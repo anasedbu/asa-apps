@@ -8,6 +8,7 @@
 <script src="../../shared/asa-cloud.js"></script>
 <script src="../../shared/asa-gate.js" data-app="trade-quote"></script>
 <script src="../../shared/asa-device-gate.js"></script>
+<script src="../../shared/asa-materials.js"></script>
 <link rel="icon" type="image/jpeg" href="data:image/jpeg;base64,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">
 <!-- Portable data snapshot: baked in by "Download Portable Copy". stamp 0 = none (won't touch your data). -->
 <script id="embeddedData" type="application/json">
@@ -1420,7 +1421,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="subtle" onclick="closeModal('manageModal')">✕</button>
     </div>
     <div class="modal-body">
-      <input type="text" class="manage-search" id="manageSearch" placeholder="Search by code, AEF#, NEF#, type, or size..." oninput="renderManage()">
+      <input type="text" class="manage-search" id="manageSearch" placeholder="Search by code, AEF#, NEF#, type or size — or type “needs price” to see items still missing a weight or price" oninput="renderManage()">
       <table class="manage-table">
         <thead>
           <tr><th>Code</th><th>AEF#</th><th>Type</th><th>Size</th><th class="num">kg/m</th><th class="num">Len</th><th class="num">Rate</th><th></th></tr>
@@ -1697,6 +1698,10 @@ const QUOTATIONS_KEY = 'alsahlawi_quotations_v1';
 const EMBEDDED_STAMP_KEY = 'alsahlawi_embedded_stamp_v1';
 
 let catalog   = [];
+// Master material list (shared/asa-materials.js): one list for every tool and account.
+const masterOn = () => !!(window.ASAMaterials && ASAMaterials.seeded());
+const needsPrice = p => !!(window.ASAMaterials && ASAMaterials.needsPrice(p));
+const keepMeta = (prev, obj) => { ['id', 'desc', 'vendor', 'oldCode'].forEach(k => { if (prev && prev[k] != null && prev[k] !== '') obj[k] = prev[k]; }); return obj; };
 let customers = [];
 let quote = [];
 let qbNextFieldIdx = 0;  // cursor for "Copy Next Field" → QuickBooks Desktop
@@ -1877,10 +1882,10 @@ function loadCatalog() {
   }
   // Migration A: add any new fixed-rate items from the seed that aren't already in the user's catalog
   // (preserves user customizations while introducing new product lines like Sheets and Casting)
-  const haveCodes = new Set(catalog.map(p => p.code));
+  const haveCodes = new Set(catalog.flatMap(p => [p.code, p.oldCode]).filter(Boolean));
   let added = 0;
   SEED_CATALOG.forEach(seed => {
-    if (seed.fixed && !haveCodes.has(seed.code)) {
+    if (!masterOn() && seed.fixed && !haveCodes.has(seed.code)) {
       catalog.push(JSON.parse(JSON.stringify(seed)));
       added++;
     }
@@ -2340,7 +2345,7 @@ function findMatches(q) {
   const nq = normalize(q);
   const scored = catalog.map(p => {
     const code = normalize(p.code);
-    const desc = normalize((p.type||'') + (p.size||'') + (p.notes||'') + (p.aef||'') + (p.nef||''));
+    const desc = normalize((p.type||'') + (p.size||'') + (p.notes||'') + (p.aef||'') + (p.nef||'') + (p.desc||'') + (p.oldCode||''));
     let score = 0;
     if (code === nq) score = 1000;
     else if (code.startsWith(nq)) score = 500 - (code.length - nq.length);
@@ -2394,7 +2399,7 @@ function renderSuggestions(matches) {
   box.innerHTML = matches.map((p, i) => `
     <div class="sugg-item" data-idx="${i}" onmousedown="selectSuggestion(${i})">
       <span class="sugg-code">${p.code}</span>
-      <span class="sugg-desc">${p.type} ${p.size}${p.notes ? ' — ' + p.notes : ''}</span>
+      <span class="sugg-desc">${p.type} ${p.size}${p.notes ? ' — ' + p.notes : ''}${needsPrice(p) ? ' <b style="color:#b42318">⚠ needs ' + (p.perPiece || p.fixed ? 'price' : 'weight') + '</b>' : ''}</span>
       <span class="sugg-weight">${suggWeightLabel(p)}</span>
     </div>
   `).join('');
@@ -2603,6 +2608,7 @@ function addCurrentToQuote() {
   // (`fixed:true` makes priceOf use this rate directly — no further scaling.)
   const item = sheetLineFor(currentMatch);
   if (isSheet(item) && !(item.weight > 0)) { toast('Enter the sheet thickness first'); document.getElementById('scT').focus(); return; }
+  if (needsPrice(item)) { toast(item.code + ' has no ' + (item.perPiece || item.fixed ? 'price' : 'weight') + ' yet — add it with Edit (it is saved for everyone)'); return; }
   const effRate = effectiveRate(item);
   quote.push({ ...item, qty, rate: effRate, fixed: true });
   renderQuote();
@@ -3693,7 +3699,7 @@ function openEditProfile(idx) {
 function saveProfile(e) {
   e.preventDefault();
   const idx = parseInt(document.getElementById('editIdx').value);
-  const profile = {
+  const profile = keepMeta(idx >= 0 ? catalog[idx] : null, {
     code: document.getElementById('pCode').value.trim(),
     type: document.getElementById('pType').value.trim(),
     size: document.getElementById('pSize').value.trim(),
@@ -3704,7 +3710,7 @@ function saveProfile(e) {
     nef: document.getElementById('pNef').value.trim(),
     notes: document.getElementById('pNotes').value.trim(),
     fixed: document.getElementById('pFixed').checked
-  };
+  });
   if (!profile.notes) delete profile.notes;
   if (!profile.aef) delete profile.aef;
   if (!profile.nef) delete profile.nef;
@@ -3734,7 +3740,8 @@ function saveProfile(e) {
 }
 function deleteProfile(idx) {
   const p = catalog[idx];
-  if (!confirm(`Delete ${p.code} (${p.type} ${p.size})?`)) return;
+  if (masterOn() && !ASACloud.isAdmin()) { toast('Only the admin can remove materials from the shared list'); return; }
+  if (!confirm(`Delete ${p.code} (${p.type} ${p.size})?` + (masterOn() ? ' This removes it for everyone.' : ''))) return;
   catalog.splice(idx, 1);
   saveCatalog();
   renderManage();
@@ -3763,7 +3770,7 @@ function openEditItem(idx) {
 function saveItem(e) {
   e.preventDefault();
   const idx = parseInt(document.getElementById('iEditIdx').value);
-  const item = {
+  const item = keepMeta(idx >= 0 ? catalog[idx] : null, {
     code:   document.getElementById('iCode').value.trim(),
     type:   document.getElementById('iType').value.trim(),
     size:   'Per Piece',
@@ -3773,7 +3780,7 @@ function saveItem(e) {
     notes:  document.getElementById('iNotes').value.trim(),
     fixed:    true,
     perPiece: true
-  };
+  });
   if (!item.notes) delete item.notes;
   if (!item.code || !item.type || !(item.rate > 0)) {
     toast('Please fill code, type and a positive price');
@@ -3807,7 +3814,7 @@ function renderManage() {
   const q = normalize(document.getElementById('manageSearch').value);
   const tbody = document.getElementById('manageBody');
   const items = catalog.map((p, i) => ({ p, i }))
-    .filter(x => !q || normalize(x.p.code + x.p.type + x.p.size + (x.p.aef||'') + (x.p.nef||'')).includes(q))
+    .filter(x => !q || (q === 'needsprice' ? needsPrice(x.p) : normalize(x.p.code + x.p.type + x.p.size + (x.p.aef||'') + (x.p.nef||'') + (x.p.desc||'') + (x.p.oldCode||'')).includes(q)))
     .sort((a, b) => a.p.code.localeCompare(b.p.code));
   if (items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No matches</td></tr>`;
@@ -3815,7 +3822,7 @@ function renderManage() {
   }
   tbody.innerHTML = items.map(x => `
     <tr>
-      <td class="code">${x.p.code}${x.p.perPiece ? ' <span style="color:var(--muted);font-size:10px">(per pc)</span>' : ''}</td>
+      <td class="code">${x.p.code}${x.p.perPiece ? ' <span style="color:var(--muted);font-size:10px">(per pc)</span>' : ''}${needsPrice(x.p) ? ' <span style="color:#b42318;font-size:10px;font-weight:700">⚠ NEEDS ' + (x.p.perPiece || x.p.fixed ? 'PRICE' : 'WEIGHT') + '</span>' : ''}${x.p.oldCode && x.p.oldCode !== x.p.code ? '<br><span style="color:var(--muted);font-size:10px">was ' + x.p.oldCode + '</span>' : ''}</td>
       <td>${x.p.aef || '—'}</td>
       <td>${x.p.type}${x.p.notes ? ' <span style="color:var(--muted)">('+x.p.notes+')</span>' : ''}</td>
       <td>${x.p.size}</td>
@@ -3893,6 +3900,7 @@ function importCatalog(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!Array.isArray(data)) throw new Error('Invalid format');
+      if (masterOn()) { alert('The material list is shared by everyone now, so it cannot be replaced by an import. Add or edit items one by one instead — they reach everyone.'); return; }
       if (!confirm(`Import ${data.length} profiles? This will REPLACE the current catalog.`)) return;
       catalog = data;
       saveCatalog();
@@ -3905,6 +3913,7 @@ function importCatalog(e) {
   e.target.value = '';
 }
 function resetCatalog() {
+  if (masterOn()) { alert('The material list is shared by everyone, so it cannot be reset from here.'); return; }
   if (!confirm('Reset catalog to factory defaults? All your additions/edits will be lost.')) return;
   catalog = JSON.parse(JSON.stringify(SEED_CATALOG));
   saveCatalog();
@@ -3945,6 +3954,11 @@ const TQ_OUTBOX = 'asa_tq_outbox', TQ_CHUNK = 900000;
 let tqSynced = new Map();
 let tqListSynced = { customers: '', catalog: '' };
 let tqListTimers = {};
+// Once the admin has built the master material list, the price catalog comes from it (one record per material)
+// instead of the old single shared copy, so everyone's additions and edits reach every tool and account.
+const tqMaster = ASAMaterials.bridgeCatalog({ read: () => catalog, write: json => tqApply(STORAGE_KEY, json), refresh: () => tqRefresh('catalog'), toast,
+  base: async () => { const c = await tqPullList('catalog').catch(() => null); return c ? JSON.parse(c.json) : null; } });
+const tqLists = () => tqMaster.on ? [[CUSTOMERS_KEY, 'customers']] : [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']];
 const tqLV = () => TQ.shared || TQ.vault;       // where the shared lists live
 const tqTag = () => ({ dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now(), _u: Date.now() });
 const tqStrip = d => { const o = { ...d }; ['dev', 'by', 'ts', '_u', '_by', '_device', '_at', 'deleted'].forEach(k => delete o[k]); return o; };
@@ -3965,6 +3979,7 @@ function tqCloudSave(k) {
     tqSynced = now;
   } else {
     const name = k === CUSTOMERS_KEY ? 'customers' : 'catalog';
+    if (name === 'catalog' && tqMaster.on) { tqMaster.saved(); return; }
     clearTimeout(tqListTimers[name]);
     tqListTimers[name] = setTimeout(() => tqPushList(name, json), 1500);
   }
@@ -4034,8 +4049,10 @@ async function tqSyncAll() {
   tqApply(QUOTATIONS_KEY, JSON.stringify(all));
   if (onlyHere.length) tqCloudSave(QUOTATIONS_KEY);
   tqRefresh('quotes');
-  // Customers + catalog (shared with Delivery Order): the cloud copy wins; the first approved device seeds it.
-  for (const [key, name] of [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']]) {
+  // Materials: the master list, once it exists.
+  await tqMaster.start().catch(() => false);
+  // Customers (+ the old catalog copy until the master list exists), shared with Delivery Order: the cloud copy wins.
+  for (const [key, name] of tqLists()) {
     const c = await tqPullList(name);
     const here = tqRaw(key) || '[]';
     if (c) { tqListSynced[name] = c.json; if (c.json !== here) { tqApply(key, c.json); tqRefresh(name); } }
@@ -4059,7 +4076,7 @@ function tqLive() {
     tqApply(QUOTATIONS_KEY, JSON.stringify(arr)); tqRefresh('quotes');
     toast('Quotations updated by the team');
   }).catch(() => {});
-  for (const [key, name] of [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']]) {
+  for (const [key, name] of tqLists()) {
     ASACloud.watchDoc(tqLV(), 'lists', name, async meta => {
       if (!meta || meta.dev === ASACloud.deviceId()) return;
       const c = await tqPullList(name).catch(() => null);

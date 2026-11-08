@@ -8,6 +8,7 @@
 <script src="../../shared/asa-cloud.js"></script>
 <script src="../../shared/asa-gate.js" data-app="delivery-order"></script>
 <script src="../../shared/asa-device-gate.js"></script>
+<script src="../../shared/asa-materials.js"></script>
 <style>
   a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:8px;white-space:nowrap;margin-right:12px}
   a.asa-home:hover{background:rgba(255,255,255,.15)}
@@ -1541,7 +1542,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <button class="subtle" onclick="closeModal('manageModal')">✕</button>
     </div>
     <div class="modal-body">
-      <input type="text" class="manage-search" id="manageSearch" placeholder="Search by code, AEF#, NEF#, type, or size..." oninput="renderManage()">
+      <input type="text" class="manage-search" id="manageSearch" placeholder="Search by code, AEF#, NEF#, type or size — or type “needs price” to see items still missing a weight or price" oninput="renderManage()">
       <table class="manage-table">
         <thead>
           <tr><th>Code</th><th>AEF#</th><th>Type</th><th>Size</th><th class="num">kg/m</th><th class="num">Len</th><th class="num">Rate</th><th></th></tr>
@@ -1825,6 +1826,10 @@ function lsSet(k, v) { try { window.localStorage.setItem(k, v); try { doCloudSav
 function lsRemove(k) { try { window.localStorage.removeItem(k); } catch(e) {} }
 
 let catalog   = [];
+// Master material list (shared/asa-materials.js): one list for every tool and account.
+const masterOn = () => !!(window.ASAMaterials && ASAMaterials.seeded());
+const needsPrice = p => !!(window.ASAMaterials && ASAMaterials.needsPrice(p));
+const keepMeta = (prev, obj) => { ['id', 'desc', 'vendor', 'oldCode'].forEach(k => { if (prev && prev[k] != null && prev[k] !== '') obj[k] = prev[k]; }); return obj; };
 let customers = [];
 let quote = [];
 let qbNextFieldIdx = 0;  // cursor for "Copy Next Field" → QuickBooks Desktop
@@ -1928,10 +1933,10 @@ function loadCatalog() {
   }
   // Migration A: add any new fixed-rate items from the seed that aren't already in the user's catalog
   // (preserves user customizations while introducing new product lines like Sheets and Casting)
-  const haveCodes = new Set(catalog.map(p => p.code));
+  const haveCodes = new Set(catalog.flatMap(p => [p.code, p.oldCode]).filter(Boolean));
   let added = 0;
   SEED_CATALOG.forEach(seed => {
-    if (seed.fixed && !haveCodes.has(seed.code)) {
+    if (!masterOn() && seed.fixed && !haveCodes.has(seed.code)) {
       catalog.push(JSON.parse(JSON.stringify(seed)));
       added++;
     }
@@ -2396,7 +2401,7 @@ function findMatches(q) {
   const nq = normalize(q);
   const scored = catalog.map(p => {
     const code = normalize(p.code);
-    const desc = normalize((p.type||'') + (p.size||'') + (p.notes||'') + (p.aef||'') + (p.nef||''));
+    const desc = normalize((p.type||'') + (p.size||'') + (p.notes||'') + (p.aef||'') + (p.nef||'') + (p.desc||'') + (p.oldCode||''));
     let score = 0;
     if (code === nq) score = 1000;
     else if (code.startsWith(nq)) score = 500 - (code.length - nq.length);
@@ -2446,7 +2451,7 @@ function renderSuggestions(matches) {
   box.innerHTML = matches.map((p, i) => `
     <div class="sugg-item" data-idx="${i}" onmousedown="selectSuggestion(${i})">
       <span class="sugg-code">${p.code}</span>
-      <span class="sugg-desc">${p.type} ${p.size}${p.notes ? ' — ' + p.notes : ''}</span>
+      <span class="sugg-desc">${p.type} ${p.size}${p.notes ? ' — ' + p.notes : ''}${needsPrice(p) ? ' <b style="color:#b42318">⚠ needs ' + (p.perPiece || p.fixed ? 'price' : 'weight') + '</b>' : ''}</span>
       <span class="sugg-weight">${suggWeightLabel(p)}</span>
     </div>
   `).join('');
@@ -2666,6 +2671,7 @@ function addRoundOffLine() {
 
 function addCurrentToQuote(asReturn) {
   if (!currentMatch) { toast('Select a profile first'); return; }
+  if (needsPrice(currentMatch)) { toast(currentMatch.code + ' has no ' + (currentMatch.perPiece || currentMatch.fixed ? 'price' : 'weight') + ' yet — add it with Edit (it is saved for everyone)'); return; }
   const raw = parseFloat(document.getElementById('qtyInput').value);
   const mag = Math.abs(isFinite(raw) && raw !== 0 ? raw : 1);
   const qty = asReturn ? -mag : mag;
@@ -3945,7 +3951,7 @@ function openEditProfile(idx) {
 function saveProfile(e) {
   e.preventDefault();
   const idx = parseInt(document.getElementById('editIdx').value);
-  const profile = {
+  const profile = keepMeta(idx >= 0 ? catalog[idx] : null, {
     code: document.getElementById('pCode').value.trim(),
     type: document.getElementById('pType').value.trim(),
     size: document.getElementById('pSize').value.trim(),
@@ -3956,7 +3962,7 @@ function saveProfile(e) {
     nef: document.getElementById('pNef').value.trim(),
     notes: document.getElementById('pNotes').value.trim(),
     fixed: document.getElementById('pFixed').checked
-  };
+  });
   if (!profile.notes) delete profile.notes;
   if (!profile.aef) delete profile.aef;
   if (!profile.nef) delete profile.nef;
@@ -3986,7 +3992,8 @@ function saveProfile(e) {
 }
 function deleteProfile(idx) {
   const p = catalog[idx];
-  if (!confirm(`Delete ${p.code} (${p.type} ${p.size})?`)) return;
+  if (masterOn() && !ASACloud.isAdmin()) { toast('Only the admin can remove materials from the shared list'); return; }
+  if (!confirm(`Delete ${p.code} (${p.type} ${p.size})?` + (masterOn() ? ' This removes it for everyone.' : ''))) return;
   catalog.splice(idx, 1);
   saveCatalog();
   renderManage();
@@ -4015,7 +4022,7 @@ function openEditItem(idx) {
 function saveItem(e) {
   e.preventDefault();
   const idx = parseInt(document.getElementById('iEditIdx').value);
-  const item = {
+  const item = keepMeta(idx >= 0 ? catalog[idx] : null, {
     code:   document.getElementById('iCode').value.trim(),
     type:   document.getElementById('iType').value.trim(),
     size:   'Per Piece',
@@ -4025,7 +4032,7 @@ function saveItem(e) {
     notes:  document.getElementById('iNotes').value.trim(),
     fixed:    true,
     perPiece: true
-  };
+  });
   if (!item.notes) delete item.notes;
   if (!item.code || !item.type || !(item.rate > 0)) {
     toast('Please fill code, type and a positive price');
@@ -4059,7 +4066,7 @@ function renderManage() {
   const q = normalize(document.getElementById('manageSearch').value);
   const tbody = document.getElementById('manageBody');
   const items = catalog.map((p, i) => ({ p, i }))
-    .filter(x => !q || normalize(x.p.code + x.p.type + x.p.size + (x.p.aef||'') + (x.p.nef||'')).includes(q))
+    .filter(x => !q || (q === 'needsprice' ? needsPrice(x.p) : normalize(x.p.code + x.p.type + x.p.size + (x.p.aef||'') + (x.p.nef||'') + (x.p.desc||'') + (x.p.oldCode||'')).includes(q)))
     .sort((a, b) => a.p.code.localeCompare(b.p.code));
   if (items.length === 0) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No matches</td></tr>`;
@@ -4067,7 +4074,7 @@ function renderManage() {
   }
   tbody.innerHTML = items.map(x => `
     <tr>
-      <td class="code">${x.p.code}${x.p.perPiece ? ' <span style="color:var(--muted);font-size:10px">(per pc)</span>' : ''}</td>
+      <td class="code">${x.p.code}${x.p.perPiece ? ' <span style="color:var(--muted);font-size:10px">(per pc)</span>' : ''}${needsPrice(x.p) ? ' <span style="color:#b42318;font-size:10px;font-weight:700">⚠ NEEDS ' + (x.p.perPiece || x.p.fixed ? 'PRICE' : 'WEIGHT') + '</span>' : ''}${x.p.oldCode && x.p.oldCode !== x.p.code ? '<br><span style="color:var(--muted);font-size:10px">was ' + x.p.oldCode + '</span>' : ''}</td>
       <td>${x.p.aef || '—'}</td>
       <td>${x.p.type}${x.p.notes ? ' <span style="color:var(--muted)">('+x.p.notes+')</span>' : ''}</td>
       <td>${x.p.size}</td>
@@ -4151,6 +4158,7 @@ function importCatalog(e) {
     try {
       const data = JSON.parse(ev.target.result);
       if (!Array.isArray(data)) throw new Error('Invalid format');
+      if (masterOn()) { alert('The material list is shared by everyone now, so it cannot be replaced by an import. Add or edit items one by one instead — they reach everyone.'); return; }
       if (!confirm(`Import ${data.length} profiles? This will REPLACE the current catalog.`)) return;
       catalog = data;
       saveCatalog();
@@ -4163,6 +4171,7 @@ function importCatalog(e) {
   e.target.value = '';
 }
 function resetCatalog() {
+  if (masterOn()) { alert('The material list is shared by everyone, so it cannot be reset from here.'); return; }
   if (!confirm('Reset catalog to factory defaults? All your additions/edits will be lost.')) return;
   catalog = JSON.parse(JSON.stringify(SEED_CATALOG));
   saveCatalog();
@@ -4205,6 +4214,11 @@ const DO_CHUNK = 900000;
 let doSynced = new Map();                       // order id -> JSON last sent/received
 let listSynced = { customers: '', catalog: '' };
 let listTimers = {};
+// Once the admin has built the master material list, the price catalog comes from it (one record per material)
+// instead of the old single shared copy, so everyone's additions and edits reach every tool and account.
+const doMaster = ASAMaterials.bridgeCatalog({ read: () => catalog, write: json => doApply(STORAGE_KEY, json), refresh: () => doRefresh('catalog'), toast,
+  base: async () => { const c = await pullList('catalog').catch(() => null); return c ? JSON.parse(c.json) : null; } });
+const doLists = () => doMaster.on ? [[CUSTOMERS_KEY, 'customers']] : [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']];
 const LIST_OF = { alsahlawi_customers_v1: 'customers', alsahlawi_catalog_v2: 'catalog' };
 
 const doTag = () => ({ dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now(), _u: Date.now() });
@@ -4226,6 +4240,7 @@ function doCloudSave(k, json) {
     doSynced = now;
   } else if (LIST_OF[k]) {
     const name = LIST_OF[k];
+    if (name === 'catalog' && doMaster.on) { doMaster.saved(); return; }
     clearTimeout(listTimers[name]);
     listTimers[name] = setTimeout(() => pushList(name, json), 1500);   // big lists: wait for typing to stop
   }
@@ -4294,8 +4309,10 @@ async function doSyncAll() {
   doApply(QUOTATIONS_KEY, JSON.stringify(all));
   if (onlyHere.length) doCloudSave(QUOTATIONS_KEY, JSON.stringify(all));
   doRefresh('orders');
-  // Customers + catalog: the cloud copy wins; the first approved device seeds it.
-  for (const [key, name] of [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']]) {
+  // Materials: the master list, once it exists.
+  await doMaster.start().catch(() => false);
+  // Customers (+ the old catalog copy until the master list exists): the cloud copy wins.
+  for (const [key, name] of doLists()) {
     const c = await pullList(name);
     const here = lsGet(key) || '[]';
     if (c) { listSynced[name] = c.json; if (c.json !== here) { doApply(key, c.json); doRefresh(name); } }
@@ -4319,7 +4336,7 @@ function doLive() {
     doApply(QUOTATIONS_KEY, JSON.stringify(arr)); doRefresh('orders');
     toast('Delivery orders updated by the team');
   }).catch(() => {});
-  for (const [key, name] of [[CUSTOMERS_KEY, 'customers'], [STORAGE_KEY, 'catalog']]) {
+  for (const [key, name] of doLists()) {
     ASACloud.watchDoc(doLV(), 'lists', name, async meta => {
       if (!meta || meta.dev === ASACloud.deviceId()) return;
       const c = await pullList(name).catch(() => null);

@@ -7,6 +7,7 @@
 <script src="../../shared/asa-config.js"></script>
 <script src="../../shared/asa-cloud.js"></script>
 <script src="../../shared/asa-gate.js" data-app="material-tracker"></script>
+<script src="../../shared/asa-materials.js"></script>
 <style>
   a.asa-home{font-weight:600;font-size:13px;text-decoration:none;color:#262262;padding:9px 12px;border:1px solid #cfd3e6;border-radius:8px;background:#fff;white-space:nowrap;align-self:flex-end}
   a.asa-home:hover{background:#E2E2E2}
@@ -409,7 +410,7 @@ thead{display:table-header-group}
 
   <div class="panel" id="p-us">
     <div class="qa">
-      <div class="qa-title">Quick Add — 181 materials from the rate calculator catalogue</div>
+      <div class="qa-title" id="qaTitle">Quick Add — materials from the shared material list</div>
       <div class="qa-grid">
         <div class="fld">
           <label>Date</label>
@@ -479,8 +480,9 @@ thead{display:table-header-group}
   <div class="modal" style="max-width:560px">
     <h3>Add a Material of Your Own</h3>
     <div class="body">
-      <p class="sub" style="margin:0">For anything not in the 181-item catalogue — glass, hardware,
-        accessories, bought-in items. Saved materials show up in the search from then on.</p>
+      <p class="sub" style="margin:0">For anything not in the material list — glass, hardware,
+        accessories, bought-in items. Saved materials show up in the search from then on, and are added to the
+        shared material list for everyone.</p>
       <div class="fld"><label>Material name</label><input id="xName" placeholder="e.g. 6 MM Clear Tempered Glass"></div>
       <div class="fld"><label>Size / description — optional</label><input id="xSize" placeholder="e.g. 1200 x 2400 MM"></div>
       <div class="fld">
@@ -1579,12 +1581,43 @@ function disconnectCloud(){
    ============================================================ */
 const norm = s => String(s ?? '').toLowerCase().replace(/[\s\-*×]/g, '');
 
-/* the searchable set = the 181 baked-in profiles + anything added by hand */
+/* the searchable set = the shared master material list (or, until the admin has built it, the
+   181 baked-in profiles) + anything added by hand */
 let customItems = [];
 let HAY = [];
+const fromMaster = m => m.perPiece ? { ...m, unit: 'pc', weight: 0 } : m;
+function catalogItems(){
+  const master = (window.ASAMaterials && ASAMaterials.seeded()) ? ASAMaterials.items() : [];
+  if (!master.length) return SEED_CATALOG.concat(customItems);
+  const have = new Set(master.map(m => String(m.code).toLowerCase()));
+  return master.map(fromMaster).concat(customItems.filter(x => !have.has(String(x.code).toLowerCase())));
+}
+// A material added here by hand also goes onto the shared master list.
+function toMaster(x){
+  const m = { id: ASAMaterials.idFor(x.code), code: x.code, type: x.type && x.type !== 'Custom' ? x.type : 'Other',
+              size: x.size || (x.unit === 'pc' ? 'Per Piece' : ''), rate: Number(x.rate) || 0, fixed: true, length: 1 };
+  if (x.unit === 'pc'){ m.weight = 1; m.perPiece = true; } else m.weight = Number(x.weight) || 0;
+  if (x.notes) m.notes = x.notes;
+  return m;
+}
+function shareCustom(list){
+  if (!(window.ASAMaterials && ASAMaterials.seeded())) return;
+  for (const x of list) if (x && x.code && !ASAMaterials.findByCode(x.code)) ASAMaterials.save(toMaster(x)).catch(() => {});
+}
+async function startMaster(){
+  if (!window.ASAMaterials) return;
+  const r = await ASAMaterials.start().catch(() => null);
+  if (!r || !r.seeded) return;
+  buildHay();
+  shareCustom(customItems);
+  ASAMaterials.onChange(() => buildHay());
+}
 function buildHay(){
-  HAY = SEED_CATALOG.concat(customItems).map(it => ({
-    it, hay: norm([it.code, it.type, it.size, it.aef, it.nef, it.notes].filter(Boolean).join(' '))
+  const list = catalogItems();
+  const q = document.getElementById('qaTitle');
+  if (q) q.textContent = 'Quick Add — ' + list.length + ' materials from the shared material list';
+  HAY = list.map(it => ({
+    it, hay: norm([it.code, it.type, it.size, it.aef, it.nef, it.notes, it.desc, it.oldCode].filter(Boolean).join(' '))
   }));
 }
 buildHay();
@@ -1688,6 +1721,7 @@ async function saveCustomItem(x){
   customItems = customItems.filter(i => i.id !== x.id).concat([x]);
   buildHay();
   if (cloudOn()) push('custom_items', xToRow(x));
+  shareCustom([x]);
 }
 
 async function deleteCustomItem(id){
@@ -2870,6 +2904,7 @@ async function init(){
   if (cloudOn()){
     await flushOutbox();
     await pullCustom();
+    await startMaster();
     if (await pullAll()){
       if (!cById.has(settings.activeContract))
         settings.activeContract = contracts.length ? contracts.slice().sort(byRecent)[0].id : '';

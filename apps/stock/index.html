@@ -8,6 +8,7 @@
 <script src="../../shared/asa-cloud.js"></script>
 <script src="../../shared/asa-gate.js" data-app="stock"></script>
 <script src="../../shared/asa-device-gate.js"></script>
+<script src="../../shared/asa-materials.js"></script>
 <style>
   a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:8px;white-space:nowrap;margin-right:12px}
   a.asa-home:hover{background:rgba(255,255,255,.15)}
@@ -416,6 +417,7 @@ function save(){
   try { localStorage.setItem(KEY, JSON.stringify(STATE)); } catch(e){}
   renderSaved();
   stockCloudSave();
+  stShareNew();
 }
 
 // ---------- Helpers ----------
@@ -1063,10 +1065,39 @@ function scLive(){
   }).catch(function(){});
 }
 
+// ---------- Shared master material list ----------
+// A NEW item added here (by hand or by a CSV import) is also added to the shared material list,
+// so every tool and every account knows about it. Items that were already here are left alone.
+var stMasterOn = false, stBase = null;
+var ST_BASE_KEY = "asa_stock_master_baseline";
+function stKey(s){ return String(s||"").toLowerCase().trim(); }
+function stShareNew(){
+  if(!stMasterOn || !stBase) return;
+  STATE.items.forEach(function(it){
+    if(!it.item || stBase[stKey(it.item)] || ASAMaterials.findByCode(it.item)) return;
+    ASAMaterials.save({ id:ASAMaterials.idFor(it.item), code:it.item, desc:it.desc||"", vendor:it.vendor||"",
+      type:"Stock item", size:"Per Piece", weight:1, length:1, rate:0, fixed:true, perPiece:true }).catch(function(){});
+  });
+}
+function stMaster(){
+  if(!window.ASAMaterials) return;
+  ASAMaterials.start().then(function(r){
+    if(!r || !r.seeded) return;
+    // The items this device had when the shared list was switched on count as "already here".
+    try { stBase = JSON.parse(localStorage.getItem(ST_BASE_KEY) || "null"); } catch(e){ stBase = null; }
+    if(!stBase){
+      stBase = {}; STATE.items.forEach(function(it){ stBase[stKey(it.item)] = 1; });
+      try { localStorage.setItem(ST_BASE_KEY, JSON.stringify(stBase)); } catch(e){}
+    }
+    stMasterOn = true;
+    stShareNew();
+  }).catch(function(){});
+}
+
 ASADeviceGate.open({ tool:"stock", prefix:"st", title:"Stock Inventory" }).then(function(ctx){
   Object.assign(SC, ctx);
   if(!SC.cloud) return;
-  scSyncAll().then(scLive).catch(function(){ toast("Working offline — changes will sync later"); });
+  scSyncAll().then(scLive).then(stMaster).catch(function(){ toast("Working offline — changes will sync later"); });
 });
 
 document.addEventListener("DOMContentLoaded", init);

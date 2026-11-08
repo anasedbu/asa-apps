@@ -11,6 +11,7 @@
 <script src="../shared/asa-config.js"></script>
 <script src="../shared/asa-cloud.js"></script>
 <script src="../shared/asa-gate.js" data-app="admin" data-chip="off"></script>
+<script src="../shared/asa-materials.js"></script>
 <style>
   :root{--navy:#262262;--grey:#E2E2E2;--ink:#1b1946;--muted:#6b6a86;--line:#d9d9e2;--red:#b42318;--green:#157f4a;
     --display:'Bebas Neue','Arial Narrow',Impact,sans-serif;--body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif}
@@ -65,6 +66,7 @@
   <div class="card" id="useCard" style="margin-top:18px"></div>
   <div class="card" id="devCard" style="margin-top:18px"></div>
   <div class="card" id="mtCard" style="margin-top:18px"></div>
+  <div class="card" id="matCard" style="margin-top:18px"></div>
   <div class="card" id="numCard" style="margin-top:18px"></div>
 </main>
 
@@ -90,7 +92,7 @@ let people = [], devices = [];
 
 function only(title, msg) {
   $('pplCard').innerHTML = `<h2>${esc(title)}</h2><p class="hint">${esc(msg || '')}</p>`;
-  ['useCard', 'devCard', 'mtCard', 'numCard'].forEach(id => $(id).style.display = 'none');
+  ['useCard', 'devCard', 'mtCard', 'matCard', 'numCard'].forEach(id => $(id).style.display = 'none');
 }
 
 /* ------------------------------------------------------------ PEOPLE + ACCESS */
@@ -277,6 +279,75 @@ async function loadMT() {
       : '<p class="hint">No changes recorded yet.</p>'}`;
 }
 
+/* ------------------------------------------------------------ MASTER MATERIAL LIST */
+// One list of every material, used by Trading Quotation, Delivery Order, Material Tracker,
+// Stock Inventory and LPO. It starts from the current price catalog; whatever anyone adds goes onto it.
+async function loadMaterials(msg) {
+  $('matCard').innerHTML = '<p class="hint">Loading the material list…</p>';
+  let info = null, list = [];
+  try {
+    info = await ASACloud.get('materials', 'meta', 'info');
+    if (info && info.seeded) list = await ASAMaterials.fetchAll();
+  } catch (err) { $('matCard').innerHTML = `<h2>Shared material list</h2><p class="msg">${esc(ASACloud.friendly(err))}</p>`; return; }
+  const on = !!(info && info.seeded);
+  const need = list.filter(ASAMaterials.needsPrice);
+  $('matCard').innerHTML = `
+    <div class="row" style="margin-top:0;justify-content:space-between">
+      <div><h2>Shared material list</h2>
+        <p class="hint">One list of every material for every account. Trading Quotation, Delivery Order, Material Tracker,
+          Stock Inventory and LPO all use it: any new item someone adds in those tools is added here for everyone,
+          and edits (weights, prices) reach everyone too. Only you can remove an item.</p></div>
+      <div class="acts">${on ? '<button onclick="downloadMaterials()">Download CSV</button>' : ''}
+        <button onclick="loadMaterials()">Refresh</button></div>
+    </div>
+    ${on
+      ? `<div class="stats"><div class="stat"><b>${list.length}</b><span>Materials</span></div>
+           <div class="stat"><b>${need.length}</b><span>Need weight / price</span></div></div>
+         ${need.length ? `<details><summary style="cursor:pointer;font-weight:600">Added without a weight or price</summary>
+           <p style="font-size:13px;margin-top:6px">${need.sort((a, b) => a.code.localeCompare(b.code)).map(x => esc(x.code)).join('<br>')}</p></details>` : ''}`
+      : `<p class="hint" style="margin-top:12px"><b>Not started yet.</b> It starts by itself the next time you open the
+           Trading Quotation or Delivery Order — or start it now from the current price catalog.</p>
+         <div class="row"><button class="primary" onclick="startMaterials()">Start the shared list now</button></div>`}
+    <div class="msg" id="matMsg" style="color:${msg && msg.ok ? 'var(--green)' : 'var(--red)'}">${esc(msg ? msg.text : '')}</div>`;
+}
+// The current shared price catalog (Trading Quotation / Delivery Order) — the starting point.
+async function oldCatalog() {
+  try {
+    const meta = await ASACloud.get('tl-data', 'lists', 'catalog');
+    if (meta) {
+      const parts = await Promise.all(Array.from({ length: meta.chunks || 1 }, (_, i) => ASACloud.get('tl-data', 'lists', 'catalog_' + i)));
+      if (parts.every(Boolean)) { const arr = JSON.parse(parts.map(p => p.data).join('')); if (arr.length) return arr; }
+    }
+  } catch (e) {}
+  try { const arr = JSON.parse(localStorage.getItem('alsahlawi_catalog_v2') || '[]'); if (arr.length) return arr; } catch (e) {}
+  return null;
+}
+async function startMaterials() {
+  const m = $('matMsg'); m.style.color = 'var(--muted)'; m.textContent = 'Starting…';
+  try {
+    const cat = await oldCatalog();
+    if (!cat) throw new Error('Could not find the current price catalog. Open the Trading Quotation once, then try again.');
+    const used = new Set();
+    const list = cat.filter(p => p && p.code).map(p => {
+      let id = p.id || ASAMaterials.idFor(p.code), n = 2;
+      while (used.has(id)) id = ASAMaterials.idFor(p.code) + '-' + n++;
+      used.add(id); return { ...ASAMaterials.strip(p), id };
+    });
+    await ASAMaterials.publish(list, (d, t) => { m.textContent = `Saving… ${d} / ${t}`; });
+    loadMaterials({ ok: true, text: `Started with ${list.length} materials. Every tool uses it from the next time it is opened.` });
+  } catch (err) { m.style.color = 'var(--red)'; m.textContent = ASACloud.friendly(err); }
+}
+function downloadMaterials() {
+  const cell = v => { v = v == null ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const rows = [['Item', 'Description', 'Preferred Vendor', 'Type', 'Size', 'Kg per m (sheet: per sheet)', 'Length m', 'Rate AED', 'Priced by', 'Needs weight/price', 'Old code']];
+  ASAMaterials.items().sort((a, b) => a.code.localeCompare(b.code)).forEach(x => rows.push([x.code, x.desc, x.vendor, x.type, x.size,
+    x.perPiece ? '' : x.weight, x.perPiece ? '' : x.length, x.rate, x.perPiece ? 'piece' : 'kg', ASAMaterials.needsPrice(x) ? 'YES' : '', x.oldCode]));
+  const blob = new Blob(['﻿' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'ASA-materials-' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
 /* ------------------------------------------------------------ QUOTATION NUMBERS */
 async function loadNumbers() {
   let next = 1;
@@ -302,7 +373,7 @@ ASAGate.ready.then(s => {
   if (!ASACloud.configured()) return only('Logged in as admin',
     'The cloud is not connected yet. Once the Firebase setup is done you will approve sign-ups here, tick which tools each person may use, and see every login.');
   if (s.offline) return only('Offline', 'Connect to the internet to manage people.');
-  loadPeople(); loadUse(); loadDevices(); loadMT(); loadNumbers();
+  loadPeople(); loadUse(); loadDevices(); loadMT(); loadMaterials(); loadNumbers();
 });
 </script>
 </body>
