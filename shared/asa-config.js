@@ -4,8 +4,14 @@
    controlled by the login and the Firestore rules, not by hiding this file.
    Passwords are NEVER written in this file — Firebase checks them. */
 window.ASA_CONFIG = {
-  firebase: null,
-  // e.g. firebase: { apiKey:"...", authDomain:"...", projectId:"...", appId:"..." },
+  firebase: {
+    apiKey: "AIzaSyDRIz2JwwC5ocgkcifj4Xq1ta9Hrx3rPAQ",
+    authDomain: "asa-apps-40469.firebaseapp.com",
+    projectId: "asa-apps-40469",
+    storageBucket: "asa-apps-40469.firebasestorage.app",
+    messagingSenderId: "718124373393",
+    appId: "1:718124373393:web:3b1898edaf10cd60ddf630"
+  },
 
   // The one admin. Typing this username on the login screen signs in as admin.
   adminUser: 'Anas',
