@@ -370,7 +370,9 @@
             <button class="mini" type="button" onclick="removeStamp()">Remove Stamp</button>
             <input type="file" id="sigUpload" accept="image/*" hidden onchange="onSigUpload(event)">
             <input type="file" id="stampUpload" accept="image/*" hidden onchange="onStampUpload(event)">
+            <input type="file" id="companyStampFile" accept="image/*" hidden onchange="onCompanyStampFile(event)">
           </div>
+          <div id="stampNotice" class="no-print"></div>
           <input type="text" id="preparedName" class="sig-name" placeholder="Eng. Name">
           <input type="text" id="preparedContact" class="sig-name" placeholder="+971-" style="font-weight:400; font-size:12px;">
           <div class="forco">For Al Sahlawi Bldg. Metal Const. Ind. Factory LLC, Sharjah-UAE</div>
@@ -1201,12 +1203,38 @@ async function claimLegacy() {
 async function loadCompanyStamp() {
   try {
     const a = await ASACloud.get(Q_APP, 'assets', 'stamp');
-    if (!a || !a.img) return;
-    const usingDefault = !stampData || stampData === STAMP;
-    STAMP = a.img;
-    try { localStorage.setItem(STAMP_CACHE, a.img); } catch (e) {}
-    if (usingDefault) setStamp('');
+    if (a && a.img) {
+      const usingDefault = !stampData || stampData === STAMP;
+      STAMP = a.img;
+      try { localStorage.setItem(STAMP_CACHE, a.img); } catch (e) {}
+      if (usingDefault) setStamp('');
+    }
   } catch (e) {}
+  paintStampNotice();
+}
+
+// Until the company stamp is in the cloud: the admin gets a one-click upload right under
+// the signature; everyone else gets a short note. Hidden once the stamp is set.
+function paintStampNotice() {
+  const box = $('stampNotice'); if (!box) return;
+  if (STAMP || qMode() !== 'cloud') { box.innerHTML = ''; return; }
+  box.innerHTML = isAdminQ()
+    ? `<div class="claim" style="margin:6px 0">The company stamp isn't set yet.
+         <button class="mini" type="button" onclick="$('companyStampFile').click()">Upload company stamp</button>
+         <div style="font-size:12px;color:#6b7280;margin-top:4px">Pick the stamp image once — every quotation then shows it over the signature.</div></div>`
+    : `<div class="claim" style="margin:6px 0">The company stamp hasn't been set by the admin yet.</div>`;
+}
+async function onCompanyStampFile(e) {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const url = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result); rd.readAsDataURL(f); });
+  try {
+    await ASACloud.put(Q_APP, 'assets', 'stamp', { img: url });
+    STAMP = url;
+    try { localStorage.setItem(STAMP_CACHE, url); } catch (x) {}
+    setStamp(''); scheduleDraft(); paintStampNotice();
+    toast('Company stamp saved — it now shows on every quotation');
+  } catch (err) { alert('Could not save the stamp: ' + ASACloud.friendly(err)); }
 }
 function paintAdminBar() {
   const bar = $('adminBar'); if (!bar) return;
