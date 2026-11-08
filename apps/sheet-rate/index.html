@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sheet Rate Calculator</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="sheet-rate"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #E2E2E2;
+    --paper: #ffffff;
+    --ink: #1b1946;
+    --ink-soft: #4a4870;
+    --ink-dim: #8a89a3;
+    --rule: #d9d9e2;
+    --rule-strong: #c4c4cf;
+    --accent: #262262;
+    --accent-soft: #ecebf5;
+    --row-hover: #f5f5f9;
+    --shadow: 0 1px 2px rgba(38,34,98,0.05), 0 8px 24px rgba(38,34,98,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    padding: 40px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wrap { width: 100%; max-width: 1040px; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .title-group h1 {
+    font-family: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif; letter-spacing: .5px;
+    font-weight: 400;
+    font-size: clamp(28px, 4vw, 38px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .title-group h1 em {
+    font-style: italic;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .title-group p {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .badges { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .badge {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: var(--shadow);
+    min-width: 150px;
+  }
+  .badge .label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .badge-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge-input-wrap .prefix {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-dim);
+  }
+  .badge-input-wrap input {
+    width: 84px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--paper);
+    text-align: right;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .badge-input-wrap input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(38,34,98,0.14);
+  }
+  .density-presets {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .preset {
+    background: transparent;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .preset:hover, .preset.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .unit-toggle { display: flex; gap: 4px; }
+  .unit-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 7px 0;
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .unit-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .unit-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .quick {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+  .quick-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .quick-tag {
+    font-family: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif; letter-spacing: .5px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .quick-sub { font-size: 12px; color: var(--ink-dim); }
+  .quick-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 16px;
+    align-items: end;
+  }
+  .quick-field { display: flex; flex-direction: column; gap: 6px; }
+  .quick-field label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+  .quick-foot {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .quick-foot strong {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  /* Highlight the price field that was just computed */
+  .quick-field input.computed {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead {
+    background: #f5f5f9;
+    border-bottom: 1px solid var(--rule);
+  }
+  th {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    font-weight: 600;
+    text-align: left;
+    padding: 14px 14px;
+  }
+  th.num { text-align: right; }
+  th:last-child { width: 84px; text-align: center; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.15s ease;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr.data-row:hover { background: var(--row-hover); }
+  tbody tr.empty td {
+    text-align: center;
+    color: var(--ink-dim);
+    padding: 40px 16px;
+    font-size: 13px;
+  }
+
+  td {
+    padding: 12px 14px;
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  td.num {
+    text-align: right;
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-weight: 500;
+  }
+  td.rate {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-weight: 700;
+    text-align: right;
+    color: var(--accent);
+  }
+  td.total-cell {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .input-row {
+    background: var(--accent-soft);
+    border-top: 1px solid var(--rule);
+  }
+  .input-row td { padding: 14px 14px; }
+
+  input[type="number"], select {
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  input[type="number"] {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    text-align: right;
+    font-weight: 500;
+  }
+  input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(38,34,98,0.14);
+  }
+  select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%235a564e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+  .add-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 12px;
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.05s ease;
+  }
+  .add-btn:hover { background: #34307a; }
+  .add-btn:active { transform: scale(0.97); }
+
+  .del-btn, .edit-btn, .save-btn, .cancel-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    border-radius: 6px;
+    color: var(--ink-dim);
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+  }
+  .del-btn { font-size: 16px; }
+  .del-btn:hover, .edit-btn:hover, .cancel-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .save-btn {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .save-btn:hover { background: #34307a; border-color: #34307a; }
+
+  .row-actions {
+    display: inline-flex;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .totals {
+    background: #262262;
+    color: var(--paper);
+    padding: 24px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .totals-info { display: flex; gap: 32px; flex-wrap: wrap; }
+  .totals-stat .label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a9a8c8;
+    margin-bottom: 4px;
+  }
+  .totals-stat .val {
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .grand { text-align: right; line-height: 1; }
+  .grand .label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #a9a8c8;
+    margin-bottom: 6px;
+  }
+  .grand .val {
+    font-family: 'Bebas Neue', 'Arial Narrow', Impact, sans-serif; letter-spacing: .5px;
+    font-size: clamp(30px, 5vw, 42px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .grand .val .unit {
+    font-family: 'Barlow', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #a9a8c8;
+    margin-right: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .ghost-btn {
+    background: transparent;
+    border: 1px solid var(--rule-strong);
+    color: var(--ink-soft);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Barlow', system-ui, sans-serif;
+  }
+  .ghost-btn:hover {
+    border-color: var(--ink-soft);
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .ghost-btn svg { flex-shrink: 0; }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--ink);
+    color: var(--paper);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; padding: 0; }
+    .badges, .actions, .input-row, thead tr th:last-child, .del-btn, .quick { display: none !important; }
+    tbody tr td:last-child { display: none !important; }
+    .card { border: none; box-shadow: none; }
+    .totals { background: white; color: var(--ink); border-top: 2px solid var(--ink); }
+    .totals-stat .label, .grand .label { color: var(--ink-soft) !important; }
+    .grand .val .unit { color: var(--ink-soft) !important; }
+    td.rate { color: var(--ink) !important; }
+    header { border-bottom: 2px solid var(--ink); }
+    .print-only { display: block !important; }
+    .title-group p { display: none; }
+  }
+  .print-only { display: none; }
+  .print-meta {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    font-family: 'Barlow', system-ui, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+
+  @media (max-width: 760px) {
+    body { padding: 24px 12px 40px; }
+    header { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .badges { align-self: stretch; }
+    .badge { flex: 1; }
+
+    thead { display: none; }
+    .card table, .card tbody { display: block; }
+
+    tr.data-row, tr.empty {
+      display: block;
+      padding: 14px 16px;
+    }
+    tr.data-row td, tr.empty td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+      border: none;
+    }
+    tr.data-row td::before, tr.empty td::before {
+      content: attr(data-label);
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-dim);
+      font-weight: 600;
+    }
+    tr.empty td { justify-content: center; }
+    tr.empty td::before { display: none; }
+
+    .input-row { display: block; padding: 16px; }
+    .input-row td { display: block; padding: 6px 0; }
+    .input-row td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .totals { flex-direction: column; align-items: flex-start; gap: 20px; padding: 20px; }
+    .grand { text-align: left; }
+
+    .quick-grid { grid-template-columns: 1fr; }
+    .quick-result {
+      border-left: none;
+      border-top: 1px solid var(--rule);
+      padding-left: 0;
+      padding-top: 16px;
+    }
+  }
+
+  .asa-bar{display:flex;align-items:center;gap:14px;background:#262262;color:#E2E2E2;border-radius:14px;padding:14px 18px;margin-bottom:26px}
+  .asa-bar img{height:34px;filter:invert(.89)}
+  .asa-bar .nm{font-family:'Bebas Neue','Arial Narrow',Impact,sans-serif;font-size:19px;line-height:1.02;letter-spacing:.5px;flex:1}
+  .asa-bar a{color:#E2E2E2;text-decoration:none;font-weight:600;font-size:13px;padding:7px 11px;border:1px solid rgba(226,226,226,.4);border-radius:8px;white-space:nowrap}
+  .asa-bar a:hover{background:rgba(226,226,226,.12)}
+  .title-group h1 em{font-style:normal;color:var(--accent)}
+  .title-group h1{font-size:clamp(34px,5vw,46px)}
+  #size, .edit-size{min-width:165px}
+  @media print{.asa-bar{display:none}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="asa-bar">
+      <img src="../../assets/asa-mark.svg" alt="ASA">
+      <div class="nm">Al Sahlawi<br>Aluminum L.L.C</div>
+      <a href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+    </div>
+    <header>
+      <div class="title-group">
+        <h1>Sheet Rate <em>Calculator</em></h1>
+        <p>Enter a per-kg price for each sheet — the per-sheet rate is calculated from its weight.</p>
+        <div class="print-only print-meta" id="printMeta"></div>
+      </div>
+      <div class="badges">
+        <div class="badge">
+          <label class="label">Size units</label>
+          <div class="unit-toggle">
+            <button type="button" class="unit-btn active" data-unit="mm">mm</button>
+            <button type="button" class="unit-btn" data-unit="ft">ft</button>
+          </div>
+        </div>
+        <div class="badge">
+          <label class="label" for="density">Density (g/cm³)</label>
+          <div class="badge-input-wrap">
+            <input type="number" id="density" value="2.72" step="0.01" min="0.1" />
+          </div>
+          <div class="density-presets">
+            <button type="button" class="preset" data-val="2.72">Al 2.72</button>
+            <button type="button" class="preset" data-val="7.85">Steel 7.85</button>
+            <button type="button" class="preset" data-val="8.96">Cu 8.96</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="quick">
+      <div class="quick-head">
+        <span class="quick-tag">Quick Rate</span>
+        <span class="quick-sub">Edit either price — the other updates from the sheet weight</span>
+      </div>
+      <div class="quick-grid">
+        <div class="quick-field">
+          <label for="qSize">Size</label>
+          <select id="qSize">
+            <option value="1.22,2.44">1220 × 2440 mm</option>
+            <option value="1.22,3.0">1220 × 3000 mm</option>
+            <option value="1.5,3.0">1500 × 3000 mm</option>
+          </select>
+        </div>
+        <div class="quick-field">
+          <label for="qThick">Thickness (mm)</label>
+          <input type="number" id="qThick" placeholder="2.5" step="0.1" min="0.1" />
+        </div>
+        <div class="quick-field">
+          <label for="qPrice">Price/kg (AED)</label>
+          <input type="number" id="qPrice" placeholder="9.50" step="0.01" min="0" />
+        </div>
+        <div class="quick-field">
+          <label for="qSheet">Price/Sheet (AED)</label>
+          <input type="number" id="qSheet" placeholder="190.89" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="quick-foot">Unit weight: <strong id="qWeight">—</strong></div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th class="num">Thickness (mm)</th>
+            <th class="num">Qty (pcs)</th>
+            <th class="num">Unit Wt (kg)</th>
+            <th class="num">Price/kg (AED)</th>
+            <th class="num">Rate/Sheet (AED)</th>
+            <th class="num">Line Total (AED)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="empty" id="emptyRow">
+            <td colspan="8">No sheets yet — add one below to get its per-sheet rate.</td>
+          </tr>
+
+          <tr class="input-row">
+            <td data-label="Size">
+              <select id="size">
+                <option value="1.22,2.44">1220 × 2440 mm  (1.22 × 2.44 m)</option>
+                <option value="1.22,3.0">1220 × 3000 mm  (1.22 × 3.00 m)</option>
+                <option value="1.5,3.0">1500 × 3000 mm  (1.50 × 3.00 m)</option>
+              </select>
+            </td>
+            <td data-label="Thickness (mm)">
+              <input type="number" id="thickness" placeholder="2.5" step="0.1" min="0.1" />
+            </td>
+            <td data-label="Quantity (pcs)">
+              <input type="number" id="qty" placeholder="100" step="1" min="1" />
+            </td>
+            <td class="num" data-label="Unit Wt (kg)" id="previewWt" style="color:var(--ink-dim)">—</td>
+            <td data-label="Price/kg (AED)">
+              <input type="number" id="price" placeholder="9.50" step="0.01" min="0" />
+            </td>
+            <td colspan="3" data-label="">
+              <button class="add-btn" id="addBtn">+ Add Sheet</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="totals-info">
+          <div class="totals-stat">
+            <div class="label">Sheets</div>
+            <div class="val" id="count">0</div>
+          </div>
+          <div class="totals-stat">
+            <div class="label">Total Pieces</div>
+            <div class="val" id="pcsTotal">0</div>
+          </div>
+          <div class="totals-stat">
+            <div class="label">Total Weight</div>
+            <div class="val"><span id="wtTotal">0.000</span> <span style="font-size:11px;color:#a9a8c8">MT</span></div>
+          </div>
+        </div>
+        <div class="grand">
+          <div class="label">Grand Total</div>
+          <div class="val"><span class="unit">AED</span><span id="grandAED">0.00</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="ghost-btn" id="printBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print
+      </button>
+      <button class="ghost-btn" id="shareBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+        Share
+      </button>
+      <button class="ghost-btn" id="csvBtn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        CSV
+      </button>
+      <button class="ghost-btn" id="clearBtn">Clear All</button>
+    </div>
+  </div>
+
+<script>
+  const tbody = document.getElementById('tbody');
+  const emptyRow = document.getElementById('emptyRow');
+  const sizeEl = document.getElementById('size');
+  const thickEl = document.getElementById('thickness');
+  const qtyEl = document.getElementById('qty');
+  const priceEl = document.getElementById('price');
+  const previewWtEl = document.getElementById('previewWt');
+  const addBtn = document.getElementById('addBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const countEl = document.getElementById('count');
+  const pcsTotalEl = document.getElementById('pcsTotal');
+  const wtTotalEl = document.getElementById('wtTotal');
+  const grandAEDEl = document.getElementById('grandAED');
+  const densityEl = document.getElementById('density');
+  const presetBtns = document.querySelectorAll('.preset');
+  const inputRow = tbody.querySelector('.input-row');
+
+  // Quick Rate panel
+  const qSizeEl = document.getElementById('qSize');
+  const qThickEl = document.getElementById('qThick');
+  const qPriceEl = document.getElementById('qPrice');
+  const qSheetEl = document.getElementById('qSheet');
+  const qWeightEl = document.getElementById('qWeight');
+  // Which price field the user last typed in — it drives the other.
+  let qDriver = 'kg';
+  // Size display unit: 'mm' or 'ft' (underlying values stay in metres).
+  let sizeUnit = 'mm';
+  const unitBtns = document.querySelectorAll('.unit-btn');
+
+  function getDensity() {
+    const d = parseFloat(densityEl.value);
+    return (d && d > 0) ? d : 2.72;
+  }
+
+  // Weight of one sheet in kg:  Area(m²) × thickness(mm) × density(g/cm³)
+  function unitWeightKg(L, W, t, density) {
+    return L * W * t * density;
+  }
+
+  let items = [];
+  let editingIndex = -1;
+
+  // Build <option> markup for the size dropdown, matching the static input row,
+  // with `selected` set on the option whose value equals selectedValue.
+  function sizeOptionsHTML(selectedValue) {
+    return [...sizeEl.options].map(o =>
+      `<option value="${o.value}"${o.value === selectedValue ? ' selected' : ''}>${o.textContent}</option>`
+    ).join('');
+  }
+
+  function fmtNum(n, d = 0) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+  function fmtMoney(n) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  // Full size label, e.g. "1220 × 2440 mm" or "4 × 8 ft" depending on sizeUnit.
+  function fmtSize(L, W) {
+    if (sizeUnit === 'ft') {
+      // metres → feet, 1 decimal, trailing zero trimmed (4.0 → "4")
+      const f = m => parseFloat((m * 3.28084).toFixed(1)).toString();
+      return `${f(L)} × ${f(W)} ft`;
+    }
+    return `${Math.round(L * 1000)} × ${Math.round(W * 1000)} mm`;
+  }
+
+  // Re-label every size <option> in both dropdowns for the current unit.
+  function refreshSizeLabels() {
+    [sizeEl, qSizeEl].forEach(sel => {
+      [...sel.options].forEach(o => {
+        const [L, W] = o.value.split(',').map(Number);
+        o.textContent = fmtSize(L, W);
+      });
+    });
+  }
+
+  // Quick Rate: price/kg <-> price/sheet, linked by the sheet's weight.
+  // Whichever price the user last edited (qDriver) drives the other.
+  function updateQuick() {
+    const [L, W] = qSizeEl.value.split(',').map(Number);
+    const t = parseFloat(qThickEl.value);
+    const unitKg = (t > 0) ? unitWeightKg(L, W, t, getDensity()) : 0;
+    qWeightEl.textContent = unitKg ? unitKg.toFixed(2) + ' kg' : '—';
+
+    const src = (qDriver === 'sheet') ? qSheetEl : qPriceEl;
+    const dst = (qDriver === 'sheet') ? qPriceEl : qSheetEl;
+    qPriceEl.classList.toggle('computed', qDriver === 'sheet');
+    qSheetEl.classList.toggle('computed', qDriver === 'kg');
+
+    const v = parseFloat(src.value);
+    if (!unitKg || !(v >= 0) || src.value === '') {
+      dst.value = '';
+      return;
+    }
+    // sheet = kg-price × weight ;  kg-price = sheet ÷ weight
+    dst.value = (qDriver === 'kg') ? (v * unitKg).toFixed(2) : (v / unitKg).toFixed(2);
+  }
+
+  function updatePreview() {
+    const [L, W] = sizeEl.value.split(',').map(Number);
+    const t = parseFloat(thickEl.value);
+    if (t && t > 0) {
+      const wt = unitWeightKg(L, W, t, getDensity());
+      previewWtEl.textContent = wt.toFixed(2);
+      previewWtEl.style.color = 'var(--ink)';
+    } else {
+      previewWtEl.textContent = '—';
+      previewWtEl.style.color = 'var(--ink-dim)';
+    }
+  }
+
+  function render() {
+    [...tbody.querySelectorAll('tr.data-row')].forEach(r => r.remove());
+    emptyRow.style.display = items.length === 0 ? '' : 'none';
+
+    let grandAED = 0;
+    let totalPcs = 0;
+    let totalKg = 0;
+    const density = getDensity();
+
+    items.forEach((it, i) => {
+      const unitKg = unitWeightKg(it.L, it.W, it.t, density);
+      const ratePerSheet = unitKg * it.price;
+      const lineTotal = ratePerSheet * it.q;
+      grandAED += lineTotal;
+      totalPcs += it.q;
+      totalKg += unitKg * it.q;
+
+      const tr = document.createElement('tr');
+      tr.className = 'data-row';
+
+      if (i === editingIndex) {
+        tr.classList.add('editing');
+        tr.innerHTML = `
+          <td data-label="Size"><select class="edit-size">${sizeOptionsHTML(`${it.L},${it.W}`)}</select></td>
+          <td data-label="Thickness (mm)"><input type="number" class="edit-thick" step="0.1" min="0.1" value="${it.t}"></td>
+          <td data-label="Qty (pcs)"><input type="number" class="edit-qty" step="1" min="1" value="${it.q}"></td>
+          <td class="num edit-wt" data-label="Unit Wt (kg)">${unitKg.toFixed(2)}</td>
+          <td data-label="Price/kg (AED)"><input type="number" class="edit-price" step="0.01" min="0" value="${it.price}"></td>
+          <td class="rate edit-rate" data-label="Rate/Sheet (AED)">${fmtMoney(ratePerSheet)}</td>
+          <td class="total-cell edit-line" data-label="Line Total (AED)">${fmtMoney(lineTotal)}</td>
+          <td data-label=""><span class="row-actions">
+            <button class="save-btn" title="Save">✓</button>
+            <button class="cancel-btn" title="Cancel">↩</button>
+          </span></td>
+        `;
+      } else {
+        tr.innerHTML = `
+          <td data-label="Size">${fmtSize(it.L, it.W)}</td>
+          <td class="num" data-label="Thickness (mm)">${it.t}</td>
+          <td class="num" data-label="Qty (pcs)">${fmtNum(it.q)}</td>
+          <td class="num" data-label="Unit Wt (kg)">${unitKg.toFixed(2)}</td>
+          <td class="num" data-label="Price/kg (AED)">${fmtMoney(it.price)}</td>
+          <td class="rate" data-label="Rate/Sheet (AED)">${fmtMoney(ratePerSheet)}</td>
+          <td class="total-cell" data-label="Line Total (AED)">${fmtMoney(lineTotal)}</td>
+          <td data-label=""><span class="row-actions">
+            <button class="edit-btn" data-i="${i}" title="Edit">✎</button>
+            <button class="del-btn" data-i="${i}" title="Remove">×</button>
+          </span></td>
+        `;
+      }
+      tbody.insertBefore(tr, inputRow);
+    });
+
+    countEl.textContent = items.length;
+    pcsTotalEl.textContent = fmtNum(totalPcs);
+    wtTotalEl.textContent = (totalKg / 1000).toFixed(3);
+    grandAEDEl.textContent = fmtMoney(grandAED);
+
+    tbody.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        editingIndex = -1;
+        items.splice(parseInt(btn.dataset.i), 1);
+        render();
+      });
+    });
+
+    tbody.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        editingIndex = parseInt(btn.dataset.i);
+        render();
+      });
+    });
+
+    const editRow = tbody.querySelector('tr.editing');
+    if (editRow) wireEditRow(editRow);
+  }
+
+  // Wire up the in-place edit row: live preview of computed cells, Save/Cancel,
+  // and Enter-to-save / Escape-to-cancel.
+  function wireEditRow(row) {
+    const sizeSel = row.querySelector('.edit-size');
+    const thickIn = row.querySelector('.edit-thick');
+    const qtyIn = row.querySelector('.edit-qty');
+    const priceIn = row.querySelector('.edit-price');
+
+    function refreshComputed() {
+      const [L, W] = sizeSel.value.split(',').map(Number);
+      const t = parseFloat(thickIn.value);
+      const q = parseInt(qtyIn.value);
+      const price = parseFloat(priceIn.value);
+      const unitKg = (t > 0) ? unitWeightKg(L, W, t, getDensity()) : 0;
+      const rate = unitKg * (price >= 0 ? price : 0);
+      row.querySelector('.edit-wt').textContent = unitKg ? unitKg.toFixed(2) : '—';
+      row.querySelector('.edit-rate').textContent = unitKg ? fmtMoney(rate) : '—';
+      row.querySelector('.edit-line').textContent = (unitKg && q > 0) ? fmtMoney(rate * q) : '—';
+    }
+
+    function save() {
+      const [L, W] = sizeSel.value.split(',').map(Number);
+      const t = parseFloat(thickIn.value);
+      const q = parseInt(qtyIn.value);
+      const price = parseFloat(priceIn.value);
+      if (!t || t <= 0) { thickIn.focus(); return; }
+      if (!q || q <= 0) { qtyIn.focus(); return; }
+      if (!(price >= 0) || priceIn.value === '') { priceIn.focus(); return; }
+      items[editingIndex] = { L, W, t, q, price };
+      editingIndex = -1;
+      render();
+    }
+
+    function cancel() {
+      editingIndex = -1;
+      render();
+    }
+
+    [sizeSel, thickIn, qtyIn, priceIn].forEach(el => el.addEventListener('input', refreshComputed));
+    [thickIn, qtyIn, priceIn].forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+    });
+    row.querySelector('.save-btn').addEventListener('click', save);
+    row.querySelector('.cancel-btn').addEventListener('click', cancel);
+    thickIn.focus();
+  }
+
+  function addLine() {
+    const [L, W] = sizeEl.value.split(',').map(Number);
+    const t = parseFloat(thickEl.value);
+    const q = parseInt(qtyEl.value);
+    const price = parseFloat(priceEl.value);
+    if (!t || t <= 0) { thickEl.focus(); return; }
+    if (!q || q <= 0) { qtyEl.focus(); return; }
+    if (!(price >= 0) || priceEl.value === '') { priceEl.focus(); return; }
+    items.push({ L, W, t, q, price });
+    thickEl.value = '';
+    qtyEl.value = '';
+    priceEl.value = '';
+    updatePreview();
+    render();
+    thickEl.focus();
+  }
+
+  addBtn.addEventListener('click', addLine);
+
+  [thickEl, qtyEl, priceEl].forEach(el => {
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); addLine(); }
+    });
+  });
+  [thickEl, sizeEl].forEach(el => el.addEventListener('input', updatePreview));
+
+  clearBtn.addEventListener('click', () => {
+    if (items.length === 0) return;
+    if (confirm('Clear all sheets?')) {
+      items = [];
+      editingIndex = -1;
+      render();
+    }
+  });
+
+  // --- Print / Share / Export ---
+  const printBtn = document.getElementById('printBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const csvBtn = document.getElementById('csvBtn');
+  const printMeta = document.getElementById('printMeta');
+
+  function showToast(msg) {
+    let t = document.querySelector('.toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.className = 'toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function buildSummary() {
+    const density = getDensity();
+    if (items.length === 0) return 'No sheets.';
+    const lines = items.map(it => {
+      const unitKg = unitWeightKg(it.L, it.W, it.t, density);
+      const rate = unitKg * it.price;
+      const lineTotal = rate * it.q;
+      return `${fmtSize(it.L, it.W)} | ${it.t} mm | ${it.q.toLocaleString()} pcs | ${unitKg.toFixed(2)} kg/sheet @ ${fmtMoney(it.price)}/kg = ${fmtMoney(rate)} AED/sheet | line ${fmtMoney(lineTotal)} AED`;
+    });
+    const grandAED = items.reduce((s, it) => s + unitWeightKg(it.L, it.W, it.t, density) * it.price * it.q, 0);
+    const totalPcs = items.reduce((s, it) => s + it.q, 0);
+    return [
+      `Sheet Rate Summary`,
+      `Density: ${density} g/cm³`,
+      ``,
+      ...lines,
+      ``,
+      `Total: ${items.length} sheets, ${totalPcs.toLocaleString()} pcs, AED ${fmtMoney(grandAED)}`
+    ].join('\n');
+  }
+
+  printBtn.addEventListener('click', () => {
+    if (items.length === 0) { showToast('Add at least one sheet first'); return; }
+    const d = getDensity();
+    const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    printMeta.textContent = `Generated ${now}  ·  Density ${d} g/cm³`;
+    window.print();
+  });
+
+  shareBtn.addEventListener('click', async () => {
+    if (items.length === 0) { showToast('Add at least one sheet first'); return; }
+    const text = buildSummary();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Sheet Rate Summary', text });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Copied to clipboard');
+    } catch {
+      showToast('Could not copy — try Print instead');
+    }
+  });
+
+  csvBtn.addEventListener('click', () => {
+    if (items.length === 0) { showToast('Add at least one sheet first'); return; }
+    const density = getDensity();
+    const rows = [['Size', 'Thickness (mm)', 'Qty (pcs)', 'Unit Wt (kg)', 'Price/kg (AED)', 'Rate/Sheet (AED)', 'Line Total (AED)']];
+    items.forEach(it => {
+      const unitKg = unitWeightKg(it.L, it.W, it.t, density);
+      const rate = unitKg * it.price;
+      rows.push([fmtSize(it.L, it.W), it.t, it.q, unitKg.toFixed(2), it.price.toFixed(2), rate.toFixed(2), (rate * it.q).toFixed(2)]);
+    });
+    const grandAED = items.reduce((s, it) => s + unitWeightKg(it.L, it.W, it.t, density) * it.price * it.q, 0);
+    const totalPcs = items.reduce((s, it) => s + it.q, 0);
+    rows.push([]);
+    rows.push(['Total', '', totalPcs, '', '', '', grandAED.toFixed(2)]);
+
+    const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sheet-rates-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV downloaded');
+  });
+
+  // Density: live re-render + preset chips
+  function syncPresets() {
+    const v = parseFloat(densityEl.value).toFixed(2);
+    presetBtns.forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.val).toFixed(2) === v);
+    });
+  }
+  densityEl.addEventListener('input', () => { render(); updatePreview(); updateQuick(); syncPresets(); });
+  presetBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      densityEl.value = btn.dataset.val;
+      render();
+      updatePreview();
+      updateQuick();
+      syncPresets();
+    });
+  });
+  syncPresets();
+
+  // Size unit toggle (mm / ft)
+  unitBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      sizeUnit = btn.dataset.unit;
+      unitBtns.forEach(b => b.classList.toggle('active', b.dataset.unit === sizeUnit));
+      refreshSizeLabels();
+      render();
+    });
+  });
+  refreshSizeLabels();
+
+  // Quick Rate live updates
+  qPriceEl.addEventListener('input', () => { qDriver = 'kg'; updateQuick(); });
+  qSheetEl.addEventListener('input', () => { qDriver = 'sheet'; updateQuick(); });
+  [qSizeEl, qThickEl].forEach(el => el.addEventListener('input', updateQuick));
+
+  updatePreview();
+  updateQuick();
+  render();
+</script>
+</body>
+</html>

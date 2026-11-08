@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#262262">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ASA Apps">
+<title>ASA Apps · Al Sahlawi Aluminum</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<script src="shared/asa-config.js"></script>
+<script src="shared/asa-cloud.js"></script>
+<script src="shared/asa-gate.js" data-app="home" data-chip="off"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#262262;        /* ASA primary */
+    --grey:#E2E2E2;        /* ASA secondary */
+    --navy-2:#34307a;
+    --ink:#1b1946;
+    --muted:#6b6a86;
+    --card:#ffffff;
+    --line:#d3d3dc;
+    --display:'Bebas Neue', 'Oswald', 'Arial Narrow', Impact, sans-serif;
+    --body:'Barlow', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--grey);color:var(--ink);font-family:var(--body);-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+
+  /* ---------- Header ---------- */
+  header{
+    background:var(--navy);color:var(--grey);
+    padding:calc(28px + env(safe-area-inset-top)) 24px 84px;
+    position:relative;overflow:hidden;
+  }
+  header::after{ /* faint oversized mark in the background */
+    content:"";position:absolute;right:-60px;bottom:-70px;width:420px;height:310px;
+    background:url("assets/asa-mark.svg") no-repeat center/contain;
+    filter:invert(1);opacity:.05;pointer-events:none;
+  }
+  .wrap{max-width:1120px;margin:0 auto;position:relative;z-index:1}
+  .brand{display:flex;align-items:center;gap:18px}
+  .brand svg{height:58px;width:auto;color:var(--grey);flex:none}
+  .brand .name{font-family:var(--display);font-size:25px;line-height:1.02;letter-spacing:.6px;flex:1}
+  .who{font-size:14px;display:flex;align-items:center;gap:10px;opacity:.9;text-align:right}
+  .who button{font:600 13px var(--body);background:rgba(226,226,226,.14);color:var(--grey);border:1px solid rgba(226,226,226,.3);border-radius:8px;padding:6px 11px;cursor:pointer}
+  .who button:hover{background:rgba(226,226,226,.25)}
+  .hello{margin-top:42px}
+  .hello .date{font-size:13px;letter-spacing:1.6px;text-transform:uppercase;opacity:.65}
+  .hello h1{font-family:var(--display);font-weight:400;font-size:clamp(44px,7vw,68px);line-height:.95;letter-spacing:.8px;margin-top:6px}
+  .hello p{opacity:.75;margin-top:8px;font-size:16px}
+
+  /* ---------- Search + filters ---------- */
+  .tools{margin:-46px auto 0;max-width:1120px;padding:0 24px;position:relative;z-index:2}
+  .search{
+    display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;
+    padding:0 18px;height:58px;box-shadow:0 10px 30px rgba(38,34,98,.16);
+  }
+  .search svg{width:20px;height:20px;color:var(--muted);flex:none}
+  .search input{flex:1;border:0;outline:0;font:inherit;font-size:17px;color:var(--ink);background:transparent;min-width:0}
+  .search kbd{font:600 11px var(--body);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+  .chips{display:flex;gap:8px;margin-top:16px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{
+    flex:none;border:1px solid #c4c4cf;background:transparent;color:var(--ink);cursor:pointer;
+    font:500 14px var(--body);padding:8px 15px;border-radius:999px;transition:.15s;
+  }
+  .chip:hover{border-color:var(--navy)}
+  .chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+  /* ---------- App grid ---------- */
+  main{max-width:1120px;margin:0 auto;padding:22px 24px 60px}
+  section{margin-top:26px}
+  section h2{
+    font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:1px;color:var(--navy);
+    display:flex;align-items:center;gap:12px;margin-bottom:12px;
+  }
+  section h2::after{content:"";flex:1;height:1px;background:#c4c4cf}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+  .app{
+    background:var(--card);border-radius:14px;padding:18px;display:flex;gap:14px;align-items:flex-start;
+    border:1px solid transparent;transition:transform .15s, box-shadow .15s, border-color .15s;position:relative;
+  }
+  a.app:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(38,34,98,.13);border-color:var(--navy)}
+  a.app:active{transform:translateY(0)}
+  .ico{
+    width:46px;height:46px;border-radius:11px;background:var(--navy);color:var(--grey);
+    display:grid;place-items:center;flex:none;
+  }
+  .ico svg{width:23px;height:23px}
+  .app h3{font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:.5px;line-height:1;color:var(--ink);margin-top:2px}
+  .app p{font-size:14px;line-height:1.35;color:var(--muted);margin-top:5px}
+  .app .go{position:absolute;right:16px;top:18px;width:16px;height:16px;color:var(--navy);opacity:0;transition:.15s}
+  a.app:hover .go{opacity:1}
+  .app.soon{opacity:.62;cursor:default}
+  .app.soon .ico{background:#b9b8c9}
+  .badge{
+    display:inline-block;margin-top:9px;font:600 10.5px var(--body);letter-spacing:1px;text-transform:uppercase;
+    color:var(--muted);background:var(--grey);padding:3px 8px;border-radius:5px;
+  }
+  .badge.store{color:var(--navy);background:#e9e8f3;margin-right:4px}
+  footer a{color:var(--navy);font-weight:600}
+  .empty{text-align:center;color:var(--muted);padding:50px 0;display:none}
+
+  footer{text-align:center;color:var(--muted);font-size:13px;padding:0 24px calc(34px + env(safe-area-inset-bottom))}
+  footer b{font-family:var(--display);font-weight:400;font-size:17px;letter-spacing:1px;color:var(--navy)}
+
+  @media (max-width:560px){
+    header{padding-left:18px;padding-right:18px}
+    .brand svg{height:46px}.brand .name{font-size:20px}
+    .hello{margin-top:32px}
+    .tools,main{padding-left:16px;padding-right:16px}
+    .search kbd{display:none}
+    .grid{grid-template-columns:1fr;gap:10px}
+    .app{padding:15px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <svg viewBox="99.05 126.315 198.554 145.918" aria-label="ASA"><path fill-rule="evenodd" fill="currentColor" d="M248.561 223.391L258.288 153.269L258.692 153.269L268.622 223.391ZM274.5 128.545L244.304 128.545L229.947 216.709C232.322 222.487 233.532 229.029 233.532 236.361C233.532 247.983 230.66 256.899 224.917 263.112C224.002 264.102 222.997 264.984 221.95 265.816L221.203 270.408L241.874 270.408L245.925 242.643L271.258 242.643L271.258 242.237L275.313 270.408L297.605 270.408ZM225.332 212.853C221.82 206.233 215.403 198.869 206.08 190.763C198.787 184.413 193.75 179.008 190.984 174.549C188.213 170.092 186.828 165.295 186.828 160.16C186.828 151.111 190.542 146.582 197.974 146.582C201.625 146.582 204.387 147.696 206.282 149.926C208.173 152.155 209.12 155.701 209.12 160.567L209.12 175.353L230.2 175.353L230.2 161.983C230.2 150.503 227.463 141.687 221.988 135.537C216.519 129.391 208.442 126.315 197.772 126.315C186.962 126.315 178.722 129.391 173.05 135.537C167.373 141.687 164.535 150.366 164.535 161.579C164.535 169.822 166.359 177.218 170.009 183.771C173.656 190.325 180.073 197.652 189.262 205.76C196.559 212.112 201.553 217.548 204.256 222.073C206.956 226.602 208.312 231.836 208.312 237.779C208.312 242.78 207.33 246.393 205.372 248.622C203.41 250.852 200.543 251.966 196.761 251.966C189.059 251.966 185.207 247.374 185.207 238.186L185.258 223.189L170.499 223.189L177.701 267.407C182.756 270.608 189.16 272.233 196.963 272.233C207.903 272.233 216.245 269.125 221.988 262.91C227.732 256.697 230.604 247.78 230.604 236.158C230.604 227.242 228.844 219.472 225.332 212.853M146.474 223.391L136.544 153.269L136.141 153.269L126.412 223.391ZM122.156 128.545L152.351 128.545L175.457 270.408L153.161 270.408L149.109 242.237L149.109 242.643L123.776 242.643L119.722 270.408L99.05 270.408Z"/></svg>
+      <div class="name">Al Sahlawi<br>Aluminum L.L.C</div>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="hello">
+      <div class="date" id="today"></div>
+      <h1 id="greet">Welcome</h1>
+      <p>All ASA software in one place. Pick a tool to get started.</p>
+    </div>
+  </div>
+</header>
+
+<div class="tools">
+  <label class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Search tools — quotation, stock, LPO…" autocomplete="off">
+    <kbd>/</kbd>
+  </label>
+  <div class="chips" id="chips"></div>
+</div>
+
+<main id="list"></main>
+<div class="empty" id="empty">No tools match your search.</div>
+
+<footer><b>ASA</b> &nbsp;·&nbsp; Internal tools for the Al Sahlawi Aluminum team <span id="adminLink" style="display:none">&nbsp;·&nbsp; <a href="admin/index.html">Admin</a></span></footer>
+
+<script>
+/* =====================================================================
+   APP LIST — the only part you need to edit.
+   To add or update a tool:
+     1. Put its HTML file in the  apps/  folder (e.g. apps/quotation/index.html)
+     2. Set  link  to that path. Tools with no link show as "Coming soon".
+   Fields: name, about (one line), group, icon (see ICONS below), link,
+           store — where its data is saved: "Device", "Cloud" or "Device + Cloud"
+   ===================================================================== */
+const APPS = [
+  // Sales
+  { name:"Fabrication Quotation",             about:"Build and share quotations. Each person sees only their own.", group:"Sales", icon:"quote", link:"apps/quotation/index.html", store:"Private · Device + Cloud" },
+  { name:"Trading Quotation",     about:"Aluminium rates and trading quotations, with the sheet calculator. Approved devices only.", group:"Sales", icon:"calc", link:"apps/trading-quotation/index.html", store:"Approved devices · Cloud" },
+  { name:"Sheet Rate Calculator", about:"Price aluminium sheets by size and thickness (density 2.72).", group:"Sales", icon:"sheet", link:"apps/sheet-rate/index.html" },
+
+  // Documents
+  { name:"Tax Invoice",           about:"Create VAT tax invoices for fabrication jobs.",         group:"Documents",   icon:"invoice",  link:"apps/tax-invoice/index.html", store:"Device + Cloud" },
+  { name:"Delivery Order",        about:"Delivery orders with customers and the price catalog. Approved devices only.", group:"Documents", icon:"truck", link:"apps/delivery-order/index.html", store:"Approved devices · Cloud" },
+  { name:"LPO Generator",         about:"Purchase orders to suppliers with saved prices and VAT. Approved devices only.", group:"Documents", icon:"lpo", link:"apps/lpo/index.html", store:"Approved devices · Cloud" },
+
+  // Production
+  { name:"Fabrication Drawing",   about:"Drawing sheets with PDFs, images and tables. Shared with the team.", group:"Production", icon:"drawing", link:"apps/fabrication-drawing/index.html", store:"Shared · Device + Cloud" },
+  { name:"Fabrication Work Tracker", about:"Track each job through all 11 steps, with photos. Approved devices only.", group:"Production", icon:"steps", link:"apps/work-tracker/index.html", store:"Approved devices · Cloud" },
+  { name:"Material Tracker",           about:"Material used per Contract Agreement. Admin-approved people only.", group:"Production", icon:"layers", link:"apps/material-tracker/index.html", store:"Approved only · Device + Cloud" },
+  { name:"Powder Coating Tracker",     about:"Live board of jobs at powder coating, with photos. Approved devices only.", group:"Production", icon:"paint", link:"apps/powder-coating/index.html", store:"Approved devices · Cloud" },
+  { name:"Wood Finishing Tracker",     about:"Track jobs through wood finishing.", group:"Production", icon:"paint", link:"" },
+
+  // Stock & Purchasing
+  { name:"Stock Inventory",       about:"Trading stock in both warehouses, with low and out-of-stock alerts. Approved devices only.", group:"Stock & Purchasing", icon:"box", link:"apps/stock/index.html", store:"Approved devices · Cloud" },
+  { name:"Stock Costing",         about:"Landed cost of each shipment, with supplier and shipper bills. Approved devices only.", group:"Stock & Purchasing", icon:"chart", link:"apps/stock-costing/index.html", store:"Approved devices · Cloud" },
+  { name:"Procurement Tracker",   about:"Local LPOs and China shipments until delivery, with PDFs. Approved devices only.", group:"Stock & Purchasing", icon:"cart", link:"apps/procurement/index.html", store:"Approved devices · Cloud" },
+
+  // Finance
+  { name:"STL Payment Tracker",   about:"Short-term loan maturities with bank confirmations. Approved devices only.", group:"Finance", icon:"cash", link:"apps/stl/index.html", store:"Approved devices · Cloud" },
+];
+
+/* Simple line icons (24×24). Add your own here if needed. */
+const ICONS = {
+  quote:  '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',
+  drawing:'<path d="M3 21h18M5 21V9l7-6 7 6v12"/><path d="M9 21v-6h6v6"/>',
+  calc:   '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M12 12h2M16 12h0M8 16h2M12 16h2M16 16h0"/>',
+  sheet:  '<path d="M4 8l8-4 8 4-8 4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2"/>',
+  invoice:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+  truck:  '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  lpo:    '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+  steps:  '<circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><path d="M10 6h10M10 12h10M10 18h10"/><circle cx="5" cy="12" r="2"/>',
+  layers: '<path d="M3 7h18v4H3zM3 13h18v4H3z"/><path d="M7 7v4M7 13v4"/>',
+  paint:  '<path d="M4 4h13v5H4z"/><path d="M17 6h3v6h-8v3"/><rect x="10" y="15" width="4" height="6" rx="1"/>',
+  box:    '<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/>',
+  chart:  '<path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/>',
+  cart:   '<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h11L21 8H7"/>',
+  cash:   '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v0M18 15v0"/>',
+  app:    '<rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/>',
+};
+
+/* ---------- Rendering (no need to edit below) ---------- */
+const svg = k => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[k]||ICONS.app}</svg>`;
+const arrow = '<svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// Which access tick opens each tile (the admin ticks these per person in Admin → People & access).
+const TILE_TOOL = {
+  'apps/quotation/index.html': 'quotation', 'apps/trading-quotation/index.html': 'trade-quote',
+  'apps/sheet-rate/index.html': 'sheet-rate', 'apps/tax-invoice/index.html': 'tax-invoice',
+  'apps/delivery-order/index.html': 'delivery-order', 'apps/lpo/index.html': 'lpo',
+  'apps/fabrication-drawing/index.html': 'fab-drawing', 'apps/work-tracker/index.html': 'work-tracker',
+  'apps/material-tracker/index.html': 'material-tracker', 'apps/powder-coating/index.html': 'powder',
+  'apps/stock/index.html': 'stock', 'apps/stock-costing/index.html': 'costing',
+  'apps/procurement/index.html': 'procurement', 'apps/stl/index.html': 'stl'
+};
+// The admin sees everything (including "Coming soon"); everyone else only the tools they have.
+function canSee(a) {
+  if (!ASACloud.session()) return false;
+  if (ASACloud.isAdmin()) return true;
+  return !!a.link && ASACloud.hasTool(TILE_TOOL[a.link] || '');
+}
+const groupsAll = [...new Set(APPS.map(a => a.group))];
+let groups = groupsAll;
+let active = 'All';
+
+function render(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  const list = document.getElementById('list');
+  let shown = 0, html = '';
+  for (const g of groups){
+    if (active !== 'All' && active !== g) continue;
+    const items = APPS.filter(a => a.group === g && canSee(a) && (!q || (a.name+' '+a.about+' '+a.group).toLowerCase().includes(q)));
+    if (!items.length) continue;
+    shown += items.length;
+    html += `<section><h2>${esc(g)}</h2><div class="grid">` + items.map(a => a.link
+      ? `<a class="app" href="${esc(a.link)}"><div class="ico">${svg(a.icon)}</div><div><h3>${esc(a.name)}</h3><p>${esc(a.about)}</p>${a.store ? `<span class="badge store">${esc(a.store)}</span>` : ''}</div>${arrow}</a>`
+      : `<div class="app soon"><div class="ico">${svg(a.icon)}</div><div><h3>${esc(a.name)}</h3><p>${esc(a.about)}</p><span class="badge">Coming soon</span></div></div>`
+    ).join('') + `</div></section>`;
+  }
+  list.innerHTML = html;
+  document.getElementById('empty').style.display = shown ? 'none' : 'block';
+}
+
+function chips(){
+  document.getElementById('chips').innerHTML = ['All', ...groups]
+    .map(g => `<button class="chip${g===active?' on':''}" data-g="${esc(g)}">${esc(g)}</button>`).join('');
+}
+document.getElementById('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  active = b.dataset.g; chips(); render();
+});
+document.getElementById('q').addEventListener('input', render);
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.id !== 'q'){ e.preventDefault(); document.getElementById('q').focus(); }
+  if (e.key === 'Enter' && document.activeElement.id === 'q'){
+    const first = document.querySelector('#list a.app'); if (first) first.click();
+  }
+});
+
+/* Greeting in UAE time */
+(function(){
+  const now = new Date(), tz = 'Asia/Dubai';
+  const h = +new Intl.DateTimeFormat('en-GB',{hour:'numeric',hour12:false,timeZone:tz}).format(now);
+  document.getElementById('greet').textContent = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('today').textContent = new Intl.DateTimeFormat('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:tz}).format(now);
+})();
+
+chips(); render();
+
+/* Who is logged in */
+ASAGate.ready.then(s => {
+  groups = groupsAll.filter(g => APPS.some(a => a.group === g && canSee(a)));
+  if (!groups.includes(active)) active = 'All';
+  chips(); render();
+  if (!APPS.some(canSee)) document.getElementById('empty').textContent = 'No tools yet — the admin will give you access.';
+  const esc2 = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+  document.getElementById("who").innerHTML =
+    `<span>${esc2(s.name)}${s.role === "admin" ? " · Admin" : ""}</span><button onclick="ASAGate.logout()">Log out</button>`;
+  if (s.role === "admin") document.getElementById("adminLink").style.display = "";
+  const first = s.name.split(" ")[0];
+  if (!s.setup || s.role === "admin") document.getElementById("greet").textContent += ", " + first;
+});
+</script>
+</body>
+</html>

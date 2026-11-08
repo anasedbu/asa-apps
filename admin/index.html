@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#262262">
+<meta name="robots" content="noindex">
+<title>ASA Admin</title>
+<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="../shared/asa-config.js"></script>
+<script src="../shared/asa-cloud.js"></script>
+<script src="../shared/asa-gate.js" data-app="admin" data-chip="off"></script>
+<style>
+  :root{--navy:#262262;--grey:#E2E2E2;--ink:#1b1946;--muted:#6b6a86;--line:#d9d9e2;--red:#b42318;--green:#157f4a;
+    --display:'Bebas Neue','Arial Narrow',Impact,sans-serif;--body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--grey);color:var(--ink);font-family:var(--body)}
+  header{background:var(--navy);color:var(--grey);padding:calc(18px + env(safe-area-inset-top)) 20px 18px}
+  .wrap{max-width:1100px;margin:0 auto}
+  header .wrap{display:flex;align-items:center;gap:14px}
+  header .mark{height:34px;width:auto;filter:invert(.89)}
+  header h1{font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.8px;flex:1}
+  header a{color:var(--grey);opacity:.8;font-size:14px;text-decoration:none}
+  main{max-width:1100px;margin:0 auto;padding:24px 20px 60px}
+  .card{background:#fff;border-radius:14px;padding:22px;box-shadow:0 4px 16px rgba(38,34,98,.08)}
+  h2{font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.8px;color:var(--navy)}
+  p.hint{color:var(--muted);font-size:14px;margin-top:4px}
+  input{font:inherit;font-size:16px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;width:100%;max-width:320px}
+  button{font:600 14px var(--body);padding:9px 14px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+  button:hover{border-color:var(--navy)}
+  button.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+  button.danger{color:var(--red)}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .msg{color:var(--red);font-size:14px;margin-top:10px;min-height:18px}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+  .stat{background:var(--grey);border-radius:10px;padding:10px 14px;min-width:120px}
+  .stat b{display:block;font-family:var(--display);font-weight:400;font-size:28px;color:var(--navy);line-height:1}
+  .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14px}
+  th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:8px 8px;border-bottom:1px solid var(--line)}
+  td{padding:10px 8px;border-bottom:1px solid #eee;vertical-align:top}
+  td small{color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;padding:3px 8px;border-radius:6px}
+  .pill.ok{background:#e6f4ec;color:var(--green)} .pill.out{background:#eee;color:var(--muted)} .pill.bad{background:#fde8e6;color:var(--red)}
+  tr.blocked td{opacity:.7}
+  .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .hist{background:#f7f7fa;font-size:13px}
+  .hist div{padding:3px 0}
+  @media (max-width:720px){
+    thead{display:none} table,tbody,tr,td{display:block;width:100%}
+    tr{border-bottom:1px solid var(--line);padding:8px 0} td{border:0;padding:4px 0}
+  }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <img src="../assets/asa-mark.svg" alt="ASA" class="mark">
+  <h1>Admin</h1>
+  <a href="../index.html">&larr; ASA Home</a>
+</div></header>
+
+<main>
+  <div class="card" id="pplCard"></div>
+  <div class="card" id="useCard" style="margin-top:18px"></div>
+  <div class="card" id="devCard" style="margin-top:18px"></div>
+  <div class="card" id="mtCard" style="margin-top:18px"></div>
+  <div class="card" id="numCard" style="margin-top:18px"></div>
+</main>
+
+<style>
+  .grid-wrap{overflow-x:auto;margin-top:8px}
+  table.access th.tool{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11px;padding:8px 4px;height:175px;text-align:left}
+  table.access td.tick{text-align:center;padding:6px 4px}
+  table.access input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:#262262}
+  .pend{background:#fff8e6;border:1px solid #f3d38a;border-radius:12px;padding:14px;margin:12px 0}
+  .pend .ticks{display:flex;flex-wrap:wrap;gap:8px 14px;margin:10px 0}
+  .pend .ticks label{display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer}
+  .pend .ticks input{width:17px;height:17px;accent-color:#262262}
+</style>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const when = ts => { const d = ASACloud.toDate(ts); return d ? d.toLocaleString('en-GB', { dateStyle:'medium', timeStyle:'short', timeZone:'Asia/Dubai' }) : '—'; };
+const TOOLS = ASACloud.TOOLS;
+const TOOL_NAME = Object.fromEntries(TOOLS.map(t => [t.id, t.name]));
+const APP_NAMES = { ...TOOL_NAME, home: 'ASA Home', admin: 'Admin', 'sheet-rate': 'Sheet Rate Calculator' };
+let people = [], devices = [];
+
+function only(title, msg) {
+  $('pplCard').innerHTML = `<h2>${esc(title)}</h2><p class="hint">${esc(msg || '')}</p>`;
+  ['useCard', 'devCard', 'mtCard', 'numCard'].forEach(id => $(id).style.display = 'none');
+}
+
+/* ------------------------------------------------------------ PEOPLE + ACCESS */
+async function loadPeople() {
+  $('pplCard').innerHTML = '<p class="hint">Loading people…</p>';
+  try { people = await ASACloud.admin.people(); }
+  catch (err) { $('pplCard').innerHTML = `<h2>People</h2><p class="msg">${esc(ASACloud.friendly(err))}</p>`; return; }
+  people = people.filter(p => p.status !== 'rejected');
+  people.sort((a, b) => a.name.localeCompare(b.name));
+  renderPeople();
+}
+
+function renderPeople(msg) {
+  const pending = people.filter(p => p.status === 'pending');
+  const active = people.filter(p => p.status !== 'pending');
+  $('pplCard').innerHTML = `
+    <div class="row" style="margin-top:0;justify-content:space-between">
+      <div><h2>People &amp; access</h2>
+        <p class="hint">Everyone signs up with their own name and password. Approve them here and tick which tools each person may use —
+          they only see those tools. The Sheet Rate Calculator is open to every approved person.</p></div>
+      <div class="acts"><button onclick="loadPeople()">Refresh</button><button onclick="ASAGate.logout()">Log out</button></div>
+    </div>
+    <div class="msg" id="pplMsg" style="color:${msg && msg.ok ? 'var(--green)' : 'var(--red)'}">${esc(msg ? msg.text : '')}</div>
+
+    <h2 style="font-size:19px;margin-top:14px">Waiting for approval${pending.length ? ` (${pending.length})` : ''}</h2>
+    ${pending.length ? pending.map(p => `<div class="pend">
+        <b style="font-size:16px">${esc(p.name)}</b> <small style="color:var(--muted)">signed up ${when(p.createdAt)}</small>
+        <div class="ticks">${TOOLS.map(t => `<label><input type="checkbox" data-new="${esc(p.username)}" value="${t.id}"> ${esc(t.name)}</label>`).join('')}</div>
+        <div class="acts"><button class="primary" onclick="approve('${esc(p.username)}')">Approve with ticked tools</button>
+          <button class="danger" onclick="rejectP('${esc(p.username)}')">Reject</button></div>
+      </div>`).join('') : '<p class="hint">Nobody is waiting.</p>'}
+
+    <h2 style="font-size:19px;margin-top:18px">Approved people</h2>
+    ${active.length ? `<div class="grid-wrap"><table class="access">
+      <thead><tr><th>Person</th>${TOOLS.map(t => `<th class="tool">${esc(t.name)}</th>`).join('')}<th class="tool">MT: edit contracts</th><th></th></tr></thead>
+      <tbody>${active.map(p => {
+        const tools = p.tools || {};
+        return `<tr class="${p.disabled ? 'blocked' : ''}">
+          <td><b>${esc(p.name)}</b><br><small>${p.disabled ? 'Turned off' : p.mustChange ? 'Temporary password' : 'Active'}</small></td>
+          ${TOOLS.map(t => `<td class="tick"><input type="checkbox" ${tools[t.id] ? 'checked' : ''} ${p.disabled ? 'disabled' : ''}
+              onchange="setTool('${esc(p.username)}', '${t.id}', this.checked)" title="${esc(t.name)}"></td>`).join('')}
+          <td class="tick"><input type="checkbox" ${p.mtEdit ? 'checked' : ''} ${p.disabled || !tools['material-tracker'] ? 'disabled' : ''}
+              onchange="setMtEdit('${esc(p.username)}', this.checked)" title="May change contract details in the Material Tracker"></td>
+          <td><div class="acts" style="flex-wrap:nowrap">
+            <button onclick="resetPw('${esc(p.username)}')">Reset password</button>
+            ${p.disabled ? `<button onclick="toggle('${esc(p.username)}', false)">Turn on</button>`
+                         : `<button class="danger" onclick="toggle('${esc(p.username)}', true)">Turn off</button>`}
+          </div></td></tr>`;
+      }).join('')}</tbody></table></div>` : '<p class="hint">Nobody approved yet.</p>'}`;
+}
+
+async function approve(username) {
+  const p = people.find(x => x.username === username);
+  const tools = {};
+  document.querySelectorAll(`input[data-new="${CSS.escape(username)}"]:checked`).forEach(i => tools[i.value] = true);
+  if (!Object.keys(tools).length && !confirm(`Approve ${p.name} without any tools? They will only see the Sheet Rate Calculator.`)) return;
+  try { await ASACloud.admin.setAccess(username, tools); Object.assign(p, { status: 'active', tools }); renderPeople({ ok: true, text: `${p.name} is approved — their screen opens by itself.` }); }
+  catch (err) { alert(ASACloud.friendly(err)); }
+}
+async function rejectP(username) {
+  const p = people.find(x => x.username === username);
+  if (!confirm(`Reject ${p.name}'s sign-up? They won't be able to log in.`)) return;
+  try { await ASACloud.admin.reject(username); people = people.filter(x => x.username !== username); renderPeople(); }
+  catch (err) { alert(ASACloud.friendly(err)); }
+}
+async function setTool(username, tool, on) {
+  const p = people.find(x => x.username === username);
+  const tools = { ...(p.tools || {}) };
+  if (on) tools[tool] = true; else delete tools[tool];
+  const extra = (tool === 'material-tracker' && !on) ? { mtEdit: false } : {};
+  try { await ASACloud.admin.setAccess(username, tools, extra); p.tools = tools; Object.assign(p, extra); renderPeople(); }
+  catch (err) { alert(ASACloud.friendly(err)); renderPeople(); }
+}
+async function setMtEdit(username, on) {
+  const p = people.find(x => x.username === username);
+  try { await ASACloud.admin.setAccess(username, p.tools || {}, { mtEdit: on }); p.mtEdit = on; renderPeople(); }
+  catch (err) { alert(ASACloud.friendly(err)); renderPeople(); }
+}
+async function resetPw(username) {
+  const p = people.find(x => x.username === username);
+  const temp = prompt(`Temporary password for ${p.name} (at least 6 characters).\nGive it to them; they choose their own at their next login.`);
+  if (temp === null) return;
+  if (temp.length < 6) { alert('Use at least 6 characters.'); return; }
+  try { await ASACloud.admin.resetPassword(username, temp); p.mustChange = true;
+        renderPeople({ ok: true, text: `${p.name} can now log in with the temporary password you chose. Their access and data are unchanged.` }); }
+  catch (err) { alert(ASACloud.friendly(err)); }
+}
+async function toggle(username, off) {
+  const p = people.find(x => x.username === username);
+  if (off && !confirm(`Turn off ${p.name}'s account?\nThey lose access to everything straight away, on every device.`)) return;
+  try { await ASACloud.admin.setDisabled(username, off); p.disabled = off; renderPeople(); }
+  catch (err) { alert(ASACloud.friendly(err)); }
+}
+
+/* ------------------------------------------------------------ WHO OPENED WHAT */
+async function loadUse() {
+  $('useCard').innerHTML = '<p class="hint">Loading tool activity…</p>';
+  const all = [];
+  await Promise.all(TOOLS.map(async t => {
+    try { (await ASACloud.admin.recent(t.id, 'access', 40)).forEach(a => all.push({ ...a, tool: t.id })); } catch (e) {}
+  }));
+  all.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+  $('useCard').innerHTML = `
+    <div class="row" style="margin-top:0;justify-content:space-between">
+      <div><h2>Who opened which tool</h2><p class="hint">The latest visits across all tools — person, tool, device and time.</p></div>
+      <div class="acts"><button onclick="loadUse()">Refresh</button></div>
+    </div>
+    ${all.length ? `<table><thead><tr><th>When</th><th>Person</th><th>Tool</th><th>Device</th></tr></thead>
+      <tbody>${all.slice(0, 80).map(a => `<tr><td>${when(a.at)}</td><td><b>${esc(a.name)}</b></td><td>${esc(TOOL_NAME[a.tool] || a.tool)}</td><td>${esc(a.device || '')}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="hint">No tool has been opened yet.</p>'}`;
+}
+
+/* ------------------------------------------------------------ DEVICES */
+async function loadDevices() {
+  $('devCard').innerHTML = '<p class="hint">Loading devices…</p>';
+  try { devices = await ASACloud.admin.devices(); }
+  catch (err) { $('devCard').innerHTML = `<h2>Devices</h2><p class="msg">${esc(ASACloud.friendly(err))}</p>`; return; }
+  devices.sort((a, b) => (ASACloud.toDate(b.lastSeen) || 0) - (ASACloud.toDate(a.lastSeen) || 0));
+  renderDevices();
+}
+function renderDevices() {
+  const blocked = devices.filter(d => d.blocked).length;
+  $('devCard').innerHTML = `
+    <div class="row" style="margin-top:0;justify-content:space-between">
+      <div><h2>Device log</h2>
+        <p class="hint">Every phone or computer each person has logged in from. Block a device you don't recognise
+          (e.g. a lost phone); to stop a person everywhere, turn off their account above.</p></div>
+      <div class="acts"><button onclick="loadDevices()">Refresh</button></div>
+    </div>
+    <div class="stats"><div class="stat"><b>${devices.length}</b><span>Devices</span></div><div class="stat"><b>${blocked}</b><span>Blocked</span></div></div>
+    ${devices.length ? `<table>
+      <thead><tr><th>Person</th><th>Device</th><th>First login</th><th>Last seen</th><th>Logins</th><th>Status</th><th></th></tr></thead>
+      <tbody>${devices.map(devRow).join('')}</tbody></table>` : '<p class="hint">No devices have logged in yet.</p>'}`;
+}
+function devRow(d) {
+  const admin = d.role === 'admin';
+  return `<tr class="${d.blocked ? 'blocked' : ''}">
+    <td><b>${esc(d.name || '(no name)')}</b>${admin ? '<br><small>Admin</small>' : ''}</td>
+    <td>${esc(d.device || '')}<br><small>ID ${esc(d.id.split('_').pop().slice(0, 8))}</small></td>
+    <td>${when(d.firstSeen)}</td>
+    <td>${when(d.lastSeen)}${d.lastApp ? `<br><small>${esc(APP_NAMES[d.lastApp] || d.lastApp)}</small>` : ''}</td>
+    <td>${d.logins || 0}</td>
+    <td>${d.blocked ? '<span class="pill bad">Blocked</span>' : '<span class="pill ok">Allowed</span>'}</td>
+    <td><div class="acts">
+      <button onclick="history('${esc(d.id)}')">History</button>
+      ${admin ? '' : d.blocked ? `<button onclick="block('${esc(d.id)}', false)">Unblock</button>` : `<button class="danger" onclick="block('${esc(d.id)}', true)">Block</button>`}
+      ${admin ? '' : `<button class="danger" onclick="removeDev('${esc(d.id)}')">Remove</button>`}
+    </div></td></tr>
+    <tr class="hist" id="h-${esc(d.id)}" style="display:none"><td colspan="7"></td></tr>`;
+}
+async function block(id, on) {
+  const d = devices.find(x => x.id === id);
+  if (on && !confirm(`Block ${d.name || 'this person'} on ${d.device}?`)) return;
+  try { await ASACloud.admin.setBlocked(id, on); d.blocked = on; renderDevices(); } catch (err) { alert(ASACloud.friendly(err)); }
+}
+async function removeDev(id) {
+  const d = devices.find(x => x.id === id);
+  if (!confirm(`Remove this record for ${d.name || 'this person'} (${d.device}) from the log?`)) return;
+  try { await ASACloud.admin.removeDevice(id); devices = devices.filter(x => x.id !== id); renderDevices(); } catch (err) { alert(ASACloud.friendly(err)); }
+}
+async function history(id) {
+  const tr = $('h-' + id);
+  if (tr.style.display !== 'none') { tr.style.display = 'none'; return; }
+  tr.style.display = ''; tr.firstElementChild.innerHTML = 'Loading…';
+  try {
+    const h = await ASACloud.admin.history(id);
+    tr.firstElementChild.innerHTML = h.length
+      ? h.map(e => `<div>${when(e.at)} — ${esc(e.name || '')} logged in on ${esc(e.device || '')}${e.app ? ' via ' + esc(APP_NAMES[e.app] || e.app) : ''}</div>`).join('')
+      : 'No login history recorded.';
+  } catch (err) { tr.firstElementChild.textContent = ASACloud.friendly(err); }
+}
+
+/* ------------------------------------------------------------ MATERIAL TRACKER LOG */
+async function loadMT() {
+  let acts = [];
+  try { acts = await ASACloud.admin.recent('material-tracker', 'activity', 120); } catch (e) {}
+  $('mtCard').innerHTML = `
+    <div class="row" style="margin-top:0;justify-content:space-between">
+      <div><h2>Material Tracker — who changed what</h2><p class="hint">Every material line, contract and site visit change, newest first.</p></div>
+      <div class="acts"><button onclick="loadMT()">Refresh</button></div>
+    </div>
+    ${acts.length ? `<table><thead><tr><th>When</th><th>Person</th><th>What</th><th>Device</th></tr></thead>
+      <tbody>${acts.slice(0, 100).map(a => `<tr><td>${when(a.at)}</td><td><b>${esc(a.name)}</b></td><td>${esc(a.text)}</td><td><small>${esc(a.device || '')}</small></td></tr>`).join('')}</tbody></table>`
+      : '<p class="hint">No changes recorded yet.</p>'}`;
+}
+
+/* ------------------------------------------------------------ QUOTATION NUMBERS */
+async function loadNumbers() {
+  let next = 1;
+  try { next = await ASACloud.admin.getCounter('quotation'); }
+  catch (err) { $('numCard').innerHTML = `<h2>Quotation numbers</h2><p class="msg">${esc(ASACloud.friendly(err))}</p>`; return; }
+  $('numCard').innerHTML = `
+    <h2>Fabrication Quotation numbers</h2>
+    <p class="hint">One running number for the whole company. The next quotation anyone saves gets this number.</p>
+    <div class="row"><input id="nextNo" type="number" min="1" value="${next}" style="max-width:160px">
+      <button onclick="saveNumber()">Set next number</button></div>
+    <div class="msg" id="numMsg"></div>`;
+}
+async function saveNumber() {
+  const v = parseInt($('nextNo').value, 10);
+  if (!(v >= 1)) return;
+  if (!confirm(`Set the next quotation number to ${String(v).padStart(4, '0')}?`)) return;
+  try { await ASACloud.admin.setCounter('quotation', v); $('numMsg').style.color = 'var(--green)'; $('numMsg').textContent = 'Saved.'; }
+  catch (err) { $('numMsg').textContent = ASACloud.friendly(err); }
+}
+
+ASAGate.ready.then(s => {
+  if (s.role !== 'admin') return only('Admin only', 'Log out and log in with the admin username to see this page.');
+  if (!ASACloud.configured()) return only('Logged in as admin',
+    'The cloud is not connected yet. Once the Firebase setup is done you will approve sign-ups here, tick which tools each person may use, and see every login.');
+  if (s.offline) return only('Offline', 'Connect to the internet to manage people.');
+  loadPeople(); loadUse(); loadDevices(); loadMT(); loadNumbers();
+});
+</script>
+</body>
+</html>

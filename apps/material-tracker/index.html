@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al Sahlawi — Material Tracker</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="material-tracker"></script>
+<style>
+  a.asa-home{font-weight:600;font-size:13px;text-decoration:none;color:#262262;padding:9px 12px;border:1px solid #cfd3e6;border-radius:8px;background:#fff;white-space:nowrap;align-self:flex-end}
+  a.asa-home:hover{background:#E2E2E2}
+</style>
+<link rel="icon" type="image/jpeg" href="data:image/jpeg;base64,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">
+<style>
+/* ============================================================
+   AL SAHLAWI — FABRICATION MATERIAL TRACKER
+   Material used, Contract Agreement to Contract Agreement.
+   Storage: IndexedDB — built for 50,000+ contracts.
+   ============================================================ */
+:root{
+  --brand:#3B73B9;
+  --brand-dk:#2C5A94;
+  --brand-lt:#EAF1FA;
+  --ink:#1C2530;
+  --muted:#6B7887;
+  --line:#DDE3EA;
+  --bg:#F4F6F9;
+  --card:#FFFFFF;
+  --ok:#1E874B;
+  --warn:#B7791F;
+  --hot:#C1443A;
+  --shadow:0 1px 2px rgba(28,37,48,.06),0 4px 14px rgba(28,37,48,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+.wrap{max-width:1360px;margin:0 auto;padding:0 18px 60px}
+
+/* ---------- masthead ---------- */
+.masthead{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-dk) 100%);
+  color:#fff;padding:16px 0;margin-bottom:18px;box-shadow:0 2px 12px rgba(28,37,48,.18)}
+.masthead .wrap{padding-bottom:0;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.mh-logo{height:56px;width:auto;background:#fff;border-radius:8px;padding:5px 9px;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);flex:none}
+.mh-txt{flex:1;min-width:220px}
+.mh-txt h1{margin:0;font-size:19px;font-weight:650;letter-spacing:.2px}
+.mh-txt p{margin:2px 0 0;font-size:12px;opacity:.85}
+.mh-badge{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+  border-radius:8px;padding:8px 14px;text-align:right;flex:none}
+.mh-badge span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:1px;opacity:.8}
+.mh-badge b{font-size:16px;font-weight:650}
+
+/* ---------- contract bar ---------- */
+.cbar{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;margin-bottom:16px;box-shadow:var(--shadow);
+  display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.fld{display:flex;flex-direction:column;gap:4px}
+.fld label{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:600}
+.fld input,.fld select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;
+  outline:none;transition:border-color .15s,box-shadow .15s}
+.fld input:focus,.fld select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-lt)}
+.fld input[readonly]{background:#F7F9FB;color:var(--muted)}
+.grow{flex:1;min-width:200px}
+
+/* current-contract chip — replaces the dropdown, since a 50k <select> is unusable */
+.curc{flex:1;min-width:260px;display:flex;align-items:center;gap:10px;
+  border:1px solid var(--line);border-radius:9px;padding:7px 12px;background:#fff;
+  cursor:pointer;transition:.15s;text-align:left;width:100%}
+.curc:hover{border-color:var(--brand);background:var(--brand-lt)}
+.curc .mag{font-size:15px;color:var(--brand);flex:none}
+.curc .cc{flex:1;min-width:0}
+.curc .cc b{display:block;font-size:14px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.curc .cc i{display:block;font-style:normal;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.curc kbd{font:inherit;font-size:10.5px;background:#F0F3F6;border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;color:var(--muted);flex:none}
+
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;
+  font-weight:600;color:var(--ink);transition:.15s;white-space:nowrap}
+.btn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-lt)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-dk);border-color:var(--brand-dk);color:#fff}
+.btn.save{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.save:hover{background:#186E3C;border-color:#186E3C;color:#fff}
+.btn.save.dirty{background:var(--warn);border-color:var(--warn)}
+.btn.save.dirty:hover{background:#9A6519;border-color:#9A6519;color:#fff}
+.btn.danger{color:var(--hot);border-color:#F0C9C6}
+.btn.danger:hover{background:#FCEBEA;border-color:var(--hot);color:var(--hot)}
+.btn.sm{padding:5px 10px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.spacer{flex:1}
+
+/* save-state line */
+.savebar{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);
+  margin:-8px 0 14px;padding:0 4px;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.dot.dirty{background:var(--warn)}
+.dot.busy{background:var(--brand)}
+.savebar .sep{color:var(--line)}
+
+/* edit lock */
+.lockchip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:2px 10px;
+  font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s}
+.lockchip:hover{border-color:var(--brand);color:var(--brand)}
+.lockchip.open{background:#E7F5ED;border-color:#B6E0C7;color:var(--ok)}
+
+/* cloud / live status */
+.netchip{border:1px solid var(--line);background:#fff;border-radius:20px;padding:2px 10px;
+  font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:.15s;
+  display:inline-flex;align-items:center;gap:6px}
+.netchip:hover{border-color:var(--brand);color:var(--brand)}
+.netchip .led{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.netchip.live{background:#E7F5ED;border-color:#B6E0C7;color:var(--ok)}
+.netchip.live .led{background:var(--ok);animation:pulse 2s infinite}
+.netchip.off{background:#FDF6E7;border-color:#EBD9AE;color:var(--warn)}
+.netchip.off .led{background:var(--warn)}
+.netchip.err{background:#FCEBEA;border-color:#F0C9C6;color:var(--hot)}
+.netchip.err .led{background:var(--hot)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* a row that just arrived from someone else */
+@keyframes flashin{from{background:#FFF6D6}to{background:transparent}}
+tr.justin td{animation:flashin 2.2s ease-out}
+.whotag{display:inline-block;background:#EEF1F5;border-radius:4px;padding:0 5px;
+  font-size:10px;font-weight:600;color:#57646F;margin-left:6px;vertical-align:1px}
+
+/* cloud setup modal */
+.cloudbox{max-width:620px}
+.cloudbox .body{gap:14px}
+.steps{margin:0;padding-left:20px;font-size:13px;color:var(--ink);line-height:1.7}
+.steps li{margin-bottom:6px}
+.steps code{background:#F0F3F6;border-radius:4px;padding:1px 5px;font-size:12px}
+.sql{background:#1C2530;color:#D6E2F0;border-radius:9px;padding:12px 14px;font-size:11.5px;
+  font-family:Consolas,"Courier New",monospace;white-space:pre;overflow-x:auto;max-height:230px;line-height:1.5}
+.warnbox{background:#FDF6E7;border:1px solid #EBD9AE;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#7A5A14}
+.warnbox b{color:#5E4510}
+
+/* per-kg / per-piece toggle, reused from the old direction switch */
+.dirtog{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;width:max-content}
+.dirtog button{border:none;background:#fff;padding:8px 16px;font-weight:600;color:var(--muted)}
+.dirtog button.on{background:var(--brand);color:#fff}
+
+/* saved-custom-material and site-visit rows */
+.xrow{display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #F0F3F6}
+.xrow:last-child{border-bottom:none}
+.xrow > div{flex:1;min-width:0;font-size:13px}
+.xrow b{font-weight:650}
+
+/* visit list printed on the statement */
+.pvisit{display:flex;gap:10pt;font-size:8.6pt;padding:2.5pt 0;border-bottom:0.4pt solid #E4EAF0}
+.pvisit:last-child{border-bottom:none}
+.pvisit b{min-width:60pt;font-weight:700}
+
+/* passcode gate */
+.gate{max-width:360px}
+.gate .body{align-items:center;text-align:center}
+.gate .lockicon{font-size:34px;line-height:1}
+.gate p{margin:0;color:var(--muted);font-size:13px}
+#gCode{width:170px;text-align:center;font-size:26px;letter-spacing:12px;padding:10px 0 10px 12px;
+  font-weight:650;border:1px solid var(--line);border-radius:9px;outline:none}
+#gCode:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-lt)}
+#gErr{min-height:16px;font-size:12px;font-weight:600;color:var(--hot)}
+.shake{animation:shk .3s}
+@keyframes shk{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;gap:4px;margin-bottom:-1px;flex-wrap:wrap}
+.tab{border:1px solid transparent;border-bottom:none;background:transparent;
+  padding:9px 18px;border-radius:10px 10px 0 0;font-weight:600;color:var(--muted)}
+.tab.on{background:var(--card);border-color:var(--line);color:var(--brand)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:0 12px 12px 12px;
+  padding:16px;box-shadow:var(--shadow)}
+
+/* ---------- quick add ---------- */
+.qa{background:var(--brand-lt);border:1px solid #CFDFF3;border-radius:10px;padding:12px;margin-bottom:16px}
+.qa-title{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--brand-dk);
+  font-weight:700;margin-bottom:10px}
+.qa-grid{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.qa-grid .fld input{background:#fff}
+.w-date{width:140px}.w-num{width:82px}.w-rate{width:96px}.w-calc{width:112px}
+
+/* ---------- autocomplete ---------- */
+.ac{position:relative}
+.ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:60;background:#fff;
+  border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(28,37,48,.16);
+  max-height:320px;overflow-y:auto;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:8px 11px;border-bottom:1px solid #F0F3F6;cursor:pointer}
+.ac-item:last-child{border-bottom:none}
+.ac-item.on,.ac-item:hover{background:var(--brand-lt)}
+.ac-item .l1{font-weight:650;font-size:13px}
+.ac-item .l1 em{font-style:normal;color:var(--brand);font-weight:700}
+.ac-item .l2{font-size:11.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;margin-top:1px}
+.ac-empty{padding:12px;color:var(--muted);font-size:12.5px;text-align:center}
+.pill{background:#EEF1F5;border-radius:4px;padding:0 5px;font-size:10.5px;font-weight:600;color:#57646F}
+
+/* ---------- tables ---------- */
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+thead th{background:#F7F9FB;border-bottom:1px solid var(--line);padding:9px 10px;
+  text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--muted);font-weight:700;white-space:nowrap}
+tbody td{border-bottom:1px solid #F0F3F6;padding:8px 10px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#FAFCFE}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tfoot td{background:#F7F9FB;border-top:2px solid var(--line);padding:10px;font-weight:700}
+.code{font-weight:650;font-size:12.5px}
+.sub{color:var(--muted);font-size:11.5px}
+.kg{font-weight:650;color:var(--brand-dk)}
+
+/* ---------- stat cards ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:#fff}
+.stat span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600}
+.stat b{display:block;font-size:20px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-weight:500;font-size:12px}
+.stat.b b{color:var(--brand)}
+
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty b{display:block;font-size:15px;color:var(--ink);margin-bottom:4px}
+.sechead{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  font-weight:700;margin:22px 0 9px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* pagination */
+.pager{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+.pager input{width:70px;border:1px solid var(--line);border-radius:7px;padding:5px 8px;text-align:center}
+
+/* filter row */
+.filt{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.filt input{flex:1;min-width:220px;border:1px solid var(--line);border-radius:9px;padding:9px 12px;outline:none}
+.filt input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-lt)}
+.filt select{border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+  background:#fff;color:inherit;font:inherit;outline:none;cursor:pointer}
+.filt select:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-lt)}
+
+/* ---------- modal ---------- */
+.ovl{position:fixed;inset:0;background:rgba(28,37,48,.45);z-index:200;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.ovl.show{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:520px;
+  box-shadow:0 20px 60px rgba(0,0,0,.28);max-height:90vh;overflow-y:auto}
+.modal h3{margin:0;padding:16px 20px;border-bottom:1px solid var(--line);font-size:16px}
+.modal .body{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.modal .foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.modal .fld input,.modal .fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;
+  padding:9px 11px;font-size:14px;outline:none}
+.modal .fld textarea{resize:vertical;min-height:60px}
+.modal .fld input:focus,.modal .fld textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-lt)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ---------- LOOKUP palette ---------- */
+.ovl.top{align-items:flex-start;padding-top:8vh}
+.lk{background:#fff;border-radius:14px;width:100%;max-width:720px;
+  box-shadow:0 24px 70px rgba(0,0,0,.32);overflow:hidden;display:flex;flex-direction:column;max-height:80vh}
+.lk-in{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.lk-in span{font-size:17px;color:var(--brand)}
+.lk-in input{flex:1;border:none;outline:none;font-size:16px;padding:2px 0}
+.lk-in kbd{font:inherit;font-size:11px;background:#F0F3F6;border:1px solid var(--line);
+  border-radius:4px;padding:2px 6px;color:var(--muted)}
+.lk-meta{padding:7px 18px;background:#F7F9FB;border-bottom:1px solid var(--line);
+  font-size:11.5px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.lk-res{overflow-y:auto;flex:1}
+.lk-item{padding:10px 18px;border-bottom:1px solid #F0F3F6;cursor:pointer;display:flex;gap:14px;align-items:center}
+.lk-item:last-child{border-bottom:none}
+.lk-item.on,.lk-item:hover{background:var(--brand-lt)}
+.lk-item .li{flex:1;min-width:0}
+.lk-item .li b{display:block;font-size:13.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lk-item .li b mark{background:#FFF1A8;color:inherit;border-radius:2px;padding:0 1px}
+.lk-item .li i{display:block;font-style:normal;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lk-item .li i mark{background:#FFF1A8;color:inherit;border-radius:2px;padding:0 1px}
+.lk-item .lr{text-align:right;flex:none;font-size:11.5px;color:var(--muted)}
+.lk-item .lr b{display:block;font-size:13px;color:var(--brand-dk);font-variant-numeric:tabular-nums}
+.lk-empty{padding:34px 18px;text-align:center;color:var(--muted)}
+.lk-foot{padding:8px 18px;border-top:1px solid var(--line);background:#F7F9FB;
+  font-size:11px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:#fff;padding:11px 20px;border-radius:24px;font-weight:600;
+  font-size:13px;z-index:300;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--brand-lt);
+  border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+kbd{font:inherit;font-size:11px;background:#F0F3F6;border:1px solid var(--line);
+  border-radius:4px;padding:1px 5px;color:var(--muted)}
+
+/* ============================================================
+   PRINT / PDF — A4
+   ============================================================ */
+#printArea{display:none}
+@media print{
+  @page{size:A4 portrait;margin:11mm 10mm}
+  body{background:#fff;font-size:10pt}
+  .masthead,.wrap,.ovl,.toast{display:none !important}
+  #printArea{display:block}
+}
+.pdoc{color:#111;font-size:10pt}
+.phead{display:flex;align-items:flex-start;gap:14px;border-bottom:2.5pt solid var(--brand);padding-bottom:8pt}
+.phead img{height:64px;width:auto}
+.phead .co{flex:1}
+.phead .co h2{margin:0;font-size:11.5pt;color:var(--brand-dk);letter-spacing:.1px;line-height:1.2}
+.phead .co p{margin:2pt 0 0;font-size:7.4pt;line-height:1.32;color:#444}
+.phead .doc{text-align:right;flex:none}
+.phead .doc h3{margin:0;font-size:12pt;letter-spacing:1.2px;text-transform:uppercase;color:var(--brand);white-space:nowrap}
+.phead .doc p{margin:2pt 0 0;font-size:8pt;color:#555}
+.pmeta{display:grid;grid-template-columns:1fr 1fr;gap:0 18pt;margin:10pt 0;
+  border:0.8pt solid #C9D3DE;border-radius:3pt;overflow:hidden}
+.pmeta div{display:flex;gap:6pt;padding:4.5pt 9pt;border-bottom:0.6pt solid #E4EAF0;font-size:9pt}
+.pmeta div:nth-last-child(-n+2){border-bottom:none}
+.pmeta b{color:#5A6672;font-weight:600;min-width:92pt;font-size:8.3pt;text-transform:uppercase;letter-spacing:.4px}
+.pmeta span{font-weight:600}
+.psec{margin:11pt 0 5pt;font-size:8.5pt;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--brand-dk);border-bottom:0.8pt solid #C9D3DE;padding-bottom:2.5pt}
+table.ptbl{width:100%;border-collapse:collapse;font-size:8.6pt}
+table.ptbl th{background:var(--brand) !important;color:#fff !important;padding:4.5pt 5pt;text-align:left;
+  font-size:7.6pt;text-transform:uppercase;letter-spacing:.4px;font-weight:700;border:0.5pt solid var(--brand)}
+table.ptbl td{padding:3.4pt 5pt;border:0.5pt solid #D5DDE6;vertical-align:top}
+table.ptbl td .ms{font-size:7.2pt;color:#666;display:block;line-height:1.25}
+table.ptbl td.dt{white-space:nowrap}
+table.ptbl tbody tr:nth-child(even) td{background:#F6F9FC !important}
+table.ptbl tfoot td{background:#EAF1FA !important;font-weight:700;border:0.5pt solid #C9D3DE}
+table.ptbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr,td,th{page-break-inside:avoid}
+thead{display:table-header-group}
+.ptot{display:flex;justify-content:flex-end;margin-top:9pt}
+.ptot table{border-collapse:collapse;font-size:9pt;min-width:250pt}
+.ptot td{padding:4pt 10pt;border:0.5pt solid #D5DDE6}
+.ptot td.k{background:#F6F9FC !important;font-weight:600;color:#48535F}
+.ptot td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.ptot tr.grand td{background:var(--brand) !important;color:#fff !important;font-size:10.5pt;border-color:var(--brand)}
+.psign{display:flex;justify-content:space-between;margin-top:34pt;gap:30pt}
+.psign div{flex:1;border-top:0.8pt solid #333;padding-top:4pt;font-size:8.3pt;color:#444;text-align:center}
+.pfoot{margin-top:14pt;padding-top:6pt;border-top:0.6pt solid #DDE3EA;font-size:7.3pt;color:#8A939D;text-align:center}
+.pnote{font-size:7.8pt;color:#666;margin-top:6pt;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="wrap">
+    <img class="mh-logo" id="mhLogo" alt="Al Sahlawi">
+    <div class="mh-txt">
+      <h1>Fabrication Material Tracker</h1>
+      <p>Al Sahlawi Bldg. Metal Const. Ind. Factory LLC — Material used, Contract Agreement to Contract Agreement</p>
+    </div>
+    <div class="mh-badge">
+      <span>Used on this contract</span>
+      <b id="mhKg">0.000 kg</b>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="cbar">
+    <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+    <div class="fld" style="flex:1;min-width:260px">
+      <label>Contract Agreement #</label>
+      <button class="curc" id="btnLookup">
+        <span class="mag">🔍</span>
+        <span class="cc">
+          <b id="ccNo">No contract selected</b>
+          <i id="ccSub">Click to search every saved contract</i>
+        </span>
+        <kbd>Ctrl K</kbd>
+      </button>
+    </div>
+    <button class="btn save" id="btnSave">💾 Save</button>
+    <button class="btn primary" id="btnNewC">＋ New Contract</button>
+    <button class="btn" id="btnEditC">🔒 Edit</button>
+    <div class="spacer"></div>
+    <div class="fld">
+      <label>Standard Rate AED/kg</label>
+      <input type="number" id="stdRate" class="w-rate" step="0.01" min="0" value="16.00">
+    </div>
+    <button class="btn" id="btnVisits">📍 Site Visits</button>
+    <button class="btn primary" id="btnPdf">🖨 PDF</button>
+    <button class="btn" id="btnPdfNP">🖨 PDF — No Prices</button>
+    <button class="btn" id="btnExport">⭳ Backup</button>
+    <button class="btn" id="btnImport">⭱ Restore</button>
+    <input type="file" id="fileIn" accept=".json" style="display:none">
+  </div>
+
+  <div class="savebar">
+    <span class="dot" id="saveDot"></span>
+    <span id="saveTxt">Ready</span>
+    <span class="sep">|</span>
+    <button class="netchip" id="netChip"><span class="led"></span><span id="netTxt">Local only</span></button>
+    <span class="sep">|</span>
+    <button class="lockchip" id="lockChip">🔒 Edit locked</button>
+    <span class="sep">|</span>
+    <span id="dbTxt">—</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" data-t="us">Material Used</button>
+    <button class="tab"    data-t="bm">By Material</button>
+    <button class="tab"    data-t="ac">All Contracts</button>
+  </div>
+
+  <div class="panel" id="p-us">
+    <div class="qa">
+      <div class="qa-title">Quick Add — 181 materials from the rate calculator catalogue</div>
+      <div class="qa-grid">
+        <div class="fld">
+          <label>Date</label>
+          <input type="date" id="qDate" class="w-date">
+        </div>
+        <div class="fld grow ac">
+          <label>Material — type code, size or item no.</label>
+          <input type="text" id="qSearch" placeholder="e.g.  50x50x2   ·   T-100x50x2MM   ·   80222   ·   angle" autocomplete="off">
+          <div class="ac-list" id="acList"></div>
+        </div>
+        <div class="fld"><label>Pcs</label><input type="number" id="qPcs" class="w-num" step="1" min="0" value="1"></div>
+        <div class="fld"><label>Length m</label><input type="number" id="qLen" class="w-num" step="0.01" min="0"></div>
+        <div class="fld"><label id="qRateLbl">Rate AED/kg</label><input type="number" id="qRate" class="w-rate" step="0.01" min="0"></div>
+        <div class="fld"><label>Weight kg</label><input type="text" id="qKg" class="w-calc" readonly></div>
+        <div class="fld"><label>Amount AED</label><input type="text" id="qAmt" class="w-calc" readonly></div>
+        <button class="btn primary" id="btnAdd">Add Material</button>
+        <button class="btn" id="btnCustom">＋ Custom Item</button>
+      </div>
+    </div>
+    <div id="usBody"></div>
+  </div>
+
+  <div class="panel" id="p-bm" style="display:none"></div>
+  <div class="panel" id="p-ac" style="display:none"></div>
+
+</div>
+
+<div id="printArea"></div>
+
+<!-- ---------- LOOKUP palette ---------- -->
+<div class="ovl top" id="ovlLk">
+  <div class="lk">
+    <div class="lk-in">
+      <span>🔍</span>
+      <input id="lkQ" placeholder="Search contract #, client, project, notes or date…" autocomplete="off">
+      <kbd>Esc</kbd>
+    </div>
+    <div class="lk-meta" id="lkMeta"></div>
+    <div class="lk-res" id="lkRes"></div>
+    <div class="lk-foot"><span>↑ ↓ to move</span><span>↵ to open</span><span>Esc to close</span></div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlC">
+  <div class="modal">
+    <h3 id="cTitle">New Contract</h3>
+    <div class="body">
+      <div class="row2">
+        <div class="fld"><label>Contract Agreement #</label><input id="cNo" placeholder="CA-2026-001"></div>
+        <div class="fld"><label>Agreement Date</label><input type="date" id="cDate"></div>
+      </div>
+      <div class="fld"><label>Client / Customer</label><input id="cClient" placeholder="Company name"></div>
+      <div class="fld"><label>Project / Site</label><input id="cProject" placeholder="Project or site location"></div>
+      <div class="fld"><label>Total Contract Value (AED)</label>
+        <input id="cValue" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Leave blank if not agreed yet"></div>
+      <div class="fld"><label>Notes</label><textarea id="cNotes" placeholder="Scope, colour, agreed terms…"></textarea></div>
+    </div>
+    <div class="foot">
+      <button class="btn danger" id="cDel" style="margin-right:auto;display:none">Delete Contract</button>
+      <button class="btn" id="cCancel">Cancel</button>
+      <button class="btn primary" id="cSave">Save Contract</button>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlX">
+  <div class="modal" style="max-width:560px">
+    <h3>Add a Material of Your Own</h3>
+    <div class="body">
+      <p class="sub" style="margin:0">For anything not in the 181-item catalogue — glass, hardware,
+        accessories, bought-in items. Saved materials show up in the search from then on.</p>
+      <div class="fld"><label>Material name</label><input id="xName" placeholder="e.g. 6 MM Clear Tempered Glass"></div>
+      <div class="fld"><label>Size / description — optional</label><input id="xSize" placeholder="e.g. 1200 x 2400 MM"></div>
+      <div class="fld">
+        <label>Priced by</label>
+        <div class="dirtog" id="xUnit">
+          <button type="button" data-u="kg" class="on">Per kg</button>
+          <button type="button" data-u="pc">Per piece</button>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fld"><label id="xWeightLbl">Weight per piece kg</label>
+          <input type="number" id="xWeight" step="0.001" min="0" placeholder="0.000"></div>
+        <div class="fld"><label id="xRateLbl">Price AED per kg</label>
+          <input type="number" id="xRate" step="0.01" min="0" placeholder="0.00"></div>
+      </div>
+      <div class="fld" style="max-width:130px"><label>Pieces to add now</label>
+        <input type="number" id="xPcs" step="1" min="1" value="1"></div>
+
+      <div style="border-top:1px solid var(--line);padding-top:12px">
+        <div class="sechead" style="margin:0 0 6px">Your saved materials</div>
+        <div id="xList" style="max-height:190px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="xCancel">Close</button>
+      <button class="btn" id="xSaveOnly">Save Only</button>
+      <button class="btn primary" id="xSaveUse">Save &amp; Use</button>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlV">
+  <div class="modal" style="max-width:520px">
+    <h3 id="vTitle">Site Visits</h3>
+    <div class="body">
+      <p class="sub" style="margin:0">Record each time the site was visited. Visits appear on both PDFs.</p>
+      <div class="row2">
+        <div class="fld"><label>Visit date</label><input type="date" id="vDate"></div>
+        <div class="fld" style="justify-content:flex-end">
+          <button class="btn primary" id="vAdd">＋ Add Visit</button>
+        </div>
+      </div>
+      <div class="fld"><label>What was done — optional</label>
+        <input id="vNote" placeholder="e.g. Final measurements taken, 3rd floor"></div>
+      <div style="border-top:1px solid var(--line);padding-top:12px">
+        <div class="sechead" style="margin:0 0 6px">Recorded visits</div>
+        <div id="vList" style="max-height:220px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="foot"><button class="btn" id="vClose">Close</button></div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlN">
+  <div class="modal cloudbox">
+    <h3>ASA Cloud</h3>
+    <div class="body">
+      <div id="nStatus"></div>
+      <div id="mtImport" style="display:none">
+        <div class="warnbox"><b>Admin — one-time import.</b> Copy your existing Material Tracker data into the ASA cloud.
+          Run it from a device that has the data. Running it twice is safe (same records are overwritten).</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn" onclick="runImport('device')">Import the old version’s data on this device</button>
+          <button class="btn" onclick="runImport('supabase')">Import from the old Supabase sync</button>
+        </div>
+        <div id="mtImpMsg" style="margin-top:8px;font-size:13px"></div>
+      </div>
+      <div style="display:none"><input id="nWho"><input id="nUrl"><input id="nKey"><div id="nSql"></div><button id="nCopy"></button></div>
+    </div>
+    <div class="foot">
+      <button class="btn danger" id="nOff" style="display:none">Disconnect</button>
+      <button class="btn" id="nCancel">Close</button>
+      <button class="btn primary" id="nSave" style="display:none">Connect</button>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlG">
+  <div class="modal gate">
+    <h3>Enter Edit Code</h3>
+    <div class="body">
+      <div class="lockicon">🔒</div>
+      <p>Editing contract details is protected.<br>Enter the 4-digit code to unlock.</p>
+      <input id="gCode" type="password" inputmode="numeric" maxlength="8" autocomplete="off">
+      <div id="gErr"></div>
+    </div>
+    <div class="foot">
+      <button class="btn" id="gCancel">Cancel</button>
+      <button class="btn primary" id="gOk">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="ovl" id="ovlA">
+  <div class="modal" style="max-width:420px">
+    <h3 id="aTitle">Confirm</h3>
+    <div class="body"><div id="aMsg"></div></div>
+    <div class="foot">
+      <button class="btn" id="aNo">Cancel</button>
+      <button class="btn danger" id="aYes">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   LOGO — the Al Sahlawi mark, carried over from rate-calculator.html
+   ============================================================ */
+const LOGO = "data:image/jpeg;base64,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";
+
+/* ============================================================
+   COMPANY CONSTANTS (same source of truth as the rate calculator)
+   ============================================================ */
+const BASELINE_RATE = 16.00;
+const VAT_PCT = 5;
+
+/* ------------------------------------------------------------
+   EDIT CODE — change the 4 digits below to change the passcode.
+   NOTE: this is a keep-honest-people-out guard, not real security.
+   The code sits in this file, so anyone who opens View Source can
+   read it. It stops accidental edits by staff, nothing stronger.
+   ------------------------------------------------------------ */
+// Editing is controlled by the admin in ASA Apps → Admin → Material Tracker (no code).
+const COMPANY = {
+  name: "Al Sahlawi Bldg. Metal Const. Ind. Factory LLC",
+  trn:  "100353933300003",
+  tel:  "+971-6-5386817",
+  mob1: "+971 56 4991262",
+  mob2: "+971 50 6263517",
+  email:"Info@sahlawialuminum.com",
+  web:  "www.sahlawialuminum.com",
+  address: "P.O. Box: 80079, Opp. Etisalat Office, Emirates Industrial City, Sajaa, Sharjah — U.A.E."
+};
+
+/* ============================================================
+   SEED CATALOG — imported from rate-calculator.html (15-01-2026)
+   weight = kg per METRE (sheets: kg per SHEET, length 1)
+   rate   = AED/kg at the 16.00 baseline; fixed:true = does not scale
+   ============================================================ */
+const SEED_CATALOG = [
+  // ============ SQUARE TUBES (T-) ============
+  {code:'T-15x15x2MM',     aef:'80267', nef:'91200', type:'Square Tube', size:'15 x 15 x 2 MM',     weight:0.281, length:6, rate:16.00},
+  {code:'T-20x20x1.5MM',   aef:'80212', nef:'',      type:'Square Tube', size:'20 x 20 x 1.5 MM',   weight:0.300, length:6, rate:16.00},
+  {code:'T-20x20x1.75MM',  aef:'80253', nef:'',      type:'Square Tube', size:'20 x 20 x 1.75 MM',  weight:0.345, length:6, rate:16.00},
+  {code:'T-20x20x2MM',     aef:'80202', nef:'90249', type:'Square Tube', size:'20 x 20 x 2 MM',     weight:0.389, length:6, rate:16.00},
+  {code:'T-25x25x2MM',     aef:'80203', nef:'90250', type:'Square Tube', size:'25 x 25 x 2 MM',     weight:0.500, length:6, rate:16.00},
+  {code:'T-25x25x3MM',     aef:'80238', nef:'',      type:'Square Tube', size:'25 x 25 x 3 MM',     weight:0.713, length:6, rate:16.00},
+  {code:'T-30x30x2MM',     aef:'80204', nef:'90216', type:'Square Tube', size:'30 x 30 x 2 MM',     weight:0.605, length:6, rate:16.00},
+  {code:'T-40x40x1.5MM',   aef:'80221', nef:'91218', type:'Square Tube', size:'40 x 40 x 1.5 MM',   weight:0.624, length:6, rate:16.00},
+  {code:'T-40x40x2MM',     aef:'80205', nef:'90226', type:'Square Tube', size:'40 x 40 x 2 MM',     weight:0.821, length:6, rate:16.00},
+  {code:'T-50x50x1.4MM',   aef:'80298', nef:'',      type:'Square Tube', size:'50 x 50 x 1.4 MM',   weight:0.735, length:6, rate:16.00},
+  {code:'T-50x50x1.5MM',   aef:'80283', nef:'90244', type:'Square Tube', size:'50 x 50 x 1.5 MM',   weight:0.786, length:6, rate:16.00},
+  {code:'T-50x50x1.8MM',   aef:'',      nef:'91224', type:'Square Tube', size:'50 x 50 x 1.8 MM',   weight:0.937, length:6, rate:16.00},
+  {code:'T-50x50x1.85MM',  aef:'80266', nef:'',      type:'Square Tube', size:'50 x 50 x 1.85 MM',  weight:0.962, length:6, rate:16.00},
+  {code:'T-50x50x2MM',     aef:'80222', nef:'90229', type:'Square Tube', size:'50 x 50 x 2 MM',     weight:1.037, length:6, rate:16.00},
+  {code:'T-50x50x2.7MM',   aef:'80236', nef:'91226', type:'Square Tube', size:'50 x 50 x 2.7 MM',   weight:1.379, length:6, rate:16.00},
+  {code:'T-60x60x2MM',     aef:'80233', nef:'91229', type:'Square Tube', size:'60 x 60 x 2 MM',     weight:1.252, length:6, rate:16.00},
+  {code:'T-60x60x3MM',     aef:'80224', nef:'91230', type:'Square Tube', size:'60 x 60 x 3 MM',     weight:1.847, length:6, rate:16.00},
+  {code:'T-75x75x2MM',     aef:'80268', nef:'91233', type:'Square Tube', size:'75 x 75 x 2 MM',     weight:1.577, length:6, rate:16.00},
+  {code:'T-80x80x2MM',     aef:'80246', nef:'',      type:'Square Tube', size:'80 x 80 x 2 MM',     weight:1.684, length:6, rate:16.00},
+  {code:'T-100x100x1.8MM', aef:'80299', nef:'',      type:'Square Tube', size:'100 x 100 x 1.8 MM', weight:1.909, length:6, rate:16.00},
+  {code:'T-100x100x2MM',   aef:'80216', nef:'90206', type:'Square Tube', size:'100 x 100 x 2 MM',   weight:2.117, length:6, rate:16.00},
+  {code:'T-100x100x2.5MM', aef:'80272', nef:'',      type:'Square Tube', size:'100 x 100 x 2.5 MM', weight:2.633, length:6, rate:16.00},
+  {code:'T-100x100x3MM',   aef:'80235', nef:'90200', type:'Square Tube', size:'100 x 100 x 3 MM',   weight:3.143, length:6, rate:16.00},
+  {code:'T-140x140x2.5MM', aef:'85201', nef:'',      type:'Square Tube', size:'140 x 140 x 2.5 MM', weight:3.713, length:6, rate:16.00},
+  {code:'T-150x150x2.5MM', aef:'85216', nef:'',      type:'Square Tube', size:'150 x 150 x 2.5 MM', weight:3.983, length:6, rate:16.00},
+  {code:'T-150x150x3MM',   aef:'80258', nef:'90260', type:'Square Tube', size:'150 x 150 x 3 MM',   weight:4.763, length:6, rate:16.00},
+
+  // ============ RECTANGULAR TUBES (T-) ============
+  {code:'T-20x10x1.5MM',   aef:'80381', nef:'91241', type:'Rectangular Tube', size:'20 x 10 x 1.5 MM',    weight:0.218, length:6, rate:16.00},
+  {code:'T-40x15x1.5MM',   aef:'80374', nef:'91247', type:'Rectangular Tube', size:'40 x 15 x 1.5 MM',    weight:0.421, length:6, rate:16.00},
+  {code:'T-40x20x1.5MM',   aef:'80326', nef:'90213', type:'Rectangular Tube', size:'40 x 20 x 1.5 MM',    weight:0.462, length:6, rate:16.00},
+  {code:'T-40x20x1.8MM',   aef:'80303', nef:'90233', type:'Rectangular Tube', size:'40 x 20 x 1.8 MM',    weight:0.550, length:6, rate:16.00},
+  {code:'T-50x20x1.8MM',   aef:'80409', nef:'91259', type:'Rectangular Tube', size:'50 x 20 x 1.8 MM',    weight:0.645, length:6, rate:16.00},
+  {code:'T-50x25x2MM',     aef:'80319', nef:'',      type:'Rectangular Tube', size:'50 x 25 x 2 MM',      weight:0.767, length:6, rate:16.00},
+  {code:'T-50x25x3MM',     aef:'80302', nef:'',      type:'Rectangular Tube', size:'50 x 25 x 3 MM',      weight:1.118, length:6, rate:16.00},
+  {code:'T-60x20x1.5MM',   aef:'80388', nef:'',      type:'Rectangular Tube', size:'60 x 20 x 1.5 MM',    weight:0.624, length:6, rate:16.00},
+  {code:'T-60x30x2MM',     aef:'80373', nef:'91273', type:'Rectangular Tube', size:'60 x 30 x 2 MM',      weight:0.929, length:6, rate:16.00},
+  {code:'T-60x30x3MM',     aef:'80333', nef:'91274', type:'Rectangular Tube', size:'60 x 30 x 3 MM',      weight:1.361, length:6, rate:16.00},
+  {code:'T-75x50x3MM',     aef:'80307', nef:'',      type:'Rectangular Tube', size:'75 x 50 x 3 MM',      weight:1.930, length:6, rate:16.00},
+  {code:'T-80x20x2MM',     aef:'80320', nef:'91289', type:'Rectangular Tube', size:'80 x 20 x 2 MM',      weight:1.037, length:6, rate:16.00},
+  {code:'T-80x40x2MM',     aef:'80390', nef:'90208', type:'Rectangular Tube', size:'80 x 40 x 2 MM',      weight:1.252, length:6, rate:16.00},
+  {code:'T-100x20x0.9MM',  aef:'80376', nef:'',      type:'Rectangular Tube', size:'100 x 20 x 0.9 MM',   weight:0.575, length:6, rate:16.00},
+  {code:'T-100x20x1.1MM',  aef:'80376', nef:'90230', type:'Rectangular Tube', size:'100 x 20 x 1.1 MM',   weight:0.700, length:6, rate:16.00},
+  {code:'T-100x20x1.6MM',  aef:'80312', nef:'93206', type:'Rectangular Tube', size:'100 x 20 x 1.6 MM',   weight:1.009, length:6, rate:16.00},
+  {code:'T-100x20x1.8MM',  aef:'80488', nef:'',      type:'Rectangular Tube', size:'100 x 20 x 1.8 MM',   weight:1.131, length:6, rate:16.00},
+  {code:'T-100x40x1.4MM',  aef:'80309', nef:'',      type:'Rectangular Tube', size:'100 x 40 x 1.4 MM',   weight:1.037, length:6, rate:16.00},
+  {code:'T-100x50x1.4MM',  aef:'80539', nef:'',      type:'Rectangular Tube', size:'100 x 50 x 1.4 MM',   weight:1.113, length:6, rate:16.00},
+  {code:'T-100x50x1.6MM',  aef:'80408', nef:'90202', type:'Rectangular Tube', size:'100 x 50 x 1.6 MM',   weight:1.269, length:6, rate:16.00},
+  {code:'T-100x50x1.85MM', aef:'80398', nef:'93217', type:'Rectangular Tube', size:'100 x 50 x 1.85 MM',  weight:1.462, length:6, rate:16.00},
+  {code:'T-100x50x2MM',    aef:'80316', nef:'90224', type:'Rectangular Tube', size:'100 x 50 x 2 MM',     weight:1.577, length:6, rate:16.00},
+  {code:'T-100x50x2.5MM',  aef:'80315', nef:'93219', type:'Rectangular Tube', size:'100 x 50 x 2.5 MM',   weight:1.960, length:6, rate:16.00},
+  {code:'T-100x50x3MM',    aef:'80336', nef:'90232', type:'Rectangular Tube', size:'100 x 50 x 3 MM',     weight:2.333, length:6, rate:16.00},
+  {code:'T-150x20x1.6MM',  aef:'80452', nef:'',      type:'Rectangular Tube', size:'150 x 20 x 1.6 MM',   weight:1.441, length:6, rate:16.00},
+  {code:'T-150x20x2MM',    aef:'80421', nef:'90207', type:'Rectangular Tube', size:'150 x 20 x 2 MM',     weight:1.793, length:6, rate:16.00},
+  {code:'T-150x50x2MM',    aef:'80342', nef:'93239', type:'Rectangular Tube', size:'150 x 50 x 2 MM',     weight:2.117, length:6, rate:16.00},
+  {code:'T-150x50x3MM',    aef:'80387', nef:'',      type:'Rectangular Tube', size:'150 x 50 x 3 MM',     weight:3.143, length:6, rate:16.00},
+  {code:'T-150x75x2.5MM',  aef:'80588', nef:'C-1717',type:'Rectangular Tube', size:'150 x 75 x 2.5 MM',   weight:2.970, length:6, rate:16.00},
+  {code:'T-150x100x2MM',   aef:'80526', nef:'',      type:'Rectangular Tube', size:'150 x 100 x 2 MM',    weight:2.657, length:6, rate:16.00},
+  {code:'T-150x100x3MM',   aef:'80389', nef:'',      type:'Rectangular Tube', size:'150 x 100 x 3 MM',    weight:3.953, length:6, rate:16.00},
+
+  // ============ ROUND TUBES (T-) ============
+  {code:'T-16x2MM',   aef:'80056', nef:'90341', type:'Round Tube', size:'16 x 2 MM',  weight:0.238, length:6, rate:16.00},
+  {code:'T-20x2MM',   aef:'80048', nef:'90345', type:'Round Tube', size:'20 x 2 MM',  weight:0.306, length:6, rate:16.00},
+  {code:'T-50x2MM',   aef:'80027', nef:'90303', type:'Round Tube', size:'50 x 2 MM',  weight:0.815, length:6, rate:16.00},
+  {code:'T-60x2MM',   aef:'80032', nef:'',      type:'Round Tube', size:'60 x 2 MM',  weight:0.984, length:6, rate:16.00},
+
+  // ============ ANGLES (A-) ============
+  {code:'A-50x20x1.9MM',   aef:'70692', nef:'90123', type:'Unequal Angle', size:'50 x 20 x 1.9 MM',   weight:0.349, length:6, rate:16.00},
+  {code:'A-75x50x2MM',     aef:'70757', nef:'',      type:'Unequal Angle', size:'75 x 50 x 2 MM',     weight:0.664, length:6, rate:16.00},
+  {code:'A-15x15x1.5MM',   aef:'70502', nef:'90131', type:'Equal Angle',   size:'15 x 15 x 1.5 MM',   weight:0.115, length:6, rate:16.00},
+  {code:'A-20x20x2MM',     aef:'70505', nef:'90121', type:'Equal Angle',   size:'20 x 20 x 2 MM',     weight:0.206, length:6, rate:16.00},
+  {code:'A-25x25x2MM',     aef:'70559', nef:'90118', type:'Equal Angle',   size:'25 x 25 x 2 MM',     weight:0.260, length:6, rate:16.00},
+  {code:'A-30x30x2MM',     aef:'70565', nef:'90102', type:'Equal Angle',   size:'30 x 30 x 2 MM',     weight:0.313, length:6, rate:16.00},
+  {code:'A-30x30x3MM',     aef:'70573', nef:'',      type:'Equal Angle',   size:'30 x 30 x 3 MM',     weight:0.462, length:6, rate:16.00},
+  {code:'A-40x40x2MM',     aef:'70526', nef:'90103', type:'Equal Angle',   size:'40 x 40 x 2 MM',     weight:0.421, length:6, rate:16.00},
+  {code:'A-40x40x4MM',     aef:'70543', nef:'90120', type:'Equal Angle',   size:'40 x 40 x 4 MM',     weight:0.821, length:6, rate:16.00},
+  {code:'A-50x50x3MM',     aef:'70549', nef:'90108', type:'Equal Angle',   size:'50 x 50 x 3 MM',     weight:0.786, length:6, rate:16.00},
+  {code:'A-50x50x5MM',     aef:'70551', nef:'90109', type:'Equal Angle',   size:'50 x 50 x 5 MM',     weight:1.283, length:6, rate:16.00},
+  {code:'A-100x100x4.8MM', aef:'70581', nef:'',      type:'Equal Angle',   size:'100 x 100 x 4.8 MM', weight:2.530, length:6, rate:16.00},
+
+  // ============ ROUND / SQUARE BAR ============
+  {code:'RB-16MM', aef:'70581', nef:'93504', type:'Round Bar', size:'16 MM', weight:0.543, length:6, rate:16.00},
+  {code:'RB-20MM', aef:'70581', nef:'93505', type:'Round Bar', size:'20 MM', weight:0.848, length:6, rate:16.00},
+  {code:'SB-9.5x9.5MM', aef:'70229', nef:'',      type:'Square Bar', size:'9.5 x 9.5 MM', weight:0.244, length:6, rate:16.00},
+  {code:'SB-16x16MM',   aef:'70581', nef:'90510', type:'Square Bar', size:'16 x 16 MM',   weight:0.691, length:6, rate:16.00},
+  {code:'SB-18x15MM',   aef:'70163', nef:'',      type:'Square Bar', size:'18 x 15 MM',   weight:0.729, length:6, rate:16.00},
+  {code:'SB-20x20MM',   aef:'70163', nef:'90511', type:'Square Bar', size:'20 x 20 MM',   weight:1.080, length:6, rate:16.00},
+
+  // ============ FLAT BAR (FB-) ============
+  {code:'FB-20x2MM',   aef:'70007', nef:'90783', type:'Flat Bar', size:'20 x 2 MM',   weight:0.110, length:6, rate:16.00},
+  {code:'FB-30x5MM',   aef:'70028', nef:'90721', type:'Flat Bar', size:'30 x 5 MM',   weight:0.405, length:6, rate:16.00},
+  {code:'FB-40x4MM',   aef:'70064', nef:'90732', type:'Flat Bar', size:'40 x 4 MM',   weight:0.432, length:6, rate:16.00},
+  {code:'FB-40x6MM',   aef:'70001', nef:'90734', type:'Flat Bar', size:'40 x 6 MM',   weight:0.648, length:6, rate:16.00},
+  {code:'FB-50x3MM',   aef:'70042', nef:'',      type:'Flat Bar', size:'50 x 3 MM',   weight:0.405, length:6, rate:16.00},
+  {code:'FB-50x5MM',   aef:'70043', nef:'90741', type:'Flat Bar', size:'50 x 5 MM',   weight:0.675, length:6, rate:16.00},
+  {code:'FB-50x8MM',   aef:'70075', nef:'',      type:'Flat Bar', size:'50 x 8 MM',   weight:1.080, length:6, rate:16.00},
+  {code:'FB-50x10MM',  aef:'70045', nef:'90501#',type:'Flat Bar', size:'50 x 10 MM',  weight:1.350, length:6, rate:16.00},
+  {code:'FB-75x10MM',  aef:'70048', nef:'90761', type:'Flat Bar', size:'75 x 10 MM',  weight:2.025, length:6, rate:16.00},
+  {code:'FB-100x5MM',  aef:'70128', nef:'',      type:'Flat Bar', size:'100 x 5 MM',  weight:1.350, length:6, rate:16.00},
+  {code:'FB-120x8MM',  aef:'70077', nef:'90770', type:'Flat Bar', size:'120 x 8 MM',  weight:2.592, length:6, rate:16.00},
+
+  // ============ HANDRAIL / MAIN POST / U-CHANNEL ============
+  {code:'HR-65x40MM',           aef:'81423', nef:'',      type:'Handrail',      size:'65 x 40 MM',           weight:0.832, length:6, rate:16.00},
+  {code:'HR-46.8x16.5x1.5MM-CLIP', aef:'71124', nef:'', type:'Handrail Clip', size:'46.8 x 16.50 x 1.5 MM', weight:0.330, length:6, rate:16.00},
+  {code:'MP-80x80MM',           aef:'81427', nef:'',      type:'Main Post',     size:'80 x 80 MM', weight:1.541, length:6, rate:16.00},
+  {code:'MP-80x80MM-N',         aef:'84794', nef:'',      type:'Main Post New', size:'80 x 80 MM', weight:1.461, length:6, rate:16.00, notes:'New design'},
+  {code:'UC-50x48x3MM',         aef:'70826', nef:'',      type:'U-Channel',     size:'50 x 48 x 3 MM', weight:1.134, length:6, rate:16.00},
+
+  // ============ SPECIAL TUBES (SP-) ============
+  {code:'SP-70x50x1.8MM',  aef:'86065', nef:'90574', type:'Special Tube',   size:'70 x 50 x 1.8 MM',  weight:1.131, length:6, rate:16.00},
+  {code:'SP-70x50x2.4MM',  aef:'81108', nef:'90551', type:'Special Tube',   size:'70 x 50 x 2.4 MM',  weight:1.493, length:6, rate:16.00},
+  {code:'SP-100x50x2MM-L', aef:'87329', nef:'',      type:'Special Tube L', size:'100 x 50 x 2 MM',   weight:1.577, length:6, rate:16.00, notes:'L variant'},
+  {code:'SP-120x50x2MM',   aef:'84795', nef:'90553', type:'Special Tube',   size:'120 x 50 x 2 MM',   weight:1.793, length:6, rate:16.00},
+  {code:'SP-120x50x2.4MM', aef:'81865', nef:'90552', type:'Special Tube',   size:'120 x 50 x 2.4 MM', weight:2.141, length:6, rate:16.00},
+  {code:'SP-90x50MM-T',    aef:'81912', nef:'90556', type:'Special T Tube', size:'90 x 50 MM',        weight:1.469, length:6, rate:16.00},
+
+  // ============ KICK PLATE (KP-) ============
+  {code:'KP-100x11MM',     aef:'82000', nef:'',      type:'Kick Plate',        size:'100 x 11 MM',       weight:0.579, length:6, rate:16.00},
+  {code:'KP-107x11MM',     aef:'',      nef:'60302', type:'Kick Plate',        size:'107 x 11 MM',       weight:0.560, length:6, rate:16.00},
+  {code:'KP-150x15x1.4MM', aef:'87882', nef:'',      type:'Kick Plate',        size:'150 x 15 x 1.4 MM', weight:1.263, length:6, rate:16.00},
+  {code:'KP-200x18MM-SPC', aef:'84355', nef:'',      type:'Kick Plate Special',size:'200 x 18 MM',       weight:2.009, length:6, rate:16.00},
+
+  // ============ SOFT VARIANTS ============
+  {code:'T-50x50x2.7MM-S', aef:'80236', nef:'91226', type:'Square Tube (Soft)',     size:'50 x 50 x 2.7 MM', weight:1.379, length:6, rate:16.00, notes:'Soft alloy'},
+  {code:'T-20x20x3MM-S',   aef:'80248', nef:'91207', type:'Square Tube (Soft)',     size:'20 x 20 x 3 MM',   weight:0.551, length:6, rate:16.00, notes:'Soft alloy'},
+  {code:'T-40x20x2.8MM-S', aef:'80399', nef:'91250', type:'Rectangular Tube (Soft)',size:'40 x 20 x 2.8 MM', weight:0.823, length:6, rate:16.00, notes:'Soft alloy'},
+  {code:'T-100x50x3MM-S',  aef:'80336', nef:'90232', type:'Rectangular Tube (Soft)',size:'100 x 50 x 3 MM',  weight:2.333, length:6, rate:16.00, notes:'Soft alloy'},
+
+  // ============ SPECIAL SECTIONS (length / rate variants) ============
+  {code:'T-30x2MM-55M',   aef:'80033', nef:'90357', type:'Round Tube',   size:'30 x 2 MM',  weight:0.476, length:5.5, rate:16.00, notes:'550 cm length'},
+  {code:'T-120x2.8MM',    aef:'80153', nef:'',      type:'Round Tube',   size:'120 x 2.8 MM', weight:2.784, length:6, rate:16.00},
+  {code:'T-120x5MM',      aef:'80094', nef:'90387', type:'Round Tube',   size:'120 x 5 MM',   weight:4.880, length:6, rate:16.00},
+  {code:'T-120x10MM-3M',  aef:'80153', nef:'',      type:'Round Tube',   size:'120 x 10 MM',  weight:9.331, length:3, rate:16.00, notes:'3 Mtr length'},
+  {code:'SP-65x48x1.8MM-HR', aef:'',   nef:'6605',  type:'Special Handrail', size:'65 x 48 x 1.8 MM', weight:1.028, length:6, rate:16.75},
+  {code:'T-150x150x2.5MM-7M', aef:'85216', nef:'', type:'Square Tube', size:'150 x 150 x 2.5 MM', weight:3.983, length:7, rate:16.00, notes:'7 Mtr length'},
+  {code:'T-150x150x3MM-7M',   aef:'80258', nef:'90260', type:'Square Tube', size:'150 x 150 x 3 MM', weight:4.763, length:7, rate:16.00, notes:'7 Mtr length'},
+  {code:'T-180x180x3MM',  aef:'80281', nef:'',      type:'Square Tube', size:'180 x 180 x 3 MM', weight:5.735, length:6, rate:17.00},
+  {code:'T-200x20x2MM',   aef:'80570', nef:'',      type:'Rectangular Tube', size:'200 x 20 x 2 MM',  weight:2.333, length:6, rate:17.00},
+  {code:'T-200x50x1.8MM', aef:'80563', nef:'',      type:'Rectangular Tube', size:'200 x 50 x 1.8 MM', weight:2.395, length:6, rate:17.00},
+  {code:'T-200x200x3MM',  aef:'85202', nef:'',      type:'Square Tube', size:'200 x 200 x 3 MM', weight:6.383, length:6, rate:17.00},
+  {code:'T-200x100x2.5MM',aef:'80557', nef:'',      type:'Rectangular Tube', size:'200 x 100 x 2.5 MM', weight:3.983, length:6, rate:17.00},
+  {code:'T-200x150x3MM',  aef:'80532', nef:'',      type:'Rectangular Tube', size:'200 x 150 x 3 MM', weight:5.573, length:6, rate:17.00},
+
+  // Kick Plate length variants
+  {code:'KP-100x11MM-5M',  aef:'82000', nef:'',      type:'Kick Plate', size:'100 x 11 MM', weight:0.579, length:5,   rate:16.00, notes:'5 Mtr length'},
+  {code:'KP-100x11MM-66M', aef:'82000', nef:'',      type:'Kick Plate', size:'100 x 11 MM', weight:0.579, length:6.6, rate:16.00, notes:'6.6 Mtr length'},
+  {code:'KP-100x13.5MM-GR',aef:'84371', nef:'',      type:'Kick Plate (Groove)', size:'100 x 13.50 MM', weight:0.543, length:6, rate:16.25, notes:'Groove'},
+  {code:'KP-200x18MM-SPC-66M', aef:'84355', nef:'', type:'Kick Plate Special', size:'200 x 18 MM', weight:2.009, length:6.6, rate:16.00, notes:'6.6 Mtr length'},
+
+  // Rectangular Tube length variants
+  {code:'T-100x20x1.1MM-5M',  aef:'80376', nef:'90230', type:'Rectangular Tube', size:'100 x 20 x 1.1 MM', weight:0.700, length:5,   rate:16.00, notes:'5 Mtr length'},
+  {code:'T-100x20x1.1MM-66M', aef:'80376', nef:'90230', type:'Rectangular Tube', size:'100 x 20 x 1.1 MM', weight:0.700, length:6.6, rate:16.00, notes:'6.6 Mtr length'},
+  {code:'T-100x20x1.6MM-5M',  aef:'80312', nef:'93206', type:'Rectangular Tube', size:'100 x 20 x 1.6 MM', weight:1.009, length:5,   rate:16.00, notes:'5 Mtr length'},
+  {code:'T-100x20x1.6MM-66M', aef:'80312', nef:'93206', type:'Rectangular Tube', size:'100 x 20 x 1.6 MM', weight:1.009, length:6.6, rate:16.00, notes:'6.6 Mtr length'},
+
+  // Special Plate Groove / Special Tubes (specialty rates)
+  {code:'SP-200MM-PG',     aef:'88338', nef:'',      type:'Special Plate Groove', size:'200 MM (30x15x2)', weight:1.874, length:6, rate:16.75},
+  {code:'SP-200MM-PG-5M',  aef:'88338', nef:'',      type:'Special Plate Groove', size:'200 MM (30x15x2)', weight:1.874, length:5, rate:16.75, notes:'5 Mtr length'},
+  {code:'SP-80MM',         aef:'89373', nef:'',      type:'Special Tube', size:'80 MM',  weight:1.147, length:6, rate:16.75},
+  {code:'SP-80MM-5M',      aef:'89373', nef:'',      type:'Special Tube', size:'80 MM',  weight:1.147, length:5, rate:16.75, notes:'5 Mtr length'},
+  {code:'SP-40MM',         aef:'89374', nef:'',      type:'Special Tube', size:'40 MM',  weight:0.780, length:6, rate:16.75},
+  {code:'SP-40MM-5M',      aef:'89374', nef:'',      type:'Special Tube', size:'40 MM',  weight:0.780, length:5, rate:16.75, notes:'5 Mtr length'},
+  {code:'SP-150MM',        aef:'88610', nef:'',      type:'Special Tube', size:'150 MM', weight:1.876, length:6, rate:16.75},
+  {code:'SP-150MM-5M',     aef:'88610', nef:'',      type:'Special Tube', size:'150 MM', weight:1.876, length:5, rate:16.75, notes:'5 Mtr length'},
+
+  // Special Tube (Overlap)
+  {code:'SP-100x50+20MM-OV',  aef:'84701', nef:'90576', type:'Special Tube (Overlap)', size:'100 x 50 + 20 MM',         weight:1.827, length:6, rate:16.00},
+  {code:'SP-100x50+30MM-2.5', aef:'84429', nef:'90577', type:'Special Tube (Overlap)', size:'100 x 50 + 30 MM (2.5)',   weight:2.120, length:6, rate:16.00},
+  {code:'SP-100x50+30MM-1.9', aef:'87870', nef:'',      type:'Special Tube (Overlap)', size:'100 x 50 + 30 MM (1.9)',   weight:1.654, length:6, rate:16.00},
+  {code:'SP-100x50+27MM-OV',  aef:'86436', nef:'',      type:'Special Tube (Overlap)', size:'100 x 50 Overlap 27 MM',   weight:1.793, length:6, rate:16.00},
+
+  // ============ MISC PROFILES ============
+  {code:'BC-26x26MM',         aef:'71512', nef:'',      type:'Burclose', size:'26 x 26 MM', weight:0.300, length:6, rate:16.00},
+  {code:'SP-50x50+20MM-LIP',  aef:'87328', nef:'90123', type:'Square Tube Lip', size:'50 x 50 + 20 MM', weight:1.090, length:6, rate:16.00},
+  {code:'A-50x20MM-GR1',      aef:'73390', nef:'',      type:'Special Angle',   size:'50 x 20 With Groove', weight:0.383, length:6, rate:16.25, notes:'Groove variant 1'},
+  {code:'A-50x20MM-GR2',      aef:'76539', nef:'',      type:'Special Angle',   size:'50 x 20 With Groove', weight:0.334, length:6, rate:16.25, notes:'Groove variant 2'},
+  {code:'A-50x20x1.9MM-BM',   aef:'70692', nef:'90123', type:'Unequal Angle', size:'50 x 20 x 1.9 MM', weight:0.349, length:6, rate:17.00, notes:'BM grade'},
+  {code:'A-15x15x1.5MM-BM',   aef:'70502', nef:'90131', type:'Equal Angle',   size:'15 x 15 x 1.5 MM', weight:0.115, length:6, rate:17.00, notes:'BM grade'},
+  {code:'OL-100x25x1.5MM-S',  aef:'81435', nef:'',      type:'Oval Louver Small', size:'100 x 25 x 1.5 MM', weight:0.952, length:6, rate:16.00},
+  {code:'OL-150x30x1.5MM-B',  aef:'81434', nef:'',      type:'Oval Louver Big',   size:'150 x 30 x 1.5 MM', weight:1.372, length:6, rate:16.00},
+  {code:'FL-77.6x27.9MM',     aef:'74242', nef:'',      type:'Flat Louver', size:'77.6 x 27.90 MM', weight:0.321, length:6, rate:16.00},
+  {code:'FL-77.6x27.9MM-9010',aef:'74242', nef:'',      type:'Flat Louver', size:'77.6 x 27.90 MM', weight:0.321, length:6, rate:17.00, notes:'Color 9010'},
+  {code:'HRS-18x15MM',        aef:'76540', nef:'',      type:'Half Round Solid', size:'18 x 15 MM', weight:0.635, length:6, rate:17.00},
+
+  // ============ SCREW TUBE SYSTEM ============
+  {code:'UCV-44.6x7.8x1.5MM', aef:'71391', nef:'',      type:'U-Cover', size:'44.60 x 7.8 x 1.5 MM',  weight:0.251, length:6, rate:17.00},
+  {code:'UB-47x16.4x1.2MM',   aef:'71395', nef:'',      type:'U-Base',  size:'47 x 16.40 x 1.2 MM',   weight:0.284, length:6, rate:17.00},
+  {code:'UCV-45.6x8.5x3MM',   aef:'74615', nef:'',      type:'U-Cover', size:'45.60 x 8.5 x 3 MM',    weight:0.414, length:6, rate:17.00},
+  {code:'UB-50x50x2MM',       aef:'74614', nef:'',      type:'U-Base',  size:'50 x 50 x 2 MM',        weight:0.826, length:6, rate:17.00},
+  {code:'UCV-77.6x7.7MM',     aef:'74088', nef:'',      type:'U-Cover', size:'77.60 x 7.7 MM',        weight:0.396, length:6, rate:17.00},
+  {code:'UB-80x20x1.8MM',     aef:'74089', nef:'',      type:'U-Base',  size:'80 x 20 x 1.8 MM',      weight:0.580, length:6, rate:17.00},
+  {code:'TWS-50x50x2MM',      aef:'82557', nef:'',      type:'Tube With Screw', size:'50 x 50 x 2 MM',        weight:1.119, length:6, rate:17.00},
+  {code:'TWS-40x19x1.05MM',   aef:'81074', nef:'',      type:'Tube With Screw', size:'40 x 19 x 1.05 MM',     weight:0.385, length:6, rate:17.00, notes:'with screw'},
+  {code:'TWS-40x20x1.4MM',    aef:'87479', nef:'',      type:'Tube With Screw', size:'40 x 20 x 1.4 MM',      weight:0.515, length:6, rate:17.00, notes:'with screw'},
+  {code:'TWS-80x20x1.8MM',    aef:'86762', nef:'',      type:'Tube With Screw', size:'80 x 20 x 1.8 MM',      weight:1.014, length:6, rate:17.00},
+
+  // ============ SLIDING GLASS SECTION (SG-) ============
+  {code:'SG-100-SHB', aef:'81317', nef:'', type:'Shutter Bottom',    size:'100 MM', weight:0.786, length:6,   rate:17.00},
+  {code:'SG-100-SHT', aef:'71390', nef:'', type:'Shutter Top',       size:'100 MM', weight:0.621, length:6,   rate:17.00},
+  {code:'SG-100-INT', aef:'81319', nef:'', type:'Sliding Interlock', size:'100 MM', weight:0.748, length:6,   rate:17.00},
+  {code:'SG-100-LCK', aef:'81318', nef:'', type:'Shutter Lock Side', size:'100 MM', weight:0.737, length:6,   rate:17.00},
+  {code:'SG-3L',      aef:'82476', nef:'', type:'Sliding Glass 3 Lines', size:'3 Lines', weight:2.247, length:6.6, rate:18.50},
+  {code:'SG-4L',      aef:'82477', nef:'', type:'Sliding Glass 4 Lines', size:'4 Lines', weight:2.820, length:6.6, rate:18.50},
+
+  // ============ ALUMINUM SHEETS (SH-) — each with its own fixed kg/sheet weight and AED/kg rate ============
+  // fixed:true means the rate does NOT scale with the user's standard aluminum rate input
+  {code:'SH-1.5x3x2.8-272',     type:'Aluminum Sheet', size:'1.5 M x 3 M x 2.8 MM',     weight:34.27, length:1, rate:25.53, fixed:true},
+  {code:'SH-1.22x2.44x2.8-272', type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 2.8 MM', weight:22.67, length:1, rate:25.36, fixed:true},
+  {code:'SH-1.22x2.44x2.5',     type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 2.5 MM', weight:20.24, length:1, rate:25.44, fixed:true},
+  {code:'SH-1.22x2.44x2.8',     type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 2.8 MM', weight:22.92, length:1, rate:25.09, fixed:true},
+  {code:'SH-1.22x2.44x5',       type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 5 MM',   weight:40.93, length:1, rate:19.59, fixed:true},
+  {code:'SH-1.22x2.44x1.4',     type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 1.4 MM', weight:11.46, length:1, rate:21.64, fixed:true},
+  {code:'SH-1.5x3x3.8-A',       type:'Aluminum Sheet', size:'1.5 M x 3 M x 3.8 MM',     weight:47.03, length:1, rate:22.33, fixed:true, notes:'Grade A'},
+  {code:'SH-1.22x3x2.8',        type:'Aluminum Sheet', size:'1.22 M x 3 M x 2.8 MM',    weight:28.18, length:1, rate:13.31, fixed:true},
+  {code:'SH-1.5x3x2.8',         type:'Aluminum Sheet', size:'1.5 M x 3 M x 2.8 MM',     weight:34.65, length:1, rate:18.76, fixed:true},
+  {code:'SH-1.22x2.44x5.8',     type:'Aluminum Sheet', size:'1.22 M x 2.44 M x 5.8 MM', weight:47.48, length:1, rate:25.80, fixed:true},
+  {code:'SH-1.5x3x3.8-B',       type:'Aluminum Sheet', size:'1.5 M x 3 M x 3.8 MM',     weight:47.03, length:1, rate:25.52, fixed:true, notes:'Grade B'},
+
+  // ============ ALUMINUM CASTING (AC) — sold by KG, fixed per-kg rate (not connected to standard rate) ============
+  // Quantity = kilograms (weight/length stay at 1 so price = rate × qty)
+  {code:'AC', type:'Aluminum Casting', size:'Per Kg', weight:1, length:1, rate:16.00, fixed:true, notes:'Quantity = kilograms'},
+];
+
+/* ============================================================
+   INDEXEDDB
+   localStorage caps at roughly 5 MB — only a few thousand contracts.
+   IndexedDB carries hundreds of MB, so 50,000+ contracts fit easily.
+   Only contract HEADERS live in memory; material lines are read per
+   contract, so memory stays flat however large the archive grows.
+   ============================================================ */
+const DB_NAME = 'asa_material_tracker';   // the old version's database is read only by the admin import
+const DB_VER  = 3;
+let db = null;
+
+function idb(req){
+  return new Promise((res, rej) => {
+    req.onsuccess = () => res(req.result);
+    req.onerror   = () => rej(req.error);
+  });
+}
+function txDone(t){
+  return new Promise((res, rej) => {
+    t.oncomplete = () => res();
+    t.onerror    = () => rej(t.error);
+    t.onabort    = () => rej(t.error);
+  });
+}
+function store(name, mode = 'readonly'){ return db.transaction(name, mode).objectStore(name); }
+
+function openDB(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('contracts')){
+        const s = d.createObjectStore('contracts', { keyPath: 'id' });
+        s.createIndex('by_no', 'no', { unique: false });
+        s.createIndex('by_date', 'date', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('used')){
+        const s = d.createObjectStore('used', { keyPath: 'id' });
+        s.createIndex('by_contract', 'contractId', { unique: false });
+      }
+      if (!d.objectStoreNames.contains('meta')) d.createObjectStore('meta', { keyPath: 'k' });
+      // outbox: writes made while offline, replayed when the connection returns
+      if (!d.objectStoreNames.contains('outbox')) d.createObjectStore('outbox', { keyPath: 'oid', autoIncrement: true });
+      // materials added by hand, on top of the 181 in the catalogue
+      if (!d.objectStoreNames.contains('custom')) d.createObjectStore('custom', { keyPath: 'id' });
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror   = () => rej(r.error);
+  });
+}
+
+/* write many records in chunked transactions — fast for bulk restore */
+async function putMany(name, rows){
+  if (!rows.length) return;
+  const CHUNK = 2000;
+  for (let i = 0; i < rows.length; i += CHUNK){
+    const t = db.transaction(name, 'readwrite');
+    const s = t.objectStore(name);
+    const end = Math.min(i + CHUNK, rows.length);
+    for (let j = i; j < end; j++) s.put(rows[j]);
+    await txDone(t);
+  }
+}
+async function clearStore(name){
+  const t = db.transaction(name, 'readwrite');
+  t.objectStore(name).clear();
+  await txDone(t);
+}
+
+/* ============================================================
+   LIVE SYNC (Supabase)
+   ------------------------------------------------------------
+   Written straight against the REST + Realtime endpoints with
+   fetch and WebSocket — no SDK, no CDN, nothing external loaded.
+   With no URL/key configured the tracker runs exactly as before,
+   entirely on this device.
+
+   Model: IndexedDB is the local copy and the offline buffer.
+   Supabase is the shared source of truth. Every write goes out
+   immediately; Realtime pushes it to every other open page.
+   ============================================================ */
+const SQL_SETUP = `-- Run once in the Supabase SQL Editor.
+
+create table if not exists contracts (
+  id          text primary key,
+  no          text not null,
+  client      text,
+  project     text,
+  date        text,
+  notes       text,
+  tot_pcs     numeric default 0,
+  tot_kg      numeric default 0,
+  tot_amt     numeric default 0,
+  mat_count   int     default 0,
+  line_count  int     default 0,
+  visits      jsonb   default '[]'::jsonb,
+  updated_at  timestamptz default now()
+);
+alter table contracts add column if not exists visits jsonb default '[]'::jsonb;
+create unique index if not exists contracts_no_key on contracts (lower(no));
+create index if not exists contracts_date_idx on contracts (date desc);
+
+create table if not exists used (
+  id          text primary key,
+  contract_id text references contracts(id) on delete cascade,
+  date        text,
+  code text, type text, size text, aef text, nef text,
+  kgm numeric, pcs numeric, len numeric, rate numeric, kg numeric, amt numeric,
+  unit        text default 'kg',
+  who         text,
+  created_at  timestamptz default now()
+);
+create index if not exists used_contract_idx on used (contract_id);
+alter table used add column if not exists unit text default 'kg';
+
+-- Materials you add yourself, shared with every device
+create table if not exists custom_items (
+  id     text primary key,
+  code   text not null,
+  type   text,
+  size   text,
+  weight numeric default 0,
+  length numeric default 1,
+  rate   numeric default 0,
+  unit   text default 'kg',
+  notes  text,
+  created_at timestamptz default now()
+);
+
+-- Broadcast row changes to every connected page
+alter publication supabase_realtime add table contracts;
+alter publication supabase_realtime add table used;
+alter publication supabase_realtime add table custom_items;
+
+-- Open access for the shared anon key (internal tool).
+-- Swap these for auth-based policies if you add logins.
+alter table contracts     enable row level security;
+alter table used          enable row level security;
+alter table custom_items  enable row level security;
+drop policy if exists p_contracts on contracts;
+drop policy if exists p_used on used;
+drop policy if exists p_custom on custom_items;
+create policy p_contracts on contracts    for all using (true) with check (true);
+create policy p_used      on used         for all using (true) with check (true);
+create policy p_custom    on custom_items for all using (true) with check (true);`;
+
+/* ============================================================
+   ASA CLOUD SYNC — replaces the old Supabase sync.
+   Data lives in the ASA cloud under apps/material-tracker/
+     contracts/{id} · used/{id} · custom_items/{id}   (same row shapes as before)
+     access/{auto}  — every time someone opens the tracker (admin reads)
+     activity/{auto} — who added / changed / deleted what (admin reads)
+   Only people the admin ticks (mtUse) can read or write; only editors
+   (mtEdit) can change contract details. The cloud enforces both.
+   ============================================================ */
+const MT_APP = 'material-tracker';
+let cloud = { who: '' };                 // `who` = the logged-in person's name
+let netState = 'local';                  // local | connecting | live | offline | error
+let outboxBusy = false;
+let selfIds = new Set();                 // ids this page wrote, so echoes are ignored
+let freshIds = new Set();                // ids that just arrived from someone else
+let MT = { cloud: false, canEdit: false, admin: false };
+let watchers = [];
+const lastC = new Map();                 // last known cloud row per contract (for the activity log)
+const lastU = new Map();                 // last known material line rows (for delete descriptions)
+
+const cloudOn = () => MT.cloud;
+function loadCloud(){}                   // kept for the original start-up code
+function saveCloud(){}
+
+/* ---------- row shape: app <-> database ---------- */
+function cToRow(c){
+  return { id:c.id, no:c.no, client:c.client||'', project:c.project||'', date:c.date||null,
+           notes:c.notes||'', tot_pcs:c.totPcs||0, tot_kg:c.totKg||0, tot_amt:c.totAmt||0,
+           mat_count:c.matCount||0, line_count:c.lineCount||0, visits:c.visits||[],
+           contract_value:c.value||0,
+           updated_at:new Date().toISOString() };
+}
+function rowToC(r){
+  return { id:r.id, no:r.no, client:r.client||'', project:r.project||'', date:r.date||'',
+           notes:r.notes||'', totPcs:+r.tot_pcs||0, totKg:+r.tot_kg||0, totAmt:+r.tot_amt||0,
+           matCount:+r.mat_count||0, lineCount:+r.line_count||0,
+           value:+r.contract_value||0,
+           visits: Array.isArray(r.visits) ? r.visits : [],
+           savedAt: Date.parse(r.updated_at)||Date.now() };
+}
+function uToRow(u){
+  return { id:u.id, contract_id:u.contractId, date:u.date||null, code:u.code, type:u.type, size:u.size,
+           aef:u.aef||'', nef:u.nef||'', kgm:u.kgm, pcs:u.pcs, len:u.len, rate:u.rate, kg:u.kg, amt:u.amt,
+           unit: u.unit || 'kg', who: u.who || cloud.who || '' };
+}
+function rowToU(r){
+  return { id:r.id, contractId:r.contract_id, date:r.date||'', code:r.code, type:r.type, size:r.size,
+           aef:r.aef||'', nef:r.nef||'', kgm:+r.kgm, pcs:+r.pcs, len:+r.len, rate:+r.rate,
+           kg:+r.kg, amt:+r.amt, unit: r.unit || 'kg', who:r.who||'' };
+}
+function xToRow(x){
+  return { id:x.id, code:x.code, type:x.type||'Custom', size:x.size||'', weight:x.weight||0,
+           length:x.length||1, rate:x.rate||0, unit:x.unit||'kg', notes:x.notes||'' };
+}
+function rowToX(r){
+  return { id:r.id, code:r.code, type:r.type||'Custom', size:r.size||'', weight:+r.weight||0,
+           length:+r.length||1, rate:+r.rate||0, unit:r.unit||'kg', notes:r.notes||'',
+           fixed:true, custom:true };
+}
+
+/* ---------- activity log: who changed what ---------- */
+function cDesc(r){ return `${r.no || 'contract'}${r.client ? ' (' + r.client + ')' : ''}`; }
+function contractNo(id){ const c = cById.get(id) || lastC.get(id); return c ? (c.no || 'a contract') : 'a contract'; }
+function describe(op, table, row, id){
+  if (table === 'used'){
+    const u = row || lastU.get(id);
+    if (!u) return op === 'delete' ? 'Deleted a material line' : null;
+    const what = `${u.code} — ${int(u.pcs)} pcs / ${n(u.kg, 3)} kg`;
+    if (op === 'delete') return `Deleted ${what} from ${contractNo(u.contract_id)}`;
+    return (lastU.has(u.id) ? 'Changed ' : 'Added ') + `${what} on ${contractNo(u.contract_id)}`;
+  }
+  if (table === 'contracts'){
+    if (op === 'delete'){ const c = lastC.get(id) || cById.get(id); return `Deleted contract ${c ? cDesc(c) : ''}`; }
+    const before = lastC.get(row.id);
+    if (!before) return `Created contract ${cDesc(row)}`;
+    const keys = ['no', 'client', 'project', 'date', 'notes', 'contract_value'];
+    const changed = keys.filter(k => String(before[k] ?? '') !== String(row[k] ?? ''));
+    if (changed.length) return `Edited contract ${cDesc(row)} (${changed.map(k => k === 'contract_value' ? 'value' : k).join(', ')})`;
+    if (JSON.stringify(before.visits || []) !== JSON.stringify(row.visits || [])) return `Updated site visits on ${cDesc(row)}`;
+    return null;                         // totals only — not worth a log line
+  }
+  if (table === 'custom_items'){
+    if (op === 'delete') return 'Deleted a custom material';
+    return `Saved custom material ${row.code}${row.size ? ' ' + row.size : ''}`;
+  }
+  return null;
+}
+function remember(table, row){
+  if (table === 'contracts') lastC.set(row.id, row);
+  if (table === 'used') lastU.set(row.id, row);
+}
+async function logActivity(text, table, id){
+  if (!text || !MT.cloud) return;
+  const entry = { text, table, ref: id || '' };
+  try { await ASACloud.add(MT_APP, 'activity', entry); }
+  catch (e) { await queue({ op: 'activity', entry }); }
+}
+
+/* ---------- outbox: survives being offline ---------- */
+async function queue(op){
+  const t = db.transaction('outbox', 'readwrite');
+  t.objectStore('outbox').put({ ...op, ts: Date.now() });
+  await txDone(t);
+}
+async function outboxCount(){ return idb(store('outbox').count()); }
+
+async function cloudWrite(table, row){
+  await ASACloud.put(MT_APP, table, row.id, { ...row, ts: Date.now() });
+}
+async function cloudDelete(table, id){
+  if (table === 'contracts'){
+    // The old database removed a contract's lines automatically; here we do it ourselves.
+    const rows = await ASACloud.where(MT_APP, 'used', 'contract_id', '==', id);
+    if (rows.length) await ASACloud.removeMany(MT_APP, 'used', rows.map(r => r.id));
+  }
+  await ASACloud.remove(MT_APP, table, id);
+}
+
+async function flushOutbox(){
+  if (!cloudOn() || outboxBusy) return;
+  outboxBusy = true;
+  try{
+    const jobs = await idb(store('outbox').getAll());
+    for (const j of jobs){
+      try{
+        if (j.op === 'upsert') await cloudWrite(j.table, j.row);
+        else if (j.op === 'delete') await cloudDelete(j.table, j.id);
+        else if (j.op === 'activity') await ASACloud.add(MT_APP, 'activity', j.entry);
+        const t = db.transaction('outbox', 'readwrite');
+        t.objectStore('outbox').delete(j.oid);
+        await txDone(t);
+      }catch(err){
+        if (String(err && err.code).includes('permission-denied')){
+          // The cloud refused this change (e.g. not allowed to edit) — drop it rather than retry forever.
+          const t = db.transaction('outbox', 'readwrite'); t.objectStore('outbox').delete(j.oid); await txDone(t);
+          toast('A change was refused by the cloud: ' + ASACloud.friendly(err));
+          continue;
+        }
+        setNet('offline');
+        outboxBusy = false;
+        return;
+      }
+    }
+    if (netState === 'offline') setNet('live');
+  }finally{ outboxBusy = false; refreshDbInfo(); }
+}
+
+/* every write goes through here: try now, queue on failure */
+async function push(table, row){
+  if (!cloudOn()) return;
+  selfIds.add(row.id);
+  const text = describe('upsert', table, row);
+  remember(table, row);
+  try{
+    await cloudWrite(table, row);
+    logActivity(text, table, row.id);
+    if (netState === 'offline') { setNet('live'); flushOutbox(); }
+  }catch(err){
+    if (String(err && err.code).includes('permission-denied')){ toast('Not saved to the cloud — you are not allowed to make this change.'); return; }
+    await queue({ op:'upsert', table, row });
+    if (text) await queue({ op:'activity', entry: { text, table, ref: row.id } });
+    setNet('offline');
+  }
+}
+async function pushDelete(table, id){
+  if (!cloudOn()) return;
+  selfIds.add(id);
+  const text = describe('delete', table, null, id);
+  try{
+    await cloudDelete(table, id);
+    logActivity(text, table, id);
+  }catch(err){
+    if (String(err && err.code).includes('permission-denied')){ toast('Not deleted in the cloud — you are not allowed to do this.'); return; }
+    await queue({ op:'delete', table, id });
+    if (text) await queue({ op:'activity', entry: { text, table, ref: id } });
+    setNet('offline');
+  }
+}
+
+/* ---------- first load / refresh from the cloud ---------- */
+async function pullAll(){
+  if (!cloudOn()) return false;
+  setNet('connecting');
+  try{
+    const rows = await ASACloud.list(MT_APP, 'contracts');
+    rows.forEach(r => lastC.set(r.id, r));
+    const recs = rows.map(rowToC);
+    await clearStore('contracts');
+    await putMany('contracts', recs);
+    contracts = recs;
+    cById = new Map(); cHay = new Map();
+    for (const c of contracts){ cById.set(c.id, c); reindex(c); }
+    setNet('live');
+    return true;
+  }catch(err){
+    console.error('[tracker] pull failed', err);
+    setNet(String(err && err.code).includes('unavailable') ? 'offline' : 'error');
+    return false;
+  }
+}
+
+async function pullLines(id){
+  if (!cloudOn()) return null;
+  try{
+    const rows = await ASACloud.where(MT_APP, 'used', 'contract_id', '==', id);
+    rows.forEach(r => lastU.set(r.id, r));
+    const recs = rows.map(rowToU);
+    await putMany('used', recs);
+    return recs.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a.id.localeCompare(b.id));
+  }catch(err){
+    setNet('offline');
+    return null;
+  }
+}
+
+/* ---------- live updates from other devices ---------- */
+async function wsConnect(){
+  if (!cloudOn()) return;
+  wsClose();
+  const since = Date.now() - 10 * 60 * 1000;      // small margin for devices whose clocks differ
+  const onErr = () => setNet('error');
+  try{
+    for (const table of ['contracts', 'used', 'custom_items']){
+      const stop = await ASACloud.watch(MT_APP, table, since, changes => {
+        for (const c of changes){
+          if (c.type !== 'removed') remember(table, c.data);
+          onRemote({ table, type: c.type === 'added' ? 'INSERT' : c.type === 'modified' ? 'UPDATE' : 'DELETE',
+                     record: { ...c.data, id: c.id }, old_record: { ...c.data, id: c.id } });
+        }
+      }, onErr);
+      watchers.push(stop);
+    }
+    setNet('live');
+    flushOutbox();
+  }catch(err){ setNet('error'); }
+}
+function wsClose(){
+  watchers.forEach(stop => { try{ stop(); }catch(e){} });
+  watchers = [];
+}
+
+/* a change arrived from another device */
+async function onRemote(d){
+  const rec = d.record || d.old_record;
+  if (!rec) return;
+  const id = rec.id;
+  if (selfIds.has(id)){                 // our own write echoing back
+    if (d.type !== 'INSERT') selfIds.delete(id);
+    return;
+  }
+
+  if (d.table === 'custom_items'){
+    if (d.type === 'DELETE'){
+      const t = db.transaction('custom','readwrite'); t.objectStore('custom').delete(id); await txDone(t);
+      customItems = customItems.filter(i => i.id !== id);
+    }else{
+      const x = rowToX(rec);
+      await putMany('custom', [x]);
+      customItems = customItems.filter(i => i.id !== x.id).concat([x]);
+    }
+    buildHay();
+    if ($('ovlX').classList.contains('show')) renderCustomList();
+    return;
+  }
+
+  if (d.table === 'contracts'){
+    if (d.type === 'DELETE'){
+      contracts = contracts.filter(c => c.id !== id);
+      cById.delete(id); cHay.delete(id);
+      const t = db.transaction('contracts','readwrite'); t.objectStore('contracts').delete(id); await txDone(t);
+      if (settings.activeContract === id){
+        await setActiveLocal(contracts.length ? contracts.slice().sort(byRecent)[0].id : '');
+      }
+    }else{
+      const c = rowToC(rec);
+      const had = cById.get(c.id);
+      if (had) Object.assign(had, c); else { contracts.push(c); cById.set(c.id, c); }
+      reindex(cById.get(c.id));
+      await putMany('contracts', [cById.get(c.id)]);
+    }
+    consCache = null;
+    renderAll();
+    return;
+  }
+
+  if (d.table === 'used'){
+    const cid = rec.contract_id;
+    if (d.type === 'DELETE'){
+      const t = db.transaction('used','readwrite'); t.objectStore('used').delete(id); await txDone(t);
+      if (cid === settings.activeContract || lines.some(l => l.id === id)){
+        lines = lines.filter(l => l.id !== id);
+        retotal();          // keep the cached header totals in step with the table
+        renderAll();
+      }
+    }else{
+      const u = rowToU(rec);
+      await putMany('used', [u]);
+      if (u.contractId === settings.activeContract){
+        const i = lines.findIndex(l => l.id === u.id);
+        if (i >= 0) lines[i] = u; else lines.push(u);
+        lines.sort((a,b) => (a.date||'').localeCompare(b.date||'') || a.id.localeCompare(b.id));
+        retotal();            // keep the cached header totals in step with the table
+        flash(u.id);          // mark before rendering so the row paints highlighted
+        renderAll();
+        if (d.type === 'INSERT'){
+          toast(`${u.who || 'Someone'} added ${n(u.kg,3)} kg — ${u.code}`);
+        }
+      }
+    }
+    consCache = null;
+  }
+}
+
+/* Rows that just arrived from someone else get highlighted.
+   The class is written during render rather than patched in afterwards,
+   so it survives re-renders and does not depend on a frame callback
+   (rAF is throttled when the tab is in the background). */
+function flash(id){
+  freshIds.add(id);
+  setTimeout(() => { freshIds.delete(id); if (activeC()) renderUsed(); }, 2400);
+}
+
+function setNet(s){
+  netState = s;
+  const chip = $('netChip'), txt = $('netTxt');
+  chip.classList.remove('live','off','err');
+  if (!cloudOn()){ txt.textContent = 'Local only'; return; }
+  if (s === 'live')       { chip.classList.add('live'); txt.textContent = 'Live'; }
+  else if (s === 'connecting'){ txt.textContent = 'Connecting…'; }
+  else if (s === 'offline'){ chip.classList.add('off'); txt.textContent = 'Offline — queued'; }
+  else if (s === 'error') { chip.classList.add('err'); txt.textContent = 'Sync error'; }
+}
+
+
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let contracts = [];          // headers only, all in memory
+let cById     = new Map();
+let cHay      = new Map();   // id -> lowercase search haystack
+let lines     = [];          // material lines for the ACTIVE contract only
+let settings  = { stdRate: BASELINE_RATE, activeContract: '', acSort: 'recent' };
+
+let picked = null, acIdx = -1, acHits = [];
+let editingC = null, askCb = null;
+let dirty = false, saving = false, lastSaved = null, autoT = null;
+let pendingC = new Map();    // contract headers waiting to be written
+let pendingU = [];           // material lines waiting to be written
+let pendingDel = [];         // line ids waiting to be deleted
+
+let editUnlocked = false;   // resets every time the page is loaded
+let gateCb = null;
+let acPage = 0, acFilter = '';
+const PAGE = 100;
+let consCache = null;        // across-all-contracts consumption, computed on demand
+let lkHits = [], lkIdx = 0;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function n(v, d = 3){
+  const x = Number(v);
+  if (!isFinite(x)) return (0).toFixed(d);
+  return x.toLocaleString('en-AE', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+const money = v => n(v, 2);
+const int = v => Number(v || 0).toLocaleString('en-AE');
+
+function today(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function dmy(iso){
+  if (!iso) return '—';
+  const p = String(iso).split('-');
+  return p.length === 3 ? `${p[2]}-${p[1]}-${p[0]}` : iso;
+}
+function hhmm(d){ return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function ask(title, msg, cb){
+  $('aTitle').textContent = title;
+  $('aMsg').innerHTML = msg;
+  askCb = cb;
+  $('ovlA').classList.add('show');
+}
+function effRate(item){
+  if (!item) return 0;
+  return item.fixed ? item.rate : item.rate * (settings.stdRate / BASELINE_RATE);
+}
+
+/* ============================================================
+   EDIT LOCK — contract details sit behind the 4-digit code.
+   Unlocking lasts for this page session only; a reload re-locks.
+   ============================================================ */
+function paintLock(){
+  const chip = $('lockChip');
+  chip.classList.toggle('open', editUnlocked);
+  chip.textContent = editUnlocked ? '🔓 Edit unlocked — click to lock' : '🔒 Edit locked';
+  $('btnEditC').textContent = editUnlocked ? 'Edit' : '🔒 Edit';
+}
+
+/* run cb only once the code has been entered */
+function requireCode(cb){
+  if (editUnlocked){ cb(); return; }
+  gateCb = cb;
+  $('gCode').value = '';
+  $('gErr').textContent = '';
+  $('ovlG').classList.add('show');
+  setTimeout(() => $('gCode').focus(), 60);
+}
+
+function tryCode(){
+  if ($('gCode').value.trim() === EDIT_CODE){
+    editUnlocked = true;
+    $('ovlG').classList.remove('show');
+    paintLock(); renderAll();
+    const cb = gateCb; gateCb = null;
+    if (cb) cb();
+    toast('Edit unlocked for this session');
+  }else{
+    const box = $('gCode');
+    $('gErr').textContent = 'Wrong code — try again';
+    box.value = '';
+    box.classList.remove('shake'); void box.offsetWidth; box.classList.add('shake');
+    box.focus();
+  }
+}
+
+function toggleLock(){
+  if (editUnlocked){
+    editUnlocked = false;
+    paintLock(); renderAll();
+    toast('Edit locked');
+  }else{
+    requireCode(() => {});
+  }
+}
+
+/* ============================================================
+   SAVE — explicit button, plus a debounced auto-save safety net
+   ============================================================ */
+/* a view preference only — save it without flagging the archive unsaved */
+async function persistSettings(){
+  try{
+    const t = db.transaction('meta', 'readwrite');
+    t.objectStore('meta').put({ k: 'settings', v: settings });
+    await txDone(t);
+  }catch(err){ console.error('[tracker] settings save failed', err); }
+}
+
+function markDirty(){
+  dirty = true;
+  paintSave();
+  clearTimeout(autoT);
+  autoT = setTimeout(() => { if (dirty && !saving) doSave(true); }, 2500);
+}
+
+function paintSave(){
+  const dot = $('saveDot'), txt = $('saveTxt'), btn = $('btnSave');
+  dot.className = 'dot' + (saving ? ' busy' : dirty ? ' dirty' : '');
+  btn.classList.toggle('dirty', dirty && !saving);
+  btn.disabled = saving;
+  if (saving)          txt.textContent = 'Saving…';
+  else if (dirty)      txt.textContent = 'Unsaved changes';
+  else if (lastSaved)  txt.textContent = 'Saved ' + hhmm(lastSaved);
+  else                 txt.textContent = 'Ready';
+}
+
+async function doSave(auto){
+  if (saving) return;
+  if (!dirty){ if (!auto) toast('Everything is already saved'); return; }
+  saving = true; paintSave();
+  try{
+    if (pendingC.size){ await putMany('contracts', [...pendingC.values()]); pendingC.clear(); }
+    if (pendingU.length){ await putMany('used', pendingU); pendingU = []; }
+    if (pendingDel.length){
+      const t = db.transaction('used', 'readwrite');
+      const s = t.objectStore('used');
+      for (const id of pendingDel) s.delete(id);
+      await txDone(t);
+      pendingDel = [];
+    }
+    const t = db.transaction('meta', 'readwrite');
+    t.objectStore('meta').put({ k: 'settings', v: settings });
+    await txDone(t);
+
+    dirty = false; lastSaved = new Date();
+    if (!auto) toast('Saved — ' + int(contracts.length) + ' contract' + (contracts.length === 1 ? '' : 's') + ' in the archive');
+  }catch(err){
+    toast('Save failed: ' + (err && err.name ? err.name : 'error'));
+    console.error('[tracker] save failed', err);
+  }finally{
+    saving = false; paintSave(); refreshDbInfo();
+  }
+}
+
+async function refreshDbInfo(){
+  let quota = '';
+  try{
+    if (navigator.storage && navigator.storage.estimate){
+      const e = await navigator.storage.estimate();
+      const mb = x => (x || 0) / 1048576;
+      quota = ` · ${mb(e.usage).toFixed(1)} MB used of ${(mb(e.quota) / 1024).toFixed(1)} GB available`;
+    }
+  }catch(e){}
+  let totalLines = 0;
+  for (const c of contracts) totalLines += c.lineCount || 0;
+  let pend = '';
+  try{ const q = await outboxCount(); if (q) pend = ` · ${int(q)} waiting to sync`; }catch(e){}
+  $('dbTxt').textContent =
+    `${int(contracts.length)} contract${contracts.length === 1 ? '' : 's'} · ${int(totalLines)} material line${totalLines === 1 ? '' : 's'}${pend}${quota}`;
+}
+
+/* ---------- live-sync setup dialog ---------- */
+function openCloud(){
+  $('nWho').value = cloud.who || '';
+  $('nUrl').value = cloud.url || '';
+  $('nKey').value = cloud.key || '';
+  $('nSql').textContent = SQL_SETUP;
+  $('nOff').style.display = cloudOn() ? 'inline-block' : 'none';
+  $('nStatus').innerHTML = cloudOn()
+    ? `<div class="warnbox" style="background:#E7F5ED;border-color:#B6E0C7;color:#14603A">
+         <b>Connected.</b> Status: ${esc(netState)}. Every device with these same two values sees the
+         same contracts, updating as material is logged.
+       </div>`
+    : `<div class="warnbox">
+         <b>Not connected.</b> The tracker is saving to this device only — nobody else can see it.
+         Fill in the two values below to put every phone and PC on the same live data.
+       </div>`;
+  $('ovlN').classList.add('show');
+}
+
+async function connectCloud(){
+  const who = $('nWho').value.trim();
+  const url = $('nUrl').value.trim().replace(/\/+$/, '');
+  const key = $('nKey').value.trim();
+  if (!url || !key){ toast('Paste both the Project URL and the anon key'); return; }
+  if (!/^https:\/\/[a-z0-9-]+\.supabase\.(co|in)$/i.test(url)){
+    toast('That URL does not look like a Supabase project URL'); return;
+  }
+  cloud = { url, key, who };
+  saveCloud();
+  $('ovlN').classList.remove('show');
+  toast('Connecting…');
+  setNet('connecting');
+  const ok = await pullAll();
+  if (!ok){ toast('Could not reach the project — check the URL, the key, and that the SQL ran'); return; }
+  await pullCustom();
+  await setActive(cById.has(settings.activeContract) ? settings.activeContract
+                 : (contracts.length ? contracts.slice().sort(byRecent)[0].id : ''));
+  wsConnect();
+  await flushOutbox();
+  renderAll();
+  toast(`Live — ${int(contracts.length)} contract${contracts.length === 1 ? '' : 's'} shared`);
+}
+
+function disconnectCloud(){
+  ask('Turn off live sync?',
+      'This device goes back to saving on its own. Contracts already on the server stay there, and this device keeps its local copy.',
+      () => {
+        wsClose();
+        cloud = { url:'', key:'', who: cloud.who };
+        saveCloud();
+        setNet('local'); renderAll();
+        $('ovlN').classList.remove('show');
+        toast('Live sync off — saving locally');
+      });
+}
+
+/* ============================================================
+   CATALOG SEARCH
+   ============================================================ */
+const norm = s => String(s ?? '').toLowerCase().replace(/[\s\-*×]/g, '');
+
+/* the searchable set = the 181 baked-in profiles + anything added by hand */
+let customItems = [];
+let HAY = [];
+function buildHay(){
+  HAY = SEED_CATALOG.concat(customItems).map(it => ({
+    it, hay: norm([it.code, it.type, it.size, it.aef, it.nef, it.notes].filter(Boolean).join(' '))
+  }));
+}
+buildHay();
+
+/* what one piece of this item costs, and how the amount is worked out */
+function lineAmount(it, pcs, kg, rate){
+  return (it && it.unit === 'pc') ? pcs * rate : kg * rate;
+}
+const rateLabel = it => (it && it.unit === 'pc') ? 'Rate AED/pc' : 'Rate AED/kg';
+
+function search(q){
+  const terms = String(q).trim().toLowerCase().split(/\s+/).filter(Boolean).map(norm).filter(Boolean);
+  if (!terms.length) return [];
+  const out = [];
+  for (const h of HAY){
+    let ok = true, score = 0;
+    for (const t of terms){
+      const i = h.hay.indexOf(t);
+      if (i < 0){ ok = false; break; }
+      score += i === 0 ? 0 : 1;
+      if (norm(h.it.code).startsWith(t)) score -= 3;
+      if (h.it.aef === t || h.it.nef === t) score -= 4;
+    }
+    if (ok) out.push({ it: h.it, score });
+  }
+  out.sort((a,b) => a.score - b.score || a.it.code.localeCompare(b.it.code));
+  return out.slice(0, 14).map(r => r.it);
+}
+
+function renderAC(q){
+  const box = $('acList');
+  acHits = search(q);
+  acIdx  = acHits.length ? 0 : -1;
+  if (!String(q).trim()){ box.classList.remove('show'); return; }
+  if (!acHits.length){
+    box.innerHTML = '<div class="ac-empty">No material matches “' + esc(q) + '”</div>';
+    box.classList.add('show'); return;
+  }
+  box.innerHTML = acHits.map((it, i) => `
+    <div class="ac-item${i === acIdx ? ' on' : ''}" data-i="${i}">
+      <div class="l1"><em>${esc(it.code)}</em> — ${esc(it.type)}${it.custom ? ' <span class="pill" style="background:#EAF1FA;color:#2C5A94">CUSTOM</span>' : ''}</div>
+      <div class="l2">
+        <span>${esc(it.size)}</span>
+        ${it.weight ? `<span class="pill">${n(it.weight,3)} kg/${it.length === 1 && it.fixed ? 'pc' : 'm'}</span>` : ''}
+        ${it.length !== 1 ? `<span class="pill">${it.length} m</span>` : ''}
+        <span class="pill">AED ${money(effRate(it))}/${it.unit === 'pc' ? 'pc' : 'kg'}</span>
+        ${it.aef ? `<span class="pill">AEF ${esc(it.aef)}</span>` : ''}
+        ${it.nef ? `<span class="pill">NEF ${esc(it.nef)}</span>` : ''}
+        ${it.notes ? `<span class="pill">${esc(it.notes)}</span>` : ''}
+      </div>
+    </div>`).join('');
+  box.classList.add('show');
+}
+
+function choose(i){
+  const it = acHits[i];
+  if (!it) return;
+  picked = it;
+  $('qSearch').value = `${it.code}${it.type ? ' — ' + it.type : ''} ${it.size || ''}`.trim();
+  $('qLen').value    = it.length;
+  $('qRate').value   = effRate(it).toFixed(2);
+  $('qRateLbl').textContent = rateLabel(it);
+  $('acList').classList.remove('show');
+  calc();
+  $('qPcs').focus(); $('qPcs').select();
+}
+
+function calc(){
+  if (!picked){ $('qKg').value = ''; $('qAmt').value = ''; return; }
+  const pcs = Number($('qPcs').value) || 0;
+  const len = Number($('qLen').value) || 0;
+  const rate = Number($('qRate').value) || 0;
+  const kg = pcs * len * picked.weight;
+  $('qKg').value  = n(kg, 3);
+  $('qAmt').value = money(lineAmount(picked, pcs, kg, rate));
+}
+
+/* ============================================================
+   CUSTOM MATERIALS — anything not among the 181 baked-in profiles
+   ============================================================ */
+async function loadCustom(){
+  try{ customItems = (await idb(store('custom').getAll())).map(x => ({ ...x, fixed:true, custom:true })); }
+  catch(e){ customItems = []; }
+  buildHay();
+}
+
+async function pullCustom(){
+  if (!cloudOn()) return;
+  try{
+    const rows = await ASACloud.list(MT_APP, 'custom_items');
+    const recs = (rows || []).map(rowToX);
+    await clearStore('custom');
+    await putMany('custom', recs);
+    customItems = recs;
+    buildHay();
+  }catch(e){ /* keep the local copy */ }
+}
+
+async function saveCustomItem(x){
+  await putMany('custom', [x]);
+  customItems = customItems.filter(i => i.id !== x.id).concat([x]);
+  buildHay();
+  if (cloudOn()) push('custom_items', xToRow(x));
+}
+
+async function deleteCustomItem(id){
+  const t = db.transaction('custom','readwrite'); t.objectStore('custom').delete(id); await txDone(t);
+  customItems = customItems.filter(i => i.id !== id);
+  buildHay();
+  if (cloudOn()) pushDelete('custom_items', id);
+}
+
+function openCustom(){
+  $('xName').value = ''; $('xSize').value = ''; $('xWeight').value = '';
+  $('xRate').value = ''; $('xPcs').value = '1';
+  setUnit('kg');
+  renderCustomList();
+  $('ovlX').classList.add('show');
+  setTimeout(() => $('xName').focus(), 60);
+}
+
+function setUnit(u){
+  $('xUnit').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.u === u));
+  $('xRateLbl').textContent = u === 'pc' ? 'Price AED per piece' : 'Price AED per kg';
+  $('xWeightLbl').textContent = u === 'pc' ? 'Weight per piece kg — optional' : 'Weight per piece kg';
+}
+const curUnit = () => $('xUnit').querySelector('button.on').dataset.u;
+
+function renderCustomList(){
+  const host = $('xList');
+  if (!customItems.length){
+    host.innerHTML = `<div class="sub" style="padding:8px 0">No custom materials yet.</div>`;
+    return;
+  }
+  host.innerHTML = customItems.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(x => `
+    <div class="xrow">
+      <div>
+        <b>${esc(x.code)}</b>${x.size ? ` <span class="sub">${esc(x.size)}</span>` : ''}
+        <div class="sub">AED ${money(x.rate)} / ${x.unit === 'pc' ? 'piece' : 'kg'}${x.weight ? ` · ${n(x.weight,3)} kg per piece` : ''}</div>
+      </div>
+      <button class="btn danger sm" data-xdel="${x.id}">✕</button>
+    </div>`).join('');
+}
+
+async function addCustom(useNow){
+  const name = $('xName').value.trim();
+  if (!name){ toast('Give the material a name'); $('xName').focus(); return; }
+  const rate = Number($('xRate').value) || 0;
+  if (rate <= 0){ toast('Enter the price'); $('xRate').focus(); return; }
+  const unit = curUnit();
+  const weight = Number($('xWeight').value) || 0;
+  if (unit === 'kg' && weight <= 0){
+    toast('Per-kg pricing needs the weight of one piece'); $('xWeight').focus(); return;
+  }
+  if (customItems.some(i => i.code.toLowerCase() === name.toLowerCase())){
+    toast('A custom material with that name already exists'); return;
+  }
+  const x = { id: uid(), code:name, type:'Custom', size:$('xSize').value.trim(),
+              weight, length:1, rate, unit, notes:'', fixed:true, custom:true };
+  await saveCustomItem(x);
+  renderCustomList();
+  toast(`Saved “${name}” — it will show up in the search from now on`);
+
+  if (useNow){
+    $('ovlX').classList.remove('show');
+    acHits = [x]; choose(0);
+    const pcs = Number($('xPcs').value) || 1;
+    $('qPcs').value = pcs; calc();
+  }else{
+    $('xName').value=''; $('xSize').value=''; $('xWeight').value=''; $('xRate').value='';
+    $('xName').focus();
+  }
+}
+
+/* ============================================================
+   SITE VISITS — logged per contract, not behind the edit code
+   ============================================================ */
+function visitsOf(c){ return (c && Array.isArray(c.visits)) ? c.visits : []; }
+
+function openVisits(){
+  const c = activeC();
+  if (!c){ toast('Pick a contract first'); return; }
+  $('vDate').value = today();
+  $('vNote').value = '';
+  renderVisits();
+  $('ovlV').classList.add('show');
+  setTimeout(() => $('vDate').focus(), 60);
+}
+
+function renderVisits(){
+  const c = activeC();
+  const list = visitsOf(c).slice().sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  $('vTitle').textContent = c ? `Site Visits — ${c.no}` : 'Site Visits';
+  $('vList').innerHTML = list.length
+    ? list.map(v => `
+      <div class="xrow">
+        <div>
+          <b>${dmy(v.date)}</b>${v.who ? `<span class="whotag">${esc(v.who)}</span>` : ''}
+          ${v.note ? `<div class="sub">${esc(v.note)}</div>` : ''}
+        </div>
+        <button class="btn danger sm" data-vdel="${v.id}">✕</button>
+      </div>`).join('')
+    : `<div class="sub" style="padding:8px 0">No site visits recorded yet.</div>`;
+}
+
+async function addVisit(){
+  const c = activeC();
+  if (!c) return;
+  const date = $('vDate').value;
+  if (!date){ toast('Pick the visit date'); $('vDate').focus(); return; }
+  c.visits = visitsOf(c).concat([{ id: uid(), date, note: $('vNote').value.trim(), who: cloud.who || '' }]);
+  pendingC.set(c.id, c); markDirty();
+  if (cloudOn()) push('contracts', cToRow(c));
+  $('vNote').value = '';
+  renderVisits(); renderAll();
+  toast('Site visit recorded — ' + dmy(date));
+}
+
+async function delVisit(id){
+  const c = activeC();
+  if (!c) return;
+  c.visits = visitsOf(c).filter(v => v.id !== id);
+  pendingC.set(c.id, c); markDirty();
+  if (cloudOn()) push('contracts', cToRow(c));
+  renderVisits(); renderAll();
+}
+
+/* ============================================================
+   CONTRACT LOOKUP — searches every saved contract, instantly
+   ============================================================ */
+function hay(c){
+  return [c.no, c.client, c.project, c.notes, c.date, dmy(c.date)]
+    .filter(Boolean).join(' ').toLowerCase();
+}
+function reindex(c){ cHay.set(c.id, hay(c)); }
+
+function byRecent(a, b){
+  return String(b.date || '').localeCompare(String(a.date || '')) ||
+         String(b.no  || '').localeCompare(String(a.no  || ''));
+}
+
+/* contract numbers sort naturally — CA-2026-9 lands before CA-2026-10, not after */
+const noColl = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+function byNoAsc(a, b){
+  return noColl.compare(String(a.no || ''), String(b.no || '')) ||
+         String(a.date || '').localeCompare(String(b.date || ''));
+}
+function byNoDesc(a, b){ return byNoAsc(b, a); }
+
+const AC_SORTS = {
+  recent: { label: 'Most recent first',        fn: byRecent },
+  noDesc: { label: 'Contract # — high to low', fn: byNoDesc },
+  noAsc:  { label: 'Contract # — low to high', fn: byNoAsc  }
+};
+function acSortFn(){ return (AC_SORTS[settings.acSort] || AC_SORTS.recent).fn; }
+
+function lookup(q){
+  const terms = String(q).trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length){
+    return { hits: contracts.slice().sort(byRecent).slice(0, 60), total: contracts.length };
+  }
+  const out = [];
+  for (const c of contracts){
+    const h = cHay.get(c.id) || '';
+    let ok = true, score = 0;
+    for (const t of terms){
+      const i = h.indexOf(t);
+      if (i < 0){ ok = false; break; }
+      score += i;
+      if (String(c.no).toLowerCase().startsWith(t)) score -= 500;
+    }
+    if (ok) out.push({ c, score });
+  }
+  out.sort((a,b) => a.score - b.score || byRecent(a.c, b.c));
+  return { hits: out.slice(0, 60).map(r => r.c), total: out.length };
+}
+
+/* highlight the matched runs without letting raw text through unescaped */
+function hl(text, q){
+  const s = String(text ?? '');
+  const terms = String(q).trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return esc(s);
+  const low = s.toLowerCase();
+  let out = '', i = 0;
+  while (i < s.length){
+    let len = 0;
+    for (const t of terms) if (t && low.startsWith(t, i) && t.length > len) len = t.length;
+    if (len){ out += '<mark>' + esc(s.slice(i, i + len)) + '</mark>'; i += len; }
+    else { out += esc(s[i]); i++; }
+  }
+  return out;
+}
+
+function openLookup(){
+  $('ovlLk').classList.add('show');
+  $('lkQ').value = '';
+  renderLookup('');
+  setTimeout(() => $('lkQ').focus(), 40);
+}
+function closeLookup(){ $('ovlLk').classList.remove('show'); }
+
+function renderLookup(q){
+  const { hits, total } = lookup(q);
+  lkHits = hits; lkIdx = 0;
+
+  $('lkMeta').innerHTML = contracts.length
+    ? `<span><b>${int(total)}</b> match${total === 1 ? '' : 'es'} of ${int(contracts.length)} saved contract${contracts.length === 1 ? '' : 's'}</span>` +
+      (total > hits.length ? `<span>showing the first ${hits.length} — keep typing to narrow</span>` : '')
+    : `<span>No contracts saved yet</span>`;
+
+  if (!contracts.length){
+    $('lkRes').innerHTML = `<div class="lk-empty"><b>Nothing saved yet</b><br>Create your first Contract Agreement.</div>`;
+    return;
+  }
+  if (!hits.length){
+    $('lkRes').innerHTML = `<div class="lk-empty">No contract matches “${esc(q)}”</div>`;
+    return;
+  }
+  $('lkRes').innerHTML = hits.map((c, i) => `
+    <div class="lk-item${i === lkIdx ? ' on' : ''}" data-id="${c.id}">
+      <div class="li">
+        <b>${hl(c.no, q)}${c.client ? ' — ' + hl(c.client, q) : ''}</b>
+        <i>${c.project ? hl(c.project, q) + ' · ' : ''}${dmy(c.date)}${c.notes ? ' · ' + hl(c.notes, q) : ''}</i>
+      </div>
+      <div class="lr">
+        <b>${n(c.totKg || 0, 3)} kg</b>
+        ${int(c.lineCount || 0)} line${(c.lineCount || 0) === 1 ? '' : 's'} · AED ${money(c.totAmt || 0)}
+      </div>
+    </div>`).join('');
+}
+
+function paintLk(){
+  document.querySelectorAll('.lk-item').forEach((el, i) => el.classList.toggle('on', i === lkIdx));
+  const on = document.querySelector('.lk-item.on');
+  if (on) on.scrollIntoView({ block: 'nearest' });
+}
+
+/* ============================================================
+   CONTRACTS
+   ============================================================ */
+function activeC(){ return cById.get(settings.activeContract) || null; }
+
+function paintCurrent(){
+  const c = activeC();
+  $('ccNo').textContent  = c ? c.no : 'No contract selected';
+  $('ccSub').textContent = c
+    ? ([c.client, c.project, dmy(c.date)].filter(Boolean).join(' · ') || 'No client or project set')
+    : 'Click to search every saved contract';
+}
+
+async function linesFor(id){
+  const rows = await idb(store('used').index('by_contract').getAll(IDBKeyRange.only(id)));
+  // unflushed writes are not in the store yet — merge them in
+  const seen = new Set(rows.map(r => r.id));
+  for (const p of pendingU) if (p.contractId === id && !seen.has(p.id)) rows.push(p);
+  const dead = new Set(pendingDel);
+  return rows.filter(r => !dead.has(r.id))
+             .sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.id.localeCompare(b.id));
+}
+
+async function setActiveLocal(id){
+  settings.activeContract = id || '';
+  lines = id ? await linesFor(id) : [];
+  markDirty();
+  renderAll();
+}
+
+async function setActive(id){
+  await setActiveLocal(id);
+  if (id && cloudOn()){
+    const fresh = await pullLines(id);       // make sure we see everyone else's entries
+    if (fresh && settings.activeContract === id){
+      lines = fresh;
+      retotal();
+      renderAll();
+    }
+  }
+}
+
+function openContract(id){
+  editingC = id;
+  const c = id ? cById.get(id) : null;
+  $('cTitle').textContent = c ? 'Edit Contract' : 'New Contract';
+  // left blank on a new contract — the number is typed in by hand
+  $('cNo').value      = c ? c.no      : '';
+  $('cDate').value    = c ? c.date    : today();
+  $('cClient').value  = c ? c.client  : '';
+  $('cProject').value = c ? c.project : '';
+  $('cValue').value   = c && c.value  ? c.value : '';
+  $('cNotes').value   = c ? c.notes   : '';
+  $('cDel').style.display = c ? 'inline-block' : 'none';
+  $('ovlC').classList.add('show');
+  setTimeout(() => $('cNo').focus(), 60);
+}
+
+async function saveContract(){
+  const no = $('cNo').value.trim();
+  if (!no){ toast('Contract Agreement # is required'); $('cNo').focus(); return; }
+  const low = no.toLowerCase();
+  for (const c of contracts){
+    if (c.id !== editingC && String(c.no).toLowerCase() === low){
+      toast('That contract number already exists'); $('cNo').focus(); return;
+    }
+  }
+  const data = {
+    no,
+    date:    $('cDate').value,
+    client:  $('cClient').value.trim(),
+    project: $('cProject').value.trim(),
+    notes:   $('cNotes').value.trim(),
+    value:   Math.max(0, Number($('cValue').value) || 0)
+  };
+  const isNew = !editingC;
+  let c;
+  if (editingC){
+    c = cById.get(editingC);
+    Object.assign(c, data);
+  }else{
+    c = { id: uid(), ...data, totPcs:0, totKg:0, totAmt:0, matCount:0, lineCount:0, createdAt: Date.now() };
+    contracts.push(c); cById.set(c.id, c);
+  }
+  c.savedAt = Date.now();
+  reindex(c);
+  pendingC.set(c.id, c);
+  markDirty();
+  if (cloudOn()) push('contracts', cToRow(c));
+  $('ovlC').classList.remove('show');
+
+  if (isNew) await setActive(c.id); else renderAll();
+  toast(isNew ? 'Contract created' : 'Contract updated');
+}
+
+function delContract(){
+  const c = cById.get(editingC);
+  if (!c) return;
+  $('ovlC').classList.remove('show');
+  ask('Delete contract?',
+      `<b>${esc(c.no)}</b> and its <b>${int(c.lineCount || 0)}</b> material line${(c.lineCount||0) === 1 ? '' : 's'} will be permanently removed.`,
+      async () => {
+        // delete its lines through the index — never a full-table scan
+        const t = db.transaction('used', 'readwrite');
+        const s = t.objectStore('used');
+        const cur = s.index('by_contract').openKeyCursor(IDBKeyRange.only(c.id));
+        cur.onsuccess = e => {
+          const k = e.target.result;
+          if (k){ s.delete(k.primaryKey); k.continue(); }
+        };
+        await txDone(t);
+        const t2 = db.transaction('contracts', 'readwrite');
+        t2.objectStore('contracts').delete(c.id);
+        await txDone(t2);
+
+        contracts = contracts.filter(x => x.id !== c.id);
+        cById.delete(c.id); cHay.delete(c.id); pendingC.delete(c.id);
+        pendingU = pendingU.filter(u => u.contractId !== c.id);
+        consCache = null;
+        if (cloudOn()) await pushDelete('contracts', c.id);   // cascade removes its lines
+        await setActive(contracts.length ? contracts.slice().sort(byRecent)[0].id : '');
+        toast('Contract deleted');
+      });
+}
+
+/* recompute the cached header totals from the active contract's lines */
+function retotal(){
+  const c = activeC();
+  if (!c) return;
+  const codes = new Set();
+  let pcs = 0, kg = 0, amt = 0;
+  for (const u of lines){ pcs += u.pcs; kg += u.kg; amt += u.amt; codes.add(u.code); }
+  c.totPcs = pcs; c.totKg = kg; c.totAmt = amt;
+  c.matCount = codes.size; c.lineCount = lines.length;
+  pendingC.set(c.id, c);
+  consCache = null;
+}
+
+/* ============================================================
+   MATERIAL USED
+   ============================================================ */
+function addUsed(){
+  const c = activeC();
+  if (!c){ toast('Create a contract first'); openContract(null); return; }
+  if (!picked){ toast('Pick a material from the list'); $('qSearch').focus(); return; }
+  const pcs  = Number($('qPcs').value)  || 0;
+  const len  = Number($('qLen').value)  || 0;
+  const rate = Number($('qRate').value) || 0;
+  if (pcs <= 0){ toast('Enter the number of pieces'); $('qPcs').focus(); return; }
+
+  const kg = pcs * len * picked.weight;
+  const row = {
+    id: uid(), contractId: c.id,
+    date: $('qDate').value || today(),
+    code: picked.code, type: picked.type, size: picked.size,
+    aef: picked.aef || '', nef: picked.nef || '',
+    kgm: picked.weight, pcs, len, rate, kg,
+    amt: lineAmount(picked, pcs, kg, rate),
+    unit: picked.unit || 'kg',
+    who: cloud.who || ''
+  };
+  lines.push(row);
+  lines.sort((a,b) => (a.date || '').localeCompare(b.date || '') || a.id.localeCompare(b.id));
+  pendingU.push(row);
+  retotal(); markDirty();
+
+  // straight out to everyone else — no waiting for the auto-save
+  if (cloudOn()){
+    push('used', uToRow(row));
+    const c2 = activeC(); if (c2) push('contracts', cToRow(c2));
+  }
+
+  $('qPcs').value = 1;
+  calc(); renderAll();
+  toast(`Added ${n(kg,3)} kg — ${picked.code}`);
+}
+
+function delUsed(id){
+  const u = lines.find(x => x.id === id);
+  if (!u) return;
+  ask('Delete this line?',
+      `<b>${esc(u.code)}</b> — ${int(u.pcs)} pcs / ${n(u.kg,3)} kg on ${dmy(u.date)}.`,
+      () => {
+        lines = lines.filter(x => x.id !== id);
+        pendingU = pendingU.filter(x => x.id !== id);
+        pendingDel.push(id);
+        retotal(); markDirty(); renderAll();
+        if (cloudOn()){
+          pushDelete('used', id);
+          const c2 = activeC(); if (c2) push('contracts', cToRow(c2));
+        }
+        toast('Line deleted');
+      });
+}
+
+function byMaterial(rows){
+  const map = new Map();
+  for (const u of rows){
+    if (!map.has(u.code)) map.set(u.code, { code:u.code, type:u.type, size:u.size, rate:u.rate, pcs:0, kg:0, amt:0, lines:0 });
+    const r = map.get(u.code);
+    r.rate = u.rate; r.pcs += u.pcs; r.kg += u.kg; r.amt += u.amt; r.lines++;
+  }
+  return [...map.values()].sort((a,b) => b.kg - a.kg);
+}
+
+function totals(rows){
+  const t = { pcs:0, kg:0, amt:0, lines:0 };
+  for (const u of rows){ t.pcs += u.pcs; t.kg += u.kg; t.amt += u.amt; t.lines++; }
+  return t;
+}
+function totalsAll(){
+  const t = { pcs:0, kg:0, amt:0, lines:0, val:0, valued:0 };
+  for (const c of contracts){
+    t.pcs += c.totPcs || 0; t.kg += c.totKg || 0; t.amt += c.totAmt || 0; t.lines += c.lineCount || 0;
+    if (c.value > 0){ t.val += c.value; t.valued++; }   // agreed contract value, where one is entered
+  }
+  return t;
+}
+
+/* across every contract — a full cursor scan, so it runs on demand */
+async function computeConsumption(){
+  await doSave(true);                        // flush pending writes first
+  const map = new Map();
+  const t = db.transaction('used', 'readonly');
+  const cur = t.objectStore('used').openCursor();
+  cur.onsuccess = e => {
+    const k = e.target.result;
+    if (!k) return;
+    const u = k.value;
+    if (!map.has(u.code)) map.set(u.code, { code:u.code, type:u.type, size:u.size, pcs:0, kg:0, amt:0, cons:new Set() });
+    const r = map.get(u.code);
+    r.pcs += u.pcs; r.kg += u.kg; r.amt += u.amt; r.cons.add(u.contractId);
+    k.continue();
+  };
+  await txDone(t);
+  consCache = [...map.values()].sort((a,b) => b.kg - a.kg);
+  return consCache;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderAll(){
+  paintCurrent(); paintSave(); paintLock();
+  renderUsed(); renderByMaterial(); renderAllContracts();
+  const c = activeC();
+  $('mhKg').textContent = c ? n(c.totKg || 0, 3) + ' kg' : '0.000 kg';
+  refreshDbInfo();
+}
+
+function renderUsed(){
+  const c = activeC();
+  const host = $('usBody');
+  if (!c){
+    host.innerHTML = `<div class="empty"><b>No contract selected</b>Create a Contract Agreement, or press <kbd>Ctrl K</kbd> to look one up.</div>`;
+    return;
+  }
+  const t = totals(lines);
+  const mats = byMaterial(lines).length;
+  const stats = `
+    <div class="stats">
+      <div class="stat b"><span>Material Used</span><b>${n(t.kg,3)}<small> kg</small></b><small>${esc(c.no)}</small></div>
+      <div class="stat"><span>Pieces</span><b>${int(t.pcs)}</b><small>${mats} material${mats===1?'':'s'}</small></div>
+      <div class="stat"><span>Material Value</span><b>${money(t.amt)}<small> AED</small></b><small>at AED ${money(settings.stdRate)}/kg standard</small></div>
+      <div class="stat"><span>Site Visits</span><b>${int(visitsOf(c).length)}</b><small>${
+        visitsOf(c).length
+          ? 'last ' + dmy(visitsOf(c).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0].date)
+          : 'none recorded yet'}</small></div>
+    </div>`;
+  if (!lines.length){
+    host.innerHTML = stats + `<div class="empty"><b>Nothing logged on ${esc(c.no)} yet</b>Use Quick Add above — search by size, code or item number.</div>`;
+    return;
+  }
+  host.innerHTML = stats + `
+    <div class="tblwrap"><table>
+      <thead><tr>
+        <th>Date</th><th>Material</th>
+        <th class="num">Pcs</th><th class="num">Length m</th><th class="num">Kg/m</th>
+        <th class="num">Weight kg</th><th class="num">Rate</th><th class="num">Amount AED</th><th></th>
+      </tr></thead>
+      <tbody>${lines.map(u => `
+        <tr${freshIds.has(u.id) ? ' class="justin"' : ''}>
+          <td style="white-space:nowrap">${dmy(u.date)}</td>
+          <td>
+            <div class="code">${esc(u.code)}${u.who ? `<span class="whotag">${esc(u.who)}</span>` : ''}</div>
+            <div class="sub">${esc(u.type)} · ${esc(u.size)}</div>
+          </td>
+          <td class="num">${int(u.pcs)}</td>
+          <td class="num">${n(u.len,2)}</td>
+          <td class="num">${n(u.kgm,3)}</td>
+          <td class="num kg">${n(u.kg,3)}</td>
+          <td class="num">${money(u.rate)}${u.unit === 'pc' ? '<span class="sub">/pc</span>' : ''}</td>
+          <td class="num">${money(u.amt)}</td>
+          <td><button class="btn danger sm" data-del="${u.id}">✕</button></td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td colspan="2">Total material used — ${esc(c.no)}</td>
+        <td class="num">${int(t.pcs)}</td><td></td><td></td>
+        <td class="num">${n(t.kg,3)}</td><td></td>
+        <td class="num">${money(t.amt)}</td><td></td>
+      </tr></tfoot>
+    </table></div>`;
+}
+
+function renderByMaterial(){
+  const c = activeC();
+  const host = $('p-bm');
+  if (!c){ host.innerHTML = `<div class="empty"><b>No contract selected</b>Press <kbd>Ctrl K</kbd> to look one up.</div>`; return; }
+  const rows = byMaterial(lines);
+  const t = totals(lines);
+  if (!rows.length){
+    host.innerHTML = `<div class="empty"><b>Nothing to summarise yet</b>Log material on ${esc(c.no)} and the per-material totals appear here.</div>`;
+    return;
+  }
+  host.innerHTML = `
+    <div class="stats">
+      <div class="stat b"><span>Total Used</span><b>${n(t.kg,3)}<small> kg</small></b><small>${esc(c.no)}</small></div>
+      <div class="stat"><span>Materials</span><b>${rows.length}</b><small>distinct profiles</small></div>
+      <div class="stat"><span>Heaviest</span><b>${n(rows[0].kg,3)}<small> kg</small></b><small>${esc(rows[0].code)}</small></div>
+      <div class="stat"><span>Value</span><b>${money(t.amt)}<small> AED</small></b><small>${int(t.pcs)} pcs total</small></div>
+    </div>
+    <div class="tblwrap"><table>
+      <thead><tr>
+        <th>Material</th><th class="num">Entries</th><th class="num">Pcs</th>
+        <th class="num">Weight kg</th><th class="num">Rate</th><th class="num">Amount AED</th><th class="num">% of Kg</th>
+      </tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td><div class="code">${esc(r.code)}</div><div class="sub">${esc(r.type)} · ${esc(r.size)}</div></td>
+          <td class="num">${int(r.lines)}</td><td class="num">${int(r.pcs)}</td>
+          <td class="num kg">${n(r.kg,3)}</td><td class="num">${money(r.rate)}</td>
+          <td class="num">${money(r.amt)}</td>
+          <td class="num">${t.kg ? n(r.kg / t.kg * 100, 1) : '0.0'}%</td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td>Totals</td><td class="num">${int(t.lines)}</td><td class="num">${int(t.pcs)}</td>
+        <td class="num">${n(t.kg,3)}</td><td></td><td class="num">${money(t.amt)}</td><td class="num">100.0%</td>
+      </tr></tfoot>
+    </table></div>`;
+}
+
+function renderAllContracts(){
+  const host = $('p-ac');
+  if (!contracts.length){
+    host.innerHTML = `<div class="empty"><b>No contracts yet</b>Click “＋ New Contract” to add your first Contract Agreement.</div>`;
+    return;
+  }
+  const g = totalsAll();
+
+  // filter + paginate — a 50,000-row table would lock up the page
+  const q = acFilter.trim().toLowerCase();
+  let list = contracts;
+  if (q){
+    const terms = q.split(/\s+/).filter(Boolean);
+    list = contracts.filter(c => { const h = cHay.get(c.id) || ''; return terms.every(t => h.includes(t)); });
+  }
+  list = list.slice().sort(acSortFn());
+  const pages = Math.max(1, Math.ceil(list.length / PAGE));
+  if (acPage >= pages) acPage = pages - 1;
+  if (acPage < 0) acPage = 0;
+  const from = acPage * PAGE;
+  const slice = list.slice(from, from + PAGE);
+
+  host.innerHTML = `
+    <div class="stats">
+      <div class="stat b"><span>Material Used — All Contracts</span><b>${n(g.kg,3)}<small> kg</small></b><small>${int(contracts.length)} agreement${contracts.length===1?'':'s'}</small></div>
+      <div class="stat"><span>Total Pieces</span><b>${int(g.pcs)}</b><small>${int(g.lines)} entries</small></div>
+      <div class="stat"><span>Material Value</span><b>${money(g.amt)}<small> AED</small></b><small>excl. VAT</small></div>
+      <div class="stat"><span>Total Contract Value</span><b>${money(g.val)}<small> AED</small></b><small>${int(g.valued)} of ${int(contracts.length)} priced</small></div>
+      <div class="stat"><span>Archive</span><b>${int(contracts.length)}</b><small>contracts saved</small></div>
+    </div>
+
+    <div class="filt">
+      <input id="acFilt" placeholder="Filter contracts — number, client, project, notes…" value="${esc(acFilter)}">
+      <select id="acSort" title="Sort order">${Object.keys(AC_SORTS).map(k =>
+        `<option value="${k}"${(settings.acSort || 'recent') === k ? ' selected' : ''}>${AC_SORTS[k].label}</option>`
+      ).join('')}</select>
+      <button class="btn" id="acClear">Clear</button>
+    </div>
+
+    <div class="sechead">
+      Contract by contract
+      <span class="spacer"></span>
+      <span style="font-weight:500;text-transform:none;letter-spacing:0">${int(list.length)} shown${q ? ' of ' + int(contracts.length) : ''}</span>
+    </div>
+    <div class="tblwrap"><table>
+      <thead><tr>
+        <th>Contract Agreement #</th><th>Client</th><th>Project / Site</th><th>Date</th>
+        <th class="num">Materials</th><th class="num">Pcs</th><th class="num">Weight kg</th>
+        <th class="num">Material AED</th><th class="num">Contract Value AED</th><th></th>
+      </tr></thead>
+      <tbody>${slice.map(c => {
+        const on = c.id === settings.activeContract;
+        return `<tr${on ? ' style="background:var(--brand-lt)"' : ''}>
+          <td><div class="code">${esc(c.no)}</div>${c.notes ? `<div class="sub">${esc(c.notes)}</div>` : ''}</td>
+          <td>${esc(c.client) || '<span class="sub">—</span>'}</td>
+          <td>${esc(c.project) || '<span class="sub">—</span>'}</td>
+          <td style="white-space:nowrap">${dmy(c.date)}</td>
+          <td class="num">${int(c.matCount || 0)}</td>
+          <td class="num">${int(c.totPcs || 0)}</td>
+          <td class="num kg">${n(c.totKg || 0,3)}</td>
+          <td class="num">${money(c.totAmt || 0)}</td>
+          <td class="num">${c.value > 0 ? money(c.value) : '<span class="sub">—</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn sm" data-open="${c.id}">${on ? 'Active' : 'Open'}</button>
+            <button class="btn sm" data-edit="${c.id}">${editUnlocked ? 'Edit' : '🔒 Edit'}</button>
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+      <tfoot><tr>
+        <td colspan="5">All ${int(contracts.length)} contracts</td>
+        <td class="num">${int(g.pcs)}</td><td class="num">${n(g.kg,3)}</td>
+        <td class="num">${money(g.amt)}</td><td class="num">${money(g.val)}</td><td></td>
+      </tr></tfoot>
+    </table></div>
+
+    ${pages > 1 ? `
+    <div class="pager">
+      <button class="btn sm" id="acPrev"${acPage === 0 ? ' disabled' : ''}>← Prev</button>
+      <span>Page</span>
+      <input id="acJump" type="number" min="1" max="${pages}" value="${acPage + 1}">
+      <span>of ${int(pages)}</span>
+      <button class="btn sm" id="acNext"${acPage >= pages - 1 ? ' disabled' : ''}>Next →</button>
+      <span style="margin-left:8px">rows ${int(from + 1)}–${int(Math.min(from + PAGE, list.length))}</span>
+    </div>` : ''}
+
+    <div class="sechead">
+      Total consumption per material, across every contract
+      <span class="spacer"></span>
+      <button class="btn sm" id="acCons">${consCache ? 'Recalculate' : 'Calculate'}</button>
+    </div>
+    <div id="consBox">${renderConsumption()}</div>`;
+}
+
+function renderConsumption(){
+  if (!consCache){
+    return `<div class="empty" style="padding:26px">
+      <b>Not calculated yet</b>
+      This reads every material line in the archive, so it runs when you ask for it.
+    </div>`;
+  }
+  if (!consCache.length) return `<div class="empty" style="padding:26px"><b>No material logged yet</b></div>`;
+  let tot = 0, tp = 0, ta = 0;
+  for (const r of consCache){ tot += r.kg; tp += r.pcs; ta += r.amt; }
+  const denom = tot || 1;
+  return `<div class="tblwrap"><table>
+    <thead><tr>
+      <th>Material</th><th class="num">Contracts</th><th class="num">Pcs</th>
+      <th class="num">Weight kg</th><th class="num">Value AED</th><th class="num">% of Kg</th>
+    </tr></thead>
+    <tbody>${consCache.map(r => `
+      <tr>
+        <td><div class="code">${esc(r.code)}</div><div class="sub">${esc(r.type)} · ${esc(r.size)}</div></td>
+        <td class="num">${int(r.cons.size)}</td><td class="num">${int(r.pcs)}</td>
+        <td class="num kg">${n(r.kg,3)}</td><td class="num">${money(r.amt)}</td>
+        <td class="num">${n(r.kg / denom * 100, 1)}%</td>
+      </tr>`).join('')}
+    </tbody>
+    <tfoot><tr>
+      <td>Totals — ${consCache.length} material${consCache.length===1?'':'s'}</td><td></td>
+      <td class="num">${int(tp)}</td><td class="num">${n(tot,3)}</td>
+      <td class="num">${money(ta)}</td><td class="num">100.0%</td>
+    </tr></tfoot>
+  </table></div>`;
+}
+
+/* ============================================================
+   PDF — per-contract A4 statement
+   ============================================================ */
+function buildPDF(withPrices = true){
+  const c = activeC();
+  if (!c){ toast('Select a contract first'); return false; }
+  if (!lines.length){ toast('Nothing to print — log some material first'); return false; }
+  const mats = byMaterial(lines);
+  const t = totals(lines);
+  const vat = t.amt * VAT_PCT / 100;
+  const P = !!withPrices;                       // false = the copy that carries no money
+  const visits = visitsOf(c).slice().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+
+  $('printArea').innerHTML = `
+  <div class="pdoc">
+    <div class="phead">
+      <img src="${LOGO}" alt="">
+      <div class="co">
+        <h2>${esc(COMPANY.name)}</h2>
+        <p>${esc(COMPANY.address)}<br>
+           Tel ${esc(COMPANY.tel)} · Mob ${esc(COMPANY.mob1)} / ${esc(COMPANY.mob2)}<br>
+           ${esc(COMPANY.email)} · ${esc(COMPANY.web)} · TRN ${esc(COMPANY.trn)}</p>
+      </div>
+      <div class="doc"><h3>Material ${P ? 'Statement' : 'Schedule'}</h3><p>Printed ${dmy(today())}</p></div>
+    </div>
+    <div class="pmeta">
+      <div><b>Contract Agr. #</b><span>${esc(c.no)}</span></div>
+      <div><b>Agreement Date</b><span>${dmy(c.date)}</span></div>
+      <div><b>Client</b><span>${esc(c.client) || '—'}</span></div>
+      <div><b>Project / Site</b><span>${esc(c.project) || '—'}</span></div>
+      ${P ? `<div><b>Standard Rate</b><span>AED ${money(settings.stdRate)} / kg</span></div>`
+          : `<div><b>Site Visits</b><span>${visits.length ? int(visits.length) + ' recorded' : 'None recorded'}</span></div>`}
+      <div><b>Total Used</b><span>${n(t.kg,3)} kg · ${int(t.pcs)} pcs · ${mats.length} materials</span></div>
+    </div>
+    ${c.notes ? `<div class="pnote">Note: ${esc(c.notes)}</div>` : ''}
+
+    ${visits.length ? `
+      <div class="psec">Site Visits</div>
+      <div>${visits.map(v => `
+        <div class="pvisit">
+          <b>${dmy(v.date)}</b>
+          <span>${esc(v.note) || '—'}</span>
+          ${v.who ? `<span style="color:#777;margin-left:auto">${esc(v.who)}</span>` : ''}
+        </div>`).join('')}</div>` : ''}
+
+    <div class="psec">Material Used — Detail</div>
+    <table class="ptbl">
+      <thead><tr>
+        <th style="width:${P ? 11 : 13}%">Date</th><th style="width:${P ? 33 : 45}%">Material</th>
+        <th class="num" style="width:${P ? 7 : 10}%">Pcs</th><th class="num" style="width:${P ? 8.5 : 12}%">Len m</th>
+        <th class="num" style="width:${P ? 8.5 : 9}%">Kg/m</th><th class="num" style="width:${P ? 11 : 11}%">Weight kg</th>
+        ${P ? '<th class="num" style="width:9%">Rate</th><th class="num" style="width:12%">Amount AED</th>' : ''}
+      </tr></thead>
+      <tbody>${lines.map(u => `
+        <tr>
+          <td class="dt">${dmy(u.date)}</td>
+          <td><b>${esc(u.code)}</b><span class="ms">${esc(u.type)}${u.size ? ' · ' + esc(u.size) : ''}</span></td>
+          <td class="num">${int(u.pcs)}</td><td class="num">${n(u.len,2)}</td>
+          <td class="num">${n(u.kgm,3)}</td><td class="num">${n(u.kg,3)}</td>
+          ${P ? `<td class="num">${money(u.rate)}${u.unit === 'pc' ? '<span style="font-size:6.6pt">/pc</span>' : ''}</td>
+                 <td class="num">${money(u.amt)}</td>` : ''}
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td colspan="2">Total</td><td class="num">${int(t.pcs)}</td><td colspan="2"></td>
+        <td class="num">${n(t.kg,3)}</td>
+        ${P ? `<td></td><td class="num">${money(t.amt)}</td>` : ''}
+      </tr></tfoot>
+    </table>
+
+    <div class="psec">Summary by Material</div>
+    <table class="ptbl">
+      <thead><tr>
+        <th style="width:${P ? 40 : 52}%">Material</th><th class="num" style="width:${P ? 10 : 14}%">Pcs</th>
+        <th class="num" style="width:${P ? 15 : 22}%">Weight kg</th>
+        ${P ? '<th class="num" style="width:12%">Rate</th><th class="num" style="width:14%">Amount AED</th>' : ''}
+        <th class="num" style="width:${P ? 9 : 12}%">% Kg</th>
+      </tr></thead>
+      <tbody>${mats.map(r => `
+        <tr>
+          <td><b>${esc(r.code)}</b><span class="ms">${esc(r.type)}${r.size ? ' · ' + esc(r.size) : ''}</span></td>
+          <td class="num">${int(r.pcs)}</td><td class="num"><b>${n(r.kg,3)}</b></td>
+          ${P ? `<td class="num">${money(r.rate)}</td><td class="num">${money(r.amt)}</td>` : ''}
+          <td class="num">${t.kg ? n(r.kg / t.kg * 100, 1) : '0.0'}%</td>
+        </tr>`).join('')}
+      </tbody>
+      <tfoot><tr>
+        <td>Totals</td><td class="num">${int(t.pcs)}</td><td class="num">${n(t.kg,3)}</td>
+        ${P ? `<td></td><td class="num">${money(t.amt)}</td>` : ''}
+        <td class="num">100.0%</td>
+      </tr></tfoot>
+    </table>
+
+    ${P ? `
+    <div class="ptot"><table>
+      <tr><td class="k">Total Material Used</td><td class="v">${n(t.kg,3)} kg</td></tr>
+      <tr><td class="k">Material Value</td><td class="v">AED ${money(t.amt)}</td></tr>
+      <tr><td class="k">VAT ${VAT_PCT}%</td><td class="v">AED ${money(vat)}</td></tr>
+      <tr class="grand"><td class="k" style="color:#fff">Total Incl. VAT</td><td class="v">AED ${money(t.amt + vat)}</td></tr>
+    </table></div>` : `
+    <div class="ptot"><table>
+      <tr><td class="k">Total Pieces</td><td class="v">${int(t.pcs)}</td></tr>
+      <tr class="grand"><td class="k" style="color:#fff">Total Material Used</td><td class="v">${n(t.kg,3)} kg</td></tr>
+    </table></div>`}
+
+    <div class="psign">
+      <div>Prepared By</div><div>Store In-Charge</div><div>Client / Authorised Signatory</div>
+    </div>
+    <div class="pfoot">
+      ${esc(COMPANY.name)} · TRN ${esc(COMPANY.trn)} · ${esc(COMPANY.web)}<br>
+      Material ${P ? 'statement' : 'schedule'} for Contract Agreement ${esc(c.no)} — generated ${dmy(today())} from the Fabrication Material Tracker.
+    </div>
+  </div>`;
+  return true;
+}
+
+function printPDF(withPrices = true){
+  if (!buildPDF(withPrices)) return;
+  const c = activeC();
+  const old = document.title;
+  const kind = withPrices ? 'Material Statement' : 'Material Schedule';
+  document.title = `${kind} ${c.no}${c.client ? ' - ' + c.client : ''} ${dmy(today())}`.replace(/[\\/:*?"<>|]/g, '-');
+  window.print();
+  setTimeout(() => { document.title = old; }, 800);
+}
+
+/* ============================================================
+   BACKUP / RESTORE — covers the whole archive
+   ============================================================ */
+async function exportJSON(){
+  await doSave(true);
+  toast('Preparing backup…');
+  const allUsed = await idb(store('used').getAll());
+  const blob = new Blob([JSON.stringify({
+    app: 'AlSahlawi Material Tracker', version: 3,
+    exported: new Date().toISOString(),
+    contracts, used: allUsed, settings
+  })], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `material-tracker-backup-${today()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`Backup downloaded — ${int(contracts.length)} contracts, ${int(allUsed.length)} lines`);
+}
+
+function importJSON(file){
+  const r = new FileReader();
+  r.onload = async e => {
+    let d;
+    try{ d = JSON.parse(e.target.result); }catch(err){ toast('That file is not valid JSON'); return; }
+    const inUsed = Array.isArray(d.used) ? d.used
+                 : Array.isArray(d.moves) ? d.moves.filter(m => m.dir !== 'IN').map(m => { const {dir, ...x} = m; return x; })
+                 : null;
+    if (!Array.isArray(d.contracts) || !inUsed){ toast('That file is not a valid backup'); return; }
+
+    ask('Restore backup?',
+        `This replaces the current <b>${int(contracts.length)}</b> contract(s) with <b>${int(d.contracts.length)}</b> contract(s) and <b>${int(inUsed.length)}</b> material line(s).`,
+        async () => {
+          toast('Restoring…');
+          await clearStore('contracts'); await clearStore('used');
+          pendingC.clear(); pendingU = []; pendingDel = [];
+
+          // older backups carry no cached totals — rebuild them
+          const byC = new Map();
+          for (const u of inUsed){
+            if (!byC.has(u.contractId)) byC.set(u.contractId, []);
+            byC.get(u.contractId).push(u);
+          }
+          const recs = d.contracts.map(c => {
+            const rows = byC.get(c.id) || [];
+            const t = totals(rows);
+            return { ...c, totPcs:t.pcs, totKg:t.kg, totAmt:t.amt,
+                     matCount: new Set(rows.map(x => x.code)).size, lineCount: rows.length };
+          });
+          await putMany('contracts', recs);
+          await putMany('used', inUsed);
+          Object.assign(settings, d.settings || {});
+          $('stdRate').value = Number(settings.stdRate).toFixed(2);
+
+          contracts = recs; cById = new Map(); cHay = new Map();
+          for (const c of contracts){ cById.set(c.id, c); reindex(c); }
+          consCache = null; acPage = 0; acFilter = '';
+          settings.activeContract = contracts.length ? contracts.slice().sort(byRecent)[0].id : '';
+          lines = settings.activeContract ? await linesFor(settings.activeContract) : [];
+          dirty = true; await doSave(true);
+          renderAll();
+          toast(`Restored ${int(contracts.length)} contracts, ${int(inUsed.length)} lines`);
+        });
+  };
+  r.readAsText(file);
+}
+
+/* ============================================================
+   MIGRATION — carry any localStorage data into IndexedDB once
+   ============================================================ */
+async function migrate(){
+  const rawC = localStorage.getItem('fmt_contracts_v1');
+  if (!rawC) return false;
+  let oldC = [], oldU = [];
+  try{ oldC = JSON.parse(rawC) || []; }catch(e){ return false; }
+  try{ oldU = JSON.parse(localStorage.getItem('fmt_used_v1')) || []; }catch(e){}
+  if (!oldU.length){
+    try{
+      oldU = (JSON.parse(localStorage.getItem('fmt_moves_v1')) || [])
+        .filter(m => m.dir !== 'IN').map(m => { const {dir, ...x} = m; return x; });
+    }catch(e){}
+  }
+  if (!oldC.length) return false;
+
+  const byC = new Map();
+  for (const u of oldU){
+    if (!byC.has(u.contractId)) byC.set(u.contractId, []);
+    byC.get(u.contractId).push(u);
+  }
+  const recs = oldC.map(c => {
+    const rows = byC.get(c.id) || [];
+    const t = totals(rows);
+    return { ...c, totPcs:t.pcs, totKg:t.kg, totAmt:t.amt,
+             matCount: new Set(rows.map(x => x.code)).size, lineCount: rows.length, savedAt: Date.now() };
+  });
+  await putMany('contracts', recs);
+  await putMany('used', oldU);
+  try{ Object.assign(settings, JSON.parse(localStorage.getItem('fmt_settings_v1')) || {}); }catch(e){}
+  const t = db.transaction('meta', 'readwrite');
+  t.objectStore('meta').put({ k: 'settings', v: settings });
+  await txDone(t);
+
+  ['fmt_contracts_v1','fmt_used_v1','fmt_moves_v1','fmt_settings_v1'].forEach(k => localStorage.removeItem(k));
+  return true;
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function paintAC(){
+  document.querySelectorAll('.ac-item').forEach((el, i) => el.classList.toggle('on', i === acIdx));
+  const on = document.querySelector('.ac-item.on');
+  if (on) on.scrollIntoView({ block: 'nearest' });
+}
+
+function bind(){
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+    ['us','bm','ac'].forEach(t => $('p-' + t).style.display = t === b.dataset.t ? 'block' : 'none');
+  }));
+
+  $('btnLookup').addEventListener('click', openLookup);
+  $('btnSave').addEventListener('click', () => doSave(false));
+  $('btnNewC').addEventListener('click', () => openContract(null));
+  $('btnEditC').addEventListener('click', () => requireCode(() => openContract(activeC() ? activeC().id : null)));
+  $('lockChip').addEventListener('click', toggleLock);
+  $('netChip').addEventListener('click', openCloud);
+  $('nSave').addEventListener('click', connectCloud);
+  $('nOff').addEventListener('click', disconnectCloud);
+  $('nCancel').addEventListener('click', () => {
+    const w = $('nWho').value.trim();
+    if (w !== cloud.who){ cloud.who = w; saveCloud(); }
+    $('ovlN').classList.remove('show');
+  });
+  $('ovlN').addEventListener('click', e => { if (e.target.id === 'ovlN') $('ovlN').classList.remove('show'); });
+  $('nCopy').addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(SQL_SETUP); toast('SQL copied — paste it into the Supabase SQL Editor'); }
+    catch(err){
+      const r = document.createRange(); r.selectNodeContents($('nSql'));
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      toast('Press Ctrl+C to copy the selected SQL');
+    }
+  });
+
+  // retry the queue whenever the network comes back
+  window.addEventListener('online', () => { if (cloudOn()){ flushOutbox(); wsConnect(); } });
+  window.addEventListener('offline', () => { if (cloudOn()) setNet('offline'); });
+  // a tab left in the background can have its socket dropped — reconnect on return
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && cloudOn() && (!ws || ws.readyState > 1)) wsConnect();
+  });
+  $('gOk').addEventListener('click', tryCode);
+  $('gCancel').addEventListener('click', () => { $('ovlG').classList.remove('show'); gateCb = null; });
+  $('ovlG').addEventListener('click', e => { if (e.target.id === 'ovlG'){ $('ovlG').classList.remove('show'); gateCb = null; } });
+  $('gCode').addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); tryCode(); }
+    else if (e.key === 'Escape'){ $('ovlG').classList.remove('show'); gateCb = null; }
+  });
+  $('stdRate').addEventListener('input', e => {
+    settings.stdRate = Number(e.target.value) || BASELINE_RATE;
+    markDirty();
+    if (picked) $('qRate').value = effRate(picked).toFixed(2);
+    calc();
+  });
+  $('btnPdf').addEventListener('click', () => printPDF(true));
+  $('btnPdfNP').addEventListener('click', () => printPDF(false));
+
+  /* ---- custom materials ---- */
+  $('btnCustom').addEventListener('click', openCustom);
+  $('xUnit').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    setUnit(b.dataset.u);
+  });
+  $('xSaveUse').addEventListener('click', () => addCustom(true));
+  $('xSaveOnly').addEventListener('click', () => addCustom(false));
+  $('xCancel').addEventListener('click', () => $('ovlX').classList.remove('show'));
+  $('ovlX').addEventListener('click', e => { if (e.target.id === 'ovlX') $('ovlX').classList.remove('show'); });
+  $('xList').addEventListener('click', async e => {
+    const b = e.target.closest('[data-xdel]'); if (!b) return;
+    await deleteCustomItem(b.dataset.xdel);
+    renderCustomList();
+    toast('Custom material removed — lines already logged keep their details');
+  });
+  ['xName','xSize','xWeight','xRate'].forEach(id =>
+    $(id).addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addCustom(true); } }));
+
+  /* ---- site visits ---- */
+  $('btnVisits').addEventListener('click', openVisits);
+  $('vAdd').addEventListener('click', addVisit);
+  $('vClose').addEventListener('click', () => $('ovlV').classList.remove('show'));
+  $('ovlV').addEventListener('click', e => { if (e.target.id === 'ovlV') $('ovlV').classList.remove('show'); });
+  $('vNote').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); addVisit(); } });
+  $('vList').addEventListener('click', e => {
+    const b = e.target.closest('[data-vdel]'); if (b) delVisit(b.dataset.vdel);
+  });
+  $('btnExport').addEventListener('click', exportJSON);
+  $('btnImport').addEventListener('click', () => $('fileIn').click());
+  $('fileIn').addEventListener('change', e => { if (e.target.files[0]) importJSON(e.target.files[0]); e.target.value = ''; });
+
+  /* ---- lookup palette ---- */
+  const lq = $('lkQ');
+  lq.addEventListener('input', () => renderLookup(lq.value));
+  lq.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown'){ e.preventDefault(); lkIdx = Math.min(lkIdx + 1, lkHits.length - 1); paintLk(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); lkIdx = Math.max(lkIdx - 1, 0); paintLk(); }
+    else if (e.key === 'Enter'){ e.preventDefault(); if (lkHits[lkIdx]){ closeLookup(); setActive(lkHits[lkIdx].id); } }
+    else if (e.key === 'Escape'){ closeLookup(); }
+  });
+  $('lkRes').addEventListener('click', e => {
+    const it = e.target.closest('.lk-item'); if (!it) return;
+    closeLookup(); setActive(it.dataset.id);
+  });
+  $('ovlLk').addEventListener('click', e => { if (e.target.id === 'ovlLk') closeLookup(); });
+
+  /* ---- material autocomplete ---- */
+  const si = $('qSearch');
+  si.addEventListener('input', () => { picked = null; $('qKg').value = ''; $('qAmt').value = ''; renderAC(si.value); });
+  si.addEventListener('focus', () => { if (si.value.trim() && !picked) renderAC(si.value); });
+  si.addEventListener('keydown', e => {
+    const box = $('acList');
+    if (!box.classList.contains('show')) return;
+    if (e.key === 'ArrowDown'){ e.preventDefault(); acIdx = Math.min(acIdx + 1, acHits.length - 1); paintAC(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); acIdx = Math.max(acIdx - 1, 0); paintAC(); }
+    else if (e.key === 'Enter'){ e.preventDefault(); choose(acIdx); }
+    else if (e.key === 'Escape'){ box.classList.remove('show'); }
+  });
+  $('acList').addEventListener('mousedown', e => {
+    const it = e.target.closest('.ac-item'); if (!it) return;
+    e.preventDefault(); choose(Number(it.dataset.i));
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.ac')) $('acList').classList.remove('show'); });
+
+  ['qPcs','qLen','qRate'].forEach(id => {
+    $(id).addEventListener('input', calc);
+    $(id).addEventListener('keydown', e => { if (e.key === 'Enter') addUsed(); });
+  });
+  $('btnAdd').addEventListener('click', addUsed);
+
+  $('usBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if (b) delUsed(b.dataset.del);
+  });
+
+  /* ---- all-contracts panel (delegated: it re-renders often) ---- */
+  $('p-ac').addEventListener('click', async e => {
+    const o = e.target.closest('[data-open]');
+    const d = e.target.closest('[data-edit]');
+    if (o){ await setActive(o.dataset.open); toast('Contract opened'); return; }
+    if (d){ const id = d.dataset.edit; requireCode(() => openContract(id)); return; }
+    if (e.target.id === 'acPrev'){ acPage--; renderAllContracts(); return; }
+    if (e.target.id === 'acNext'){ acPage++; renderAllContracts(); return; }
+    if (e.target.id === 'acClear'){ acFilter = ''; acPage = 0; renderAllContracts(); return; }
+    if (e.target.id === 'acCons'){
+      e.target.disabled = true;
+      $('consBox').innerHTML = '<div class="empty" style="padding:26px"><span class="spin"></span> Reading every material line…</div>';
+      try{ await computeConsumption(); }catch(err){ toast('Could not calculate'); console.error(err); }
+      renderAllContracts();
+      return;
+    }
+  });
+  $('p-ac').addEventListener('input', e => {
+    if (e.target.id === 'acFilt'){
+      acFilter = e.target.value; acPage = 0;
+      clearTimeout(window._acT);
+      window._acT = setTimeout(() => {
+        renderAllContracts();
+        const f = $('acFilt');
+        if (f){ f.focus(); f.setSelectionRange(f.value.length, f.value.length); }
+      }, 220);
+    }
+    if (e.target.id === 'acJump'){
+      const p = parseInt(e.target.value, 10);
+      if (p > 0){
+        clearTimeout(window._acJ);
+        window._acJ = setTimeout(() => { acPage = p - 1; renderAllContracts(); }, 350);
+      }
+    }
+  });
+  $('p-ac').addEventListener('change', e => {
+    if (e.target.id === 'acSort'){
+      settings.acSort = e.target.value;
+      acPage = 0;
+      persistSettings();
+      renderAllContracts();
+    }
+  });
+
+  $('cSave').addEventListener('click', saveContract);
+  $('cDel').addEventListener('click', delContract);
+  $('cCancel').addEventListener('click', () => $('ovlC').classList.remove('show'));
+  $('ovlC').addEventListener('click', e => { if (e.target.id === 'ovlC') $('ovlC').classList.remove('show'); });
+  $('cNo').addEventListener('keydown', e => { if (e.key === 'Enter') saveContract(); });
+  $('cValue').addEventListener('keydown', e => { if (e.key === 'Enter') saveContract(); });
+
+  $('aYes').addEventListener('click', () => { $('ovlA').classList.remove('show'); if (askCb) askCb(); askCb = null; });
+  $('aNo').addEventListener('click',  () => { $('ovlA').classList.remove('show'); askCb = null; });
+  $('ovlA').addEventListener('click', e => { if (e.target.id === 'ovlA'){ $('ovlA').classList.remove('show'); askCb = null; } });
+
+  document.addEventListener('keydown', e => {
+    const meta = e.ctrlKey || e.metaKey;
+    if (!meta) return;
+    const k = e.key.toLowerCase();
+    if (k === 'k'){ e.preventDefault(); openLookup(); }
+    else if (k === 's'){ e.preventDefault(); doSave(false); }
+    else if (k === 'p'){ e.preventDefault(); printPDF(!e.shiftKey); }   // Ctrl+Shift+P = no prices
+  });
+
+  // never lose work to a stray tab close
+  window.addEventListener('beforeunload', e => {
+    if (dirty){ e.preventDefault(); e.returnValue = ''; }
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  $('mhLogo').src = LOGO;
+  loadCloud();
+  bind();
+  try{
+    db = await openDB();
+  }catch(err){
+    $('saveTxt').textContent = 'IndexedDB unavailable — this browser cannot store data';
+    console.error('[tracker] IndexedDB failed', err);
+    return;
+  }
+  // ask the browser not to evict the archive
+  try{ if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); }catch(e){}
+
+  await migrate();
+
+  const meta = await idb(store('meta').get('settings'));
+  if (meta && meta.v) Object.assign(settings, meta.v);
+
+  await loadCustom();
+  contracts = await idb(store('contracts').getAll());
+  cById = new Map(); cHay = new Map();
+  for (const c of contracts){ cById.set(c.id, c); reindex(c); }
+
+  if (!cById.has(settings.activeContract)){
+    settings.activeContract = contracts.length ? contracts.slice().sort(byRecent)[0].id : '';
+  }
+  lines = settings.activeContract ? await linesFor(settings.activeContract) : [];
+
+  $('stdRate').value = Number(settings.stdRate).toFixed(2);
+  $('qDate').value = today();
+  dirty = false;
+  setNet(cloudOn() ? 'connecting' : 'local');
+  renderAll();
+
+  // show the local copy first, then catch up with the server
+  if (cloudOn()){
+    await flushOutbox();
+    await pullCustom();
+    if (await pullAll()){
+      if (!cById.has(settings.activeContract))
+        settings.activeContract = contracts.length ? contracts.slice().sort(byRecent)[0].id : '';
+      if (settings.activeContract){
+        const fresh = await pullLines(settings.activeContract);
+        if (fresh) lines = fresh;
+      }
+      dirty = false;
+      renderAll();
+    }
+    wsConnect();
+  }
+}
+
+/* ============================================================
+   ACCESS — only people the admin ticks can open the tracker.
+   Editing contract details depends on the admin's "Can edit" tick
+   (this replaces the old 1234 code). The cloud rules enforce both;
+   this part just shows the right screen.
+   ============================================================ */
+const PERM_CACHE = 'asa_mt_perm:';
+
+function mtDenied(title, msg){
+  document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#262262;
+      font-family:Barlow,system-ui,-apple-system,'Segoe UI',sans-serif;padding:24px">
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:420px;color:#1b1946">
+      <div style="font-size:34px">🔒</div>
+      <h2 style="margin:8px 0 6px;font-size:22px">${esc(title)}</h2>
+      <p style="color:#6b6a86;line-height:1.5;margin:0 0 18px">${esc(msg)}</p>
+      <a href="../../index.html" style="display:inline-block;background:#262262;color:#fff;text-decoration:none;padding:10px 16px;border-radius:9px;font-weight:600">&larr; ASA Home</a>
+      <button onclick="ASAGate.logout()" style="margin-left:6px;padding:10px 16px;border-radius:9px;border:1px solid #d3d3dc;background:#fff;font:inherit;font-weight:600;cursor:pointer">Log out</button>
+    </div></div>`;
+}
+
+async function mtAccess(sess){
+  cloud.who = sess.name || '';
+  const mode = !ASACloud.configured() || sess.setup ? 'local' : sess.offline ? 'offline' : 'cloud';
+  if (sess.role === 'admin'){ MT = { cloud: mode === 'cloud', canEdit: true, admin: true }; return true; }
+  if (mode === 'local'){ MT = { cloud: false, canEdit: false, admin: false }; return true; }   // setup mode: device only
+  let perm = null;
+  if (mode === 'cloud'){
+    try{
+      const m = await ASACloud.myMember();
+      perm = { use: !!(m && m.tools && m.tools['material-tracker']), edit: !!(m && m.mtEdit) };
+      localStorage.setItem(PERM_CACHE + sess.username, JSON.stringify(perm));
+    }catch(e){ /* fall back to the last answer below */ }
+  }
+  if (!perm){ try{ perm = JSON.parse(localStorage.getItem(PERM_CACHE + sess.username)); }catch(e){} }
+  if (!perm || !perm.use){
+    mtDenied('No access to the Material Tracker', perm ? 'Your account isn’t allowed to open the Material Tracker. Ask the admin to give you access.'
+      : 'We couldn’t check your access (no internet). Connect and try again.');
+    return false;
+  }
+  MT = { cloud: mode === 'cloud', canEdit: perm.edit, admin: false };
+  if (MT.cloud){
+    try{ await ASACloud.add(MT_APP, 'access', { app: MT_APP, canEdit: MT.canEdit }); }catch(e){}
+  }
+  return true;
+}
+
+/* ---------- editing: the admin's tick instead of a code ---------- */
+function paintLock(){
+  const chip = $('lockChip');
+  chip.classList.toggle('open', editUnlocked);
+  chip.textContent = editUnlocked ? '✏️ You can edit contracts' : '👁 View & add only';
+  $('btnEditC').textContent = editUnlocked ? 'Edit' : '🔒 Edit';
+}
+function requireCode(cb){
+  if (editUnlocked){ cb(); return; }
+  toast('Only people the admin allows can edit contract details');
+}
+function tryCode(){}
+function toggleLock(){
+  toast(editUnlocked ? 'The admin has allowed you to edit contracts' : 'You can log material and site visits. Ask the admin if you need to edit contracts.');
+}
+
+/* ---------- the cloud window (click the sync chip) ---------- */
+function openCloud(){
+  const state = !MT.cloud ? (ASACloud.configured() ? 'Offline or not connected — saving on this device and syncing later.' : 'The ASA cloud is not set up yet — saving on this device only.')
+    : `Connected to the ASA cloud (${esc(netState)}). Everyone with access sees the same contracts, live.`;
+  $('nWho').value = cloud.who;
+  $('nStatus').innerHTML = `<div class="warnbox" style="${MT.cloud ? 'background:#E7F5ED;border-color:#B6E0C7;color:#14603A' : ''}">
+      <b>${MT.cloud ? 'Live' : 'Not live'}.</b> ${state}<br>Logged in as <b>${esc(cloud.who)}</b>${MT.admin ? ' (admin)' : MT.canEdit ? ' — can edit contracts' : ' — view & add only'}.</div>`;
+  $('mtImport').style.display = MT.admin && MT.cloud ? '' : 'none';
+  $('mtImpMsg').textContent = '';
+  $('ovlN').classList.add('show');
+}
+function connectCloud(){ $('ovlN').classList.remove('show'); }
+function disconnectCloud(){ $('ovlN').classList.remove('show'); }
+
+/* ---------- admin: one-time import of existing data ---------- */
+function impMsg(t){ $('mtImpMsg').textContent = t; }
+
+// Device data from the previous version of the tracker (same website, its own database).
+function readOldDevice(){
+  return new Promise((res, rej) => {
+    const rq = indexedDB.open('alsahlawi_material_tracker');
+    rq.onupgradeneeded = () => { rq.transaction.abort(); rej(new Error('No old Material Tracker data on this device.')); };
+    rq.onerror = () => rej(rq.error || new Error('No old Material Tracker data on this device.'));
+    rq.onsuccess = () => {
+      const odb = rq.result, out = {};
+      const names = ['contracts', 'used', 'custom'].filter(s => odb.objectStoreNames.contains(s));
+      if (!names.length){ odb.close(); return rej(new Error('No old Material Tracker data on this device.')); }
+      const t = odb.transaction(names, 'readonly');
+      names.forEach(s => { const r = t.objectStore(s).getAll(); r.onsuccess = () => out[s] = r.result || []; });
+      t.oncomplete = () => { odb.close(); res(out); };
+      t.onerror = () => rej(t.error);
+    };
+  });
+}
+
+// Everything in the old Supabase project (needs its URL + key, saved on devices that used Live Sync).
+async function readSupabase(){
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem('fmt_cloud_v1')) || {}; }catch(e){}
+  const url = (saved.url || prompt('Old Supabase Project URL (https://….supabase.co):') || '').trim().replace(/\/+$/, '');
+  const key = (saved.key || prompt('Old Supabase anon key:') || '').trim();
+  if (!url || !key) throw new Error('Supabase URL and key are needed.');
+  const get = async path => {
+    const all = [];
+    for (let from = 0; ; from += 1000){
+      const r = await fetch(`${url}/rest/v1/${path}&limit=1000&offset=${from}`, { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+      if (!r.ok) throw new Error('Supabase: HTTP ' + r.status);
+      const page = await r.json();
+      all.push(...page);
+      if (page.length < 1000) break;
+    }
+    return all;
+  };
+  return {
+    contracts: await get('contracts?select=*&order=id.asc'),
+    used: await get('used?select=*&order=id.asc'),
+    custom_items: await get('custom_items?select=*&order=id.asc').catch(() => [])
+  };
+}
+
+async function runImport(source){
+  if (!MT.admin || !MT.cloud) return;
+  try{
+    impMsg('Reading…');
+    let C, U, X;
+    if (source === 'device'){
+      const d = await readOldDevice();
+      C = (d.contracts || []).map(cToRow); U = (d.used || []).map(uToRow); X = (d.custom || []).map(xToRow);
+    }else{
+      const d = await readSupabase();
+      C = d.contracts.map(r => cToRow(rowToC(r))); U = d.used.map(r => uToRow(rowToU(r))); X = d.custom_items.map(r => xToRow(rowToX(r)));
+    }
+    if (!C.length && !U.length) { impMsg('Nothing found to import.'); return; }
+    if (!confirm(`Import into the ASA cloud?\n\n${int(C.length)} contracts, ${int(U.length)} material lines and ${int(X.length)} custom materials will be copied in. Records with the same id are overwritten.`)) { impMsg(''); return; }
+    const now = Date.now(), stamp = rows => rows.map(r => ({ ...r, ts: now }));
+    await ASACloud.putMany(MT_APP, 'contracts', stamp(C), (a, b) => impMsg(`Contracts ${a}/${b}…`));
+    await ASACloud.putMany(MT_APP, 'used', stamp(U), (a, b) => impMsg(`Material lines ${a}/${b}…`));
+    if (X.length) await ASACloud.putMany(MT_APP, 'custom_items', stamp(X), (a, b) => impMsg(`Custom materials ${a}/${b}…`));
+    await logActivity(`Imported ${C.length} contracts and ${U.length} material lines from the ${source === 'device' ? 'old version on ' + ASACloud.deviceLabel() : 'old Supabase sync'}`, 'import', '');
+    impMsg(`Done — imported ${int(C.length)} contracts and ${int(U.length)} lines.`);
+    await pullAll(); await pullCustom();
+    await setActive(cById.has(settings.activeContract) ? settings.activeContract : (contracts.length ? contracts.slice().sort(byRecent)[0].id : ''));
+    renderAll();
+  }catch(e){ impMsg('Import failed: ' + (ASACloud.friendly ? ASACloud.friendly(e) : e.message)); }
+}
+
+/* ---------- start: login → access check → the tracker ---------- */
+async function mtBoot(){
+  const sess = await ASAGate.ready;
+  if (!(await mtAccess(sess))) return;
+  editUnlocked = MT.canEdit;
+  await init();
+  paintLock(); renderAll();
+}
+
+mtBoot();
+</script>
+</body>
+</html>

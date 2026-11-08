@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al Sahlawi — Stock Inventory</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="stock"></script>
+<script src="../../shared/asa-device-gate.js"></script>
+<style>
+  a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:8px;white-space:nowrap;margin-right:12px}
+  a.asa-home:hover{background:rgba(255,255,255,.15)}
+</style>
+<!--
+  Al Sahlawi Aluminium — Stock Inventory Tracker (v2: per-warehouse stock)
+  Single-file, offline-capable. Auto-saves to this browser (localStorage)
+  AND exports/imports backup files to move between computers.
+  Stock is split across Warehouse 1 (ASA), Warehouse 2 (Shanof) and an
+  Unassigned bucket. OUT/LOW are judged on the combined total.
+  Live cloud sync can be layered on later (see CONFIG.cloud stub).
+-->
+<script id="seedData" type="application/json">[]</script>
+<style>
+  :root{
+    --brand:#3B73B9; --brand-dark:#2c5a96; --brand-light:#e8f0fa;
+    --bg:#f5f7fb; --card:#ffffff; --border:#d8dde6;
+    --text:#1d2433; --muted:#6b7280;
+    --success:#16a34a; --danger:#dc2626; --warn:#d97706; --warn-bg:#fef3c7;
+    --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
+  .app{max-width:1240px;margin:0 auto;padding:16px;}
+  a{color:var(--brand);}
+
+  header.topbar{background:var(--brand);color:#fff;padding:14px 20px;border-radius:8px;
+    margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;
+    box-shadow:var(--shadow);flex-wrap:wrap;gap:10px;}
+  header.topbar h1{margin:0;font-size:18px;font-weight:600;}
+  header.topbar .subtitle{font-size:12px;opacity:.85;}
+  header.topbar .saved{font-size:12px;opacity:.9;display:flex;align-items:center;gap:6px;}
+  .dot{width:8px;height:8px;border-radius:50%;background:#9ae6b4;display:inline-block;}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+    padding:16px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h2{margin:0 0 12px;font-size:13px;font-weight:600;text-transform:uppercase;
+    color:var(--muted);letter-spacing:.5px;}
+
+  .row{display:flex;gap:16px;flex-wrap:wrap;align-items:end;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:12px;color:var(--muted);font-weight:500;}
+  .field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--border);
+    border-radius:6px;font-size:14px;font-family:inherit;background:#fff;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;
+    border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-light);}
+  .qty-input input{width:120px;font-size:16px;font-weight:600;}
+
+  button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:6px;
+    border:1px solid var(--border);background:#fff;padding:8px 14px;color:var(--text);
+    transition:background .12s,border-color .12s;}
+  button:hover{background:#f3f5f9;}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600;}
+  button.primary:hover{background:var(--brand-dark);}
+  button.ghost{background:transparent;}
+  button.danger{color:var(--danger);border-color:#f0c2c2;}
+  button.danger:hover{background:#fdecec;}
+  button.sm{padding:5px 10px;font-size:13px;}
+
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .stat{flex:1;min-width:130px;background:var(--card);border:1px solid var(--border);
+    border-radius:8px;padding:12px 14px;box-shadow:var(--shadow);}
+  .stat .n{font-size:24px;font-weight:700;}
+  .stat .l{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .stat.out .n{color:var(--danger);}
+  .stat.low .n{color:var(--warn);}
+  .stat.ok .n{color:var(--success);}
+
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .seg button{border:none;border-radius:0;background:#fff;padding:8px 14px;}
+  .seg button.active{background:var(--brand);color:#fff;font-weight:600;}
+  .seg button+button{border-left:1px solid var(--border);}
+
+  .lookup{position:relative;flex:1;min-width:240px;}
+  .lookup input{width:100%;font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .suggestions{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);
+    border-radius:6px;margin-top:4px;max-height:300px;overflow-y:auto;z-index:100;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);display:none;}
+  .suggestions.show{display:block;}
+  .sugg{padding:8px 12px;cursor:pointer;border-bottom:1px solid #f0f2f6;}
+  .sugg:hover,.sugg.active{background:var(--brand-light);}
+  .sugg .code{font-weight:600;font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .sugg .meta{font-size:12px;color:var(--muted);}
+  .sugg .q{float:right;font-weight:600;}
+
+  .wh-chip{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;
+    background:var(--brand-light);color:var(--brand-dark);white-space:nowrap;}
+  .wh-chip.asa{background:#e6f0ff;color:#1e4ea8;}
+  .wh-chip.shanof{background:#e8f5e9;color:#1b7a34;}
+  .wh-chip.unassigned{background:#f1f3f7;color:#5b6472;}
+
+  .alerts{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media(max-width:760px){.alerts{grid-template-columns:1fr;}}
+  .alert-card{display:flex;flex-direction:column;max-height:460px;}
+  .alert-card .list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px;}
+  .alert-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);
+    border-radius:6px;cursor:pointer;background:#fff;}
+  .alert-row:hover{border-color:var(--brand);background:var(--brand-light);}
+  .alert-row .code{font-weight:600;font-family:"SF Mono",Menlo,Consolas,monospace;flex:1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .alert-row .qv{font-size:13px;color:var(--muted);white-space:nowrap;}
+  .empty{color:var(--muted);font-size:13px;padding:14px;text-align:center;}
+
+  .badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:1px;
+    padding:3px 8px;border-radius:4px;color:#fff;}
+  .badge-out{background:var(--danger);animation:blink 1s steps(2,start) infinite;}
+  .badge-low{background:var(--warn);animation:blink 1.25s steps(2,start) infinite;}
+  @keyframes blink{50%{opacity:.18;}}
+  @media(prefers-reduced-motion:reduce){.badge-out,.badge-low{animation:none;}}
+
+  .hdr-h2-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .hdr-h2-row h2{margin:0;}
+  .count-pill{font-size:12px;font-weight:700;padding:2px 8px;border-radius:10px;}
+  .count-pill.out{background:#fde7e7;color:var(--danger);}
+  .count-pill.low{background:var(--warn-bg);color:var(--warn);}
+
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .toolbar .search{flex:1;min-width:200px;}
+  .toolbar .search input{width:100%;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:.4px;padding:8px;border-bottom:2px solid var(--border);cursor:pointer;
+    position:sticky;top:0;background:var(--card);user-select:none;}
+  thead th .arr{font-size:10px;opacity:.6;}
+  tbody td{padding:8px;border-bottom:1px solid #eef1f5;vertical-align:middle;}
+  tbody tr{cursor:pointer;}
+  tbody tr:hover{background:var(--brand-light);}
+  td.code{font-family:"SF Mono",Menlo,Consolas,monospace;font-weight:600;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+  .pill{font-size:11px;font-weight:700;padding:2px 7px;border-radius:4px;}
+  .pill.out{background:#fde7e7;color:var(--danger);}
+  .pill.low{background:var(--warn-bg);color:var(--warn);}
+  .pill.ok{background:#e6f4ea;color:var(--success);}
+  .table-wrap{max-height:560px;overflow:auto;border:1px solid var(--border);border-radius:6px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;
+    align-items:flex-start;justify-content:center;z-index:1000;padding:30px 16px;overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:10px;max-width:580px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;
+    justify-content:space-between;align-items:flex-start;gap:12px;}
+  .modal-head h3{margin:0;font-size:16px;font-family:"SF Mono",Menlo,Consolas,monospace;}
+  .modal-head .x{border:none;background:transparent;font-size:22px;line-height:1;color:var(--muted);padding:0 4px;}
+  .modal-body{padding:16px 20px;}
+  .modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;
+    flex-wrap:wrap;justify-content:flex-end;}
+
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;margin-bottom:14px;}
+  .kv .k{color:var(--muted);font-size:13px;}
+  .kv .v{font-weight:600;}
+  .bar{height:10px;border-radius:5px;background:#eef1f5;overflow:hidden;margin-top:4px;}
+  .bar>span{display:block;height:100%;background:var(--success);}
+  .bar.low>span{background:var(--warn);}
+  .bar.out>span{background:var(--danger);}
+
+  .wh-edit{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:6px 0 4px;}
+  .wh-edit .field input{width:100%;text-align:right;font-weight:600;}
+  @media(max-width:520px){.wh-edit{grid-template-columns:1fr;}}
+
+  .hist{max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;}
+  .hist table{font-size:12px;}
+  .hist td,.hist th{padding:6px 8px;}
+  .hist .pos{color:var(--success);font-weight:700;}
+  .hist .neg{color:var(--danger);font-weight:700;}
+
+  .menu-wrap{position:relative;display:inline-block;}
+  .menu{position:absolute;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid var(--border);
+    border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.12);min-width:230px;z-index:200;display:none;overflow:hidden;}
+  .menu.show{display:block;}
+  .menu button{display:block;width:100%;text-align:left;border:none;border-radius:0;padding:10px 14px;background:#fff;}
+  .menu button:hover{background:var(--brand-light);}
+  .menu .sep{height:1px;background:var(--border);}
+
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1d2433;color:#fff;
+    padding:10px 18px;border-radius:8px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.25);
+    opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:2000;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;}
+
+  @media print{
+    body{background:#fff;}
+    .no-print{display:none !important;}
+    .card,.stat{box-shadow:none;border:1px solid #ccc;}
+    .alert-card{max-height:none;}
+    .table-wrap{max-height:none;overflow:visible;}
+    .badge-out,.badge-low{animation:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div style="display:flex;align-items:center">
+    <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+    <div>
+      <h1>Stock Inventory</h1>
+      <div class="subtitle">Al Sahlawi Bldg. Metal Const. Ind. Factory LLC &nbsp;·&nbsp; Warehouse 1 (ASA) + Warehouse 2 (Shanof)</div>
+    </div>
+    </div>
+    <div class="saved"><span class="dot" id="saveDot"></span><span id="saveText">Loading…</span></div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="stTotal">0</div><div class="l">Items tracked</div></div>
+    <div class="stat out"><div class="n" id="stOut">0</div><div class="l">Out of stock</div></div>
+    <div class="stat low"><div class="n" id="stLow">0</div><div class="l">Running low</div></div>
+    <div class="stat ok"><div class="n" id="stOk">0</div><div class="l">In stock</div></div>
+  </div>
+
+  <div class="card no-print">
+    <div class="hdr-h2-row">
+      <h2>Record Stock Movement</h2>
+      <div class="seg" id="modeSeg">
+        <button data-mode="remove" class="active">− Remove</button>
+        <button data-mode="receive">+ Receive</button>
+        <button data-mode="set">= Set count</button>
+      </div>
+    </div>
+    <div class="row">
+      <div class="lookup">
+        <div class="field" style="gap:4px;">
+          <label>Item (type code or description)</label>
+          <input id="lookupInput" placeholder="Start typing… e.g. T-50x50x2" autocomplete="off">
+        </div>
+        <div class="suggestions" id="suggBox"></div>
+      </div>
+      <div class="field">
+        <label>Warehouse</label>
+        <select id="whSelect">
+          <option value="ASA">Warehouse 1 (ASA)</option>
+          <option value="SHANOF">Warehouse 2 (Shanof)</option>
+          <option value="UNASSIGNED">Unassigned</option>
+        </select>
+      </div>
+      <div class="field qty-input">
+        <label id="qtyLabel">Pieces removed</label>
+        <input id="qtyInput" type="number" step="any" placeholder="0">
+      </div>
+      <div class="field" style="flex:1;min-width:150px;">
+        <label>Note (optional)</label>
+        <input id="noteInput" placeholder="e.g. Job #1423 / recount">
+      </div>
+      <button class="primary" id="applyBtn" style="height:38px;">Apply</button>
+    </div>
+    <div class="hint" id="moveHint">Subtracts pieces from the selected item in the chosen warehouse.</div>
+    <div id="selectedInfo" class="hint" style="display:none;"></div>
+  </div>
+
+  <div class="alerts">
+    <div class="card alert-card">
+      <div class="hdr-h2-row">
+        <h2><span class="badge badge-out">OUT</span> &nbsp;Out of Stock</h2>
+        <span class="count-pill out" id="outCount">0</span>
+      </div>
+      <div class="list" id="outList"></div>
+    </div>
+    <div class="card alert-card">
+      <div class="hdr-h2-row">
+        <h2><span class="badge badge-low">LOW</span> &nbsp;Running Low</h2>
+        <span class="count-pill low" id="lowCount">0</span>
+      </div>
+      <div class="list" id="lowList"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="hdr-h2-row">
+      <h2>Full Inventory</h2>
+      <div class="no-print" style="display:flex;gap:8px;align-items:center;">
+        <label class="hint" style="margin:0;">LOW below</label>
+        <input id="thrInput" type="number" step="any" min="0" style="width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;">
+        <span class="hint" style="margin:0;">pcs (total)</span>
+      </div>
+    </div>
+    <div class="toolbar no-print">
+      <div class="search"><input id="tableSearch" placeholder="Search item, description or vendor…"></div>
+      <select id="statusFilter" style="padding:8px 10px;border:1px solid var(--border);border-radius:6px;">
+        <option value="all">All statuses</option>
+        <option value="out">Out only</option>
+        <option value="low">Low only</option>
+        <option value="ok">In stock only</option>
+      </select>
+      <button class="sm" id="addItemBtn">+ Add new item</button>
+      <button class="sm" id="importCsvBtn">⇪ Import CSV</button>
+      <div class="menu-wrap">
+        <button class="sm" id="saveMenuBtn">Save / Export ▾</button>
+        <div class="menu" id="saveMenu">
+          <button data-act="backup">⤓ Export backup (.json)</button>
+          <button data-act="csv">⤓ Export current stock (.csv)</button>
+          <button data-act="portable">⤓ Download portable copy (.html)</button>
+          <div class="sep"></div>
+          <button data-act="restore">⇪ Restore from backup (.json)</button>
+          <button data-act="print">🖨 Print / Save as PDF</button>
+          <div class="sep"></div>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="item">Item <span class="arr"></span></th>
+            <th data-sort="desc">Description <span class="arr"></span></th>
+            <th data-sort="vendor">Vendor <span class="arr"></span></th>
+            <th data-sort="loc">Warehouse <span class="arr"></span></th>
+            <th data-sort="qty" style="text-align:right;">Total <span class="arr"></span></th>
+            <th data-sort="status">Status <span class="arr"></span></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="hint" id="tableInfo"></div>
+  </div>
+
+  <div class="hint no-print" style="text-align:center;margin-bottom:30px;">
+    Auto-saves to this browser. To move data to another computer, use
+    <b>Download portable copy</b> or <b>Export backup</b> → <b>Restore from backup</b>.
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<input type="file" id="csvFile" accept=".csv,.txt" style="display:none;">
+<input type="file" id="jsonFile" accept=".json" style="display:none;">
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+
+// ---------- Config ----------
+var KEY = "alsahlawi_stock_v1";
+var DEFAULT_THR = 50;
+var WAREHOUSES = [
+  { key:"ASA", label:"Warehouse 1 (ASA)", short:"ASA", cls:"asa" },
+  { key:"SHANOF", label:"Warehouse 2 (Shanof)", short:"Shanof", cls:"shanof" },
+  { key:"UNASSIGNED", label:"Unassigned", short:"Unassigned", cls:"unassigned" }
+];
+var WH_KEYS = ["ASA","SHANOF","UNASSIGNED"];
+var CONFIG = { cloud: { enabled:false } };
+
+// ---------- State ----------
+var STATE = { items: [], threshold: DEFAULT_THR, updatedAt: null };
+var ui = { mode:"remove", selectedId:null, sortKey:"item", sortDir:1, suggIndex:-1 };
+
+var $ = function(id){ return document.getElementById(id); };
+function num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
+function whInfo(key){ for(var i=0;i<WAREHOUSES.length;i++){ if(WAREHOUSES[i].key===key) return WAREHOUSES[i]; } return WAREHOUSES[2]; }
+function whShort(key){ return whInfo(key).short; }
+
+// ---------- Load / persist ----------
+function normalize(r,i){
+  var loc;
+  if(r.loc && typeof r.loc==="object"){
+    loc = { ASA:num(r.loc.ASA), SHANOF:num(r.loc.SHANOF), UNASSIGNED:num(r.loc.UNASSIGNED) };
+  } else {
+    // legacy item (only had a single qty): all existing stock starts Unassigned
+    loc = { ASA:0, SHANOF:0, UNASSIGNED:num(r.qty) };
+  }
+  var total = loc.ASA + loc.SHANOF + loc.UNASSIGNED;
+  return {
+    id: r.id || ("I"+i),
+    item: (r.item||"").toString(),
+    desc: (r.desc||"").toString(),
+    vendor: (r.vendor||"").toString(),
+    loc: loc,
+    initial: (r.initial!=null ? num(r.initial) : total),
+    thr: (r.thr!=null && r.thr!=="" ? num(r.thr) : null),
+    history: Array.isArray(r.history) ? r.history : []
+  };
+}
+
+function seedToState(seed){
+  var arr, thr = DEFAULT_THR;
+  if(Array.isArray(seed)){ arr = seed; }
+  else { arr = seed.items || []; if(seed.threshold!=null) thr = num(seed.threshold); }
+  return { items: arr.map(normalize), threshold: thr, updatedAt: null };
+}
+
+function loadState(){
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch(e){}
+  if(saved){
+    try {
+      var p = JSON.parse(saved);
+      p.items = (p.items||[]).map(normalize);
+      if(p.threshold==null) p.threshold = DEFAULT_THR;
+      return p;
+    } catch(e){}
+  }
+  var seed = [];
+  try { seed = JSON.parse($("seedData").textContent || "[]"); } catch(e){}
+  return seedToState(seed);
+}
+
+function save(){
+  STATE.updatedAt = new Date().toISOString();
+  scSign();
+  try { localStorage.setItem(KEY, JSON.stringify(STATE)); } catch(e){}
+  renderSaved();
+  stockCloudSave();
+}
+
+// ---------- Helpers ----------
+function fmtQty(n){
+  if(n==null || isNaN(n)) return "0";
+  var r = Math.round(n*1000)/1000;
+  return (Math.abs(r - Math.round(r)) < 1e-9) ? String(Math.round(r)) : String(r);
+}
+function totalQty(it){ return it.loc.ASA + it.loc.SHANOF + it.loc.UNASSIGNED; }
+function effThr(it){ return (it.thr!=null) ? it.thr : STATE.threshold; }
+function statusOf(it){ var q=totalQty(it); if(q<=0) return "out"; if(q<effThr(it)) return "low"; return "ok"; }
+function byId(id){ for(var i=0;i<STATE.items.length;i++){ if(STATE.items[i].id===id) return STATE.items[i]; } return null; }
+function nowISO(){ return new Date().toISOString(); }
+function fmtDate(iso){
+  if(!iso) return "—";
+  var d = new Date(iso); if(isNaN(d)) return "—";
+  return d.toLocaleString(undefined,{year:"numeric",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+}
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function locParts(it){
+  var parts=[];
+  WAREHOUSES.forEach(function(w){ var q=it.loc[w.key]; if(q!==0) parts.push(w); });
+  return parts;
+}
+function locHTML(it){
+  var parts = locParts(it);
+  if(!parts.length) return '<span style="color:var(--muted)">—</span>';
+  return parts.map(function(w){
+    return '<span class="wh-chip '+w.cls+'">'+esc(w.short)+' '+fmtQty(it.loc[w.key])+'</span>';
+  }).join(" ");
+}
+function defaultLoc(it){
+  var best="ASA", bv=-Infinity;
+  WH_KEYS.forEach(function(k){ if(it.loc[k]>bv){ bv=it.loc[k]; best=k; } });
+  return (bv>0) ? best : "ASA";
+}
+function toast(msg){
+  var t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+}
+
+// ---------- Rendering ----------
+function renderSaved(){
+  $("saveText").textContent = STATE.updatedAt ? ("Saved · "+fmtDate(STATE.updatedAt)) : "Auto-save on";
+}
+function renderStats(){
+  var out=0, low=0, ok=0;
+  STATE.items.forEach(function(it){ var s=statusOf(it); if(s==="out")out++; else if(s==="low")low++; else ok++; });
+  $("stTotal").textContent = STATE.items.length;
+  $("stOut").textContent = out; $("stLow").textContent = low; $("stOk").textContent = ok;
+}
+function alertRow(it,kind){
+  var div = document.createElement("div");
+  div.className = "alert-row";
+  var q = totalQty(it);
+  div.innerHTML = '<span class="badge badge-'+kind+'">'+(kind==="out"?"OUT":"LOW")+'</span>'+
+    '<span class="code">'+esc(it.item)+'</span>'+
+    '<span class="qv">'+fmtQty(q)+(kind==="low"?(" / "+fmtQty(effThr(it))):"")+' pcs</span>';
+  div.onclick = function(){ openDetail(it.id); };
+  return div;
+}
+function renderAlerts(){
+  var outs = STATE.items.filter(function(it){ return statusOf(it)==="out"; });
+  var lows = STATE.items.filter(function(it){ return statusOf(it)==="low"; });
+  outs.sort(function(a,b){ return totalQty(a)-totalQty(b); });
+  lows.sort(function(a,b){ return (totalQty(a)/effThr(a))-(totalQty(b)/effThr(b)); });
+  var ol = $("outList"); ol.innerHTML="";
+  if(!outs.length) ol.innerHTML='<div class="empty">Nothing is out of stock 🎉</div>';
+  else outs.forEach(function(it){ ol.appendChild(alertRow(it,"out")); });
+  var ll = $("lowList"); ll.innerHTML="";
+  if(!lows.length) ll.innerHTML='<div class="empty">No items running low.</div>';
+  else lows.forEach(function(it){ ll.appendChild(alertRow(it,"low")); });
+  $("outCount").textContent = outs.length; $("lowCount").textContent = lows.length;
+}
+function renderTable(){
+  var q = ($("tableSearch").value||"").toLowerCase().trim();
+  var sf = $("statusFilter").value;
+  var rows = STATE.items.slice();
+  if(q){ rows = rows.filter(function(it){ return (it.item+" "+it.desc+" "+it.vendor).toLowerCase().indexOf(q)>=0; }); }
+  if(sf!=="all"){ rows = rows.filter(function(it){ return statusOf(it)===sf; }); }
+
+  var k = ui.sortKey, dir = ui.sortDir;
+  rows.sort(function(a,b){
+    var av,bv;
+    if(k==="qty"){ av=totalQty(a); bv=totalQty(b); }
+    else if(k==="status"){ var ord={out:0,low:1,ok:2}; av=ord[statusOf(a)]; bv=ord[statusOf(b)]; }
+    else if(k==="loc"){ var pa=locParts(a),pb=locParts(b); av=(pa.length?pa[0].short:"~").toLowerCase(); bv=(pb.length?pb[0].short:"~").toLowerCase(); }
+    else { av=(a[k]||"").toLowerCase(); bv=(b[k]||"").toLowerCase(); }
+    if(av<bv) return -1*dir; if(av>bv) return 1*dir; return 0;
+  });
+
+  var tb = $("tbody"); tb.innerHTML="";
+  var frag = document.createDocumentFragment();
+  rows.forEach(function(it){
+    var s = statusOf(it);
+    var tr = document.createElement("tr");
+    tr.innerHTML =
+      '<td class="code">'+esc(it.item)+'</td>'+
+      '<td>'+esc(it.desc)+'</td>'+
+      '<td>'+esc(it.vendor||"—")+'</td>'+
+      '<td>'+locHTML(it)+'</td>'+
+      '<td class="num">'+fmtQty(totalQty(it))+'</td>'+
+      '<td><span class="pill '+s+'">'+(s==="ok"?"IN STOCK":s.toUpperCase())+'</span></td>';
+    tr.onclick = function(){ openDetail(it.id); };
+    frag.appendChild(tr);
+  });
+  tb.appendChild(frag);
+  $("tableInfo").textContent = rows.length+" of "+STATE.items.length+" items shown";
+
+  document.querySelectorAll("thead th").forEach(function(th){
+    var arr = th.querySelector(".arr"); if(!arr) return;
+    arr.textContent = (th.getAttribute("data-sort")===ui.sortKey) ? (ui.sortDir>0?"▲":"▼") : "";
+  });
+}
+function renderAll(){ renderStats(); renderAlerts(); renderTable(); renderSaved(); $("thrInput").value = STATE.threshold; }
+
+// ---------- Movement ----------
+function updateMoveLabels(){
+  var ql = $("qtyLabel"), hint = $("moveHint");
+  var whName = whShort($("whSelect").value);
+  if(ui.mode==="remove"){ ql.textContent="Pieces removed"; hint.textContent="Subtracts pieces from the selected item in "+whName+"."; }
+  else if(ui.mode==="receive"){ ql.textContent="Pieces received"; hint.textContent="Adds pieces into "+whName+" (new shipment). Raises the total and the baseline."; }
+  else { ql.textContent="New count in "+whName; hint.textContent="Overwrites the "+whName+" count to your physical recount (baseline unchanged)."; }
+}
+function setMode(m){
+  ui.mode = m;
+  Array.prototype.forEach.call($("modeSeg").children, function(b){
+    b.classList.toggle("active", b.getAttribute("data-mode")===m); });
+  updateMoveLabels();
+}
+function selectItem(it){
+  ui.selectedId = it.id;
+  $("lookupInput").value = it.item;
+  $("whSelect").value = defaultLoc(it);
+  hideSugg(); updateMoveLabels();
+  var info = $("selectedInfo");
+  info.style.display = "block";
+  var bits = locParts(it).map(function(w){ return w.short+" "+fmtQty(it.loc[w.key]); }).join(" · ") || "no stock";
+  info.innerHTML = "Selected: <b>"+esc(it.item)+"</b> — "+esc(it.desc)+
+    " · total <b>"+fmtQty(totalQty(it))+"</b> pcs ("+bits+")";
+}
+function applyMovement(){
+  var it = ui.selectedId ? byId(ui.selectedId) : null;
+  if(!it){ toast("Pick an item first"); $("lookupInput").focus(); return; }
+  var wh = $("whSelect").value;
+  var amt = num($("qtyInput").value);
+  var note = $("noteInput").value.trim();
+  if(ui.mode!=="set" && amt<=0){ toast("Enter a quantity"); return; }
+
+  var beforeTotal = totalQty(it), kind = ui.mode, delta;
+  if(kind==="remove"){ it.loc[wh] -= amt; delta = -amt; }
+  else if(kind==="receive"){ it.loc[wh] += amt; it.initial += amt; delta = amt; }
+  else { var beforeBucket = it.loc[wh]; it.loc[wh] = amt; delta = amt - beforeBucket; }
+  var afterTotal = totalQty(it);
+
+  it.history.unshift({ t:nowISO(), kind:kind, delta:delta, before:beforeTotal, after:afterTotal, note:note, loc:wh });
+  save(); renderAll();
+  $("qtyInput").value=""; $("noteInput").value="";
+  var label = kind==="remove"?"Removed":kind==="receive"?"Received":"Set";
+  toast(label+" · "+esc(it.item)+" @ "+whShort(wh)+" → total "+fmtQty(afterTotal)+" pcs");
+  selectItem(it);
+}
+
+// ---------- Autocomplete ----------
+function renderSugg(){
+  var q = ($("lookupInput").value||"").toLowerCase().trim();
+  var box = $("suggBox");
+  if(!q){ hideSugg(); return; }
+  var matches = STATE.items.filter(function(it){
+    return (it.item+" "+it.desc).toLowerCase().indexOf(q)>=0; }).slice(0,60);
+  if(!matches.length){ box.innerHTML='<div class="sugg"><span class="meta">No match</span></div>'; box.classList.add("show"); return; }
+  box.innerHTML = matches.map(function(it,i){
+    return '<div class="sugg" data-id="'+it.id+'" data-i="'+i+'">'+
+      '<span class="q">'+fmtQty(totalQty(it))+' pcs</span>'+
+      '<div class="code">'+esc(it.item)+'</div>'+
+      '<div class="meta">'+esc(it.desc)+'</div></div>';
+  }).join("");
+  box.classList.add("show"); ui.suggIndex = -1;
+  Array.prototype.forEach.call(box.children, function(el){
+    el.onclick = function(){ var it=byId(el.getAttribute("data-id")); if(it) selectItem(it); };
+  });
+}
+function hideSugg(){ $("suggBox").classList.remove("show"); ui.suggIndex=-1; }
+
+// ---------- Detail modal ----------
+function openDetail(id){
+  var it = byId(id); if(!it) return;
+  var s = statusOf(it);
+  var total = totalQty(it);
+  var pct = it.initial>0 ? Math.max(0, Math.min(100, (total/it.initial)*100)) : (total>0?100:0);
+  var histRows = it.history.length ? it.history.map(function(h){
+    var d = h.delta, dc = d>0?"pos":(d<0?"neg":""), ds = (d>0?"+":"")+fmtQty(d);
+    var kindLbl = {remove:"Remove",receive:"Receive",set:"Set count",create:"Created",import:"CSV import",adjust:"Allocate/Recount"}[h.kind]||h.kind;
+    return '<tr><td>'+fmtDate(h.t)+'</td><td>'+kindLbl+'</td><td>'+(h.loc?esc(whShort(h.loc)):"—")+'</td><td class="'+dc+'">'+ds+'</td><td>'+fmtQty(h.after)+'</td><td>'+esc(h.note||"")+'</td></tr>';
+  }).join("") : '<tr><td colspan="6" style="color:var(--muted);">No movements recorded yet.</td></tr>';
+
+  var whInputs = WAREHOUSES.map(function(w){
+    return '<div class="field"><label>'+esc(w.label)+'</label>'+
+      '<input id="loc_'+w.key+'" type="number" step="any" value="'+it.loc[w.key]+'"></div>';
+  }).join("");
+
+  var m = $("modal");
+  m.innerHTML =
+    '<div class="modal-head">'+
+      '<div><h3>'+esc(it.item)+'</h3>'+
+      '<div style="margin-top:6px;"><span class="pill '+s+'">'+(s==="ok"?"IN STOCK":s.toUpperCase())+'</span></div></div>'+
+      '<button class="x" data-close>&times;</button>'+
+    '</div>'+
+    '<div class="modal-body">'+
+      '<div class="kv">'+
+        '<div class="k">Description</div><div class="v">'+esc(it.desc||"—")+'</div>'+
+        '<div class="k">Preferred vendor</div><div class="v">'+esc(it.vendor||"—")+'</div>'+
+        '<div class="k">Total pieces left</div><div class="v">'+fmtQty(total)+'</div>'+
+        '<div class="k">Initially (baseline)</div><div class="v">'+fmtQty(it.initial)+'</div>'+
+        '<div class="k">Remaining</div><div class="v">'+Math.round(pct)+'%'+
+          '<div class="bar '+s+'"><span style="width:'+pct+'%"></span></div></div>'+
+        '<div class="k">LOW threshold</div><div class="v">'+
+          '<input id="thrItem" type="number" step="any" min="0" placeholder="'+STATE.threshold+' (default)" value="'+(it.thr!=null?it.thr:"")+'" style="width:120px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;"> '+
+          '<span class="hint" style="margin:0;">blank = use '+STATE.threshold+'</span></div>'+
+      '</div>'+
+
+      '<div class="hdr-h2-row" style="margin-bottom:6px;"><b style="font-size:13px;">Stock by warehouse</b>'+
+        '<span class="hint" style="margin:0;">edit to recount or re-allocate</span></div>'+
+      '<div class="wh-edit">'+whInputs+'</div>'+
+
+      '<div style="margin-top:18px;"><b style="font-size:13px;">Movement history</b>'+
+        '<div class="hist"><table><thead><tr><th>When</th><th>Type</th><th>WH</th><th>Δ</th><th>Total</th><th>Note</th></tr></thead>'+
+        '<tbody>'+histRows+'</tbody></table></div></div>'+
+    '</div>'+
+    '<div class="modal-foot">'+
+      '<button class="danger sm" id="delItem">Delete item</button>'+
+      '<button class="sm" data-close>Close</button>'+
+      '<button class="primary sm" id="saveItem">Save changes</button>'+
+    '</div>';
+
+  $("overlay").classList.add("show");
+  m.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=closeModal; });
+
+  $("saveItem").onclick = function(){
+    var t = $("thrItem").value.trim();
+    it.thr = (t==="") ? null : num(t);
+    var beforeTotal = totalQty(it);
+    var newLoc = { ASA:num($("loc_ASA").value), SHANOF:num($("loc_SHANOF").value), UNASSIGNED:num($("loc_UNASSIGNED").value) };
+    var changed = (newLoc.ASA!==it.loc.ASA || newLoc.SHANOF!==it.loc.SHANOF || newLoc.UNASSIGNED!==it.loc.UNASSIGNED);
+    it.loc = newLoc;
+    var afterTotal = totalQty(it);
+    if(changed){
+      it.history.unshift({ t:nowISO(), kind:"adjust", delta:afterTotal-beforeTotal, before:beforeTotal, after:afterTotal, note:"Warehouse allocation / recount", loc:"" });
+    }
+    save(); renderAll(); toast("Saved"); closeModal();
+  };
+  $("delItem").onclick = function(){
+    if(!confirm('Delete "'+it.item+'" from inventory? This cannot be undone.')) return;
+    STATE.items = STATE.items.filter(function(x){ return x.id!==it.id; });
+    if(ui.selectedId===it.id){ ui.selectedId=null; $("selectedInfo").style.display="none"; }
+    save(); renderAll(); closeModal(); toast("Deleted");
+  };
+}
+function closeModal(){ $("overlay").classList.remove("show"); $("modal").innerHTML=""; }
+
+// ---------- Add item ----------
+function openAddItem(){
+  var whOpts = WAREHOUSES.map(function(w){ return '<option value="'+w.key+'">'+esc(w.label)+'</option>'; }).join("");
+  var m = $("modal");
+  m.innerHTML =
+    '<div class="modal-head"><h3 style="font-family:inherit;">Add new item</h3><button class="x" data-close>&times;</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="row" style="flex-direction:column;align-items:stretch;gap:12px;">'+
+        '<div class="field"><label>Item code / name *</label><input id="niItem" placeholder="e.g. T-60x60x4"></div>'+
+        '<div class="field"><label>Description</label><input id="niDesc" placeholder="e.g. Tube: 60 x 60 x 4 MM"></div>'+
+        '<div class="field"><label>Preferred vendor</label><input id="niVendor" placeholder="e.g. ARABIAN EXTRUSIONS FACTORY"></div>'+
+        '<div class="row">'+
+          '<div class="field"><label>Opening quantity (pcs)</label><input id="niQty" type="number" step="any" value="0"></div>'+
+          '<div class="field"><label>Into warehouse</label><select id="niWh">'+whOpts+'</select></div>'+
+          '<div class="field"><label>LOW threshold (optional)</label><input id="niThr" type="number" step="any" placeholder="'+STATE.threshold+' (default)"></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="sm" data-close>Cancel</button><button class="primary sm" id="niSave">Add item</button></div>';
+  $("overlay").classList.add("show");
+  m.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=closeModal; });
+  $("niItem").focus();
+  $("niSave").onclick = function(){
+    var name = $("niItem").value.trim();
+    if(!name){ toast("Item code is required"); return; }
+    var qty = num($("niQty").value);
+    var wh = $("niWh").value;
+    var t = $("niThr").value.trim();
+    var loc = { ASA:0, SHANOF:0, UNASSIGNED:0 }; loc[wh] = qty;
+    var it = normalize({
+      id:"I"+Date.now()+"_"+Math.floor(Math.random()*1000),
+      item:name, desc:$("niDesc").value.trim(), vendor:$("niVendor").value.trim(),
+      loc:loc, initial:qty, thr:(t===""?null:num(t)),
+      history:[{t:nowISO(),kind:"create",delta:qty,before:0,after:qty,note:"Item created",loc:wh}]
+    }, 0);
+    STATE.items.push(it);
+    save(); renderAll(); closeModal(); toast("Added "+esc(name));
+  };
+}
+
+// ---------- CSV ----------
+function parseCSV(text){
+  text = text.replace(/^﻿/,"");
+  var rows=[], row=[], field="", inQ=false, i=0, c;
+  for(; i<text.length; i++){
+    c = text[i];
+    if(inQ){
+      if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQ=false; }
+      else field+=c;
+    } else {
+      if(c==='"') inQ=true;
+      else if(c===','){ row.push(field); field=""; }
+      else if(c==='\r'){ }
+      else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+      else field+=c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+function parseWh(v){
+  var s=(v||"").toLowerCase().trim();
+  if(s==="") return null;
+  if(s.indexOf("asa")>=0 || s.indexOf("warehouse 1")>=0 || s==="1" || s==="wh1") return "ASA";
+  if(s.indexOf("shanof")>=0 || s.indexOf("shanouf")>=0 || s.indexOf("warehouse 2")>=0 || s==="2" || s==="wh2") return "SHANOF";
+  return "UNASSIGNED";
+}
+function mapColumns(header){
+  var h = header.map(function(x){ return (x||"").toLowerCase().trim(); });
+  function find(preds){ for(var p=0;p<preds.length;p++){ for(var j=0;j<h.length;j++){ if(preds[p](h[j])) return j; } } return -1; }
+  return {
+    itemCol: find([ function(s){return s==="item";}, function(s){return s.indexOf("item")>=0 && s.indexOf("desc")<0;}, function(s){return s.indexOf("code")>=0;}, function(s){return s.indexOf("name")>=0;} ]),
+    descCol: find([ function(s){return s.indexOf("desc")>=0;} ]),
+    vendCol: find([ function(s){return s.indexOf("vendor")>=0;}, function(s){return s.indexOf("supplier")>=0;} ]),
+    whCol:   find([ function(s){return s.indexOf("warehouse")>=0;}, function(s){return s.indexOf("location")>=0;}, function(s){return s.indexOf("store")>=0;}, function(s){return s.indexOf("site")>=0;} ]),
+    qtyCol:  find([ function(s){return s.indexOf("quantity on hand")>=0;}, function(s){return s.indexOf("on hand")>=0;}, function(s){return s.indexOf("physical count")>=0;}, function(s){return s==="qty";}, function(s){return s.indexOf("quantity")>=0;}, function(s){return s.indexOf("qty")>=0;} ])
+  };
+}
+function importCSVText(text){
+  var rows = parseCSV(text).filter(function(r){ return r.some(function(c){ return (c||"").trim()!==""; }); });
+  if(rows.length<2){ toast("CSV looks empty"); return; }
+  var map = mapColumns(rows[0]);
+  if(map.itemCol<0 || map.qtyCol<0){
+    alert("Couldn't find the Item and Quantity columns in this CSV.\nExpected headers like: Item, Description, Preferred Vendor, Quantity On Hand (and optionally Warehouse).");
+    return;
+  }
+  var records = [];
+  for(var i=1;i<rows.length;i++){
+    var r = rows[i];
+    var name = (r[map.itemCol]||"").trim();
+    if(!name) continue;
+    records.push({
+      item:name,
+      desc: map.descCol>=0 ? (r[map.descCol]||"").trim() : "",
+      vendor: map.vendCol>=0 ? (r[map.vendCol]||"").trim() : "",
+      wh: map.whCol>=0 ? parseWh(r[map.whCol]) : null,
+      qty: num(r[map.qtyCol])
+    });
+  }
+  if(!records.length){ toast("No rows found"); return; }
+  chooseImportMode(records, map.whCol>=0);
+}
+function chooseImportMode(records, hasWh){
+  var m = $("modal");
+  m.innerHTML =
+    '<div class="modal-head"><h3 style="font-family:inherit;">Import '+records.length+' rows</h3><button class="x" data-close>&times;</button></div>'+
+    '<div class="modal-body">'+
+      '<p style="margin-top:0;">'+(hasWh?"A warehouse column was detected — quantities go to that warehouse.":"No warehouse column — quantities go to the <b>Unassigned</b> bucket.")+'</p>'+
+      '<p>How should this CSV be applied to your current inventory ('+STATE.items.length+' items)?</p>'+
+      '<div style="display:flex;flex-direction:column;gap:10px;">'+
+        '<button class="primary" id="impMerge" style="text-align:left;padding:12px 14px;">↻ Merge &amp; update '+
+          '<div style="font-weight:400;font-size:12px;opacity:.9;">Reconcile matching items to the CSV total, add new ones, keep everything else (and your history &amp; allocations).</div></button>'+
+        '<button id="impReplace" style="text-align:left;padding:12px 14px;">⤿ Replace everything '+
+          '<div style="font-weight:400;font-size:12px;color:var(--muted);">Wipe current list and start fresh from this CSV. Resets baselines, history &amp; allocations.</div></button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="sm" data-close>Cancel</button></div>';
+  $("overlay").classList.add("show");
+  m.querySelectorAll("[data-close]").forEach(function(b){ b.onclick=closeModal; });
+  $("impMerge").onclick = function(){ applyImport(records,"merge"); };
+  $("impReplace").onclick = function(){
+    if(confirm("Replace ALL current data with this CSV? Baselines, history and warehouse allocations will be reset.")) applyImport(records,"replace");
+  };
+}
+function applyImport(records, mode){
+  if(mode==="replace"){
+    STATE.items = records.map(function(r,i){
+      var loc={ASA:0,SHANOF:0,UNASSIGNED:0}; loc[r.wh||"UNASSIGNED"] = r.qty;
+      return normalize({ id:"I"+i, item:r.item, desc:r.desc, vendor:r.vendor, loc:loc, initial:r.qty,
+        history:[{t:nowISO(),kind:"import",delta:r.qty,before:0,after:r.qty,note:"CSV import (replace)",loc:(r.wh||"UNASSIGNED")}] }, i);
+    });
+    save(); renderAll(); closeModal(); toast("Imported "+records.length+" items (replaced)");
+    return;
+  }
+  // merge
+  var index = {};
+  STATE.items.forEach(function(it){ index[it.item.toLowerCase().trim()] = it; });
+  var added=0, updated=0;
+  records.forEach(function(r){
+    var key = r.item.toLowerCase().trim();
+    var ex = index[key];
+    if(ex){
+      var beforeTotal = totalQty(ex);
+      if(r.wh){
+        var bucket = r.wh;
+        if(ex.loc[bucket] !== r.qty){
+          ex.loc[bucket] = r.qty;
+          var aT = totalQty(ex);
+          ex.history.unshift({t:nowISO(),kind:"adjust",delta:aT-beforeTotal,before:beforeTotal,after:aT,note:"CSV import (merge, "+whShort(bucket)+")",loc:bucket});
+          updated++;
+        }
+      } else {
+        // CSV states a total on-hand -> reconcile via Unassigned, preserve ASA/Shanof allocations
+        var target = r.qty - ex.loc.ASA - ex.loc.SHANOF;
+        if(ex.loc.UNASSIGNED !== target){
+          ex.loc.UNASSIGNED = target;
+          var aT2 = totalQty(ex);
+          ex.history.unshift({t:nowISO(),kind:"adjust",delta:aT2-beforeTotal,before:beforeTotal,after:aT2,note:"CSV import (merge, total reconciled)",loc:"UNASSIGNED"});
+          updated++;
+        }
+      }
+      if(r.desc) ex.desc = r.desc;
+      if(r.vendor) ex.vendor = r.vendor;
+    } else {
+      var loc={ASA:0,SHANOF:0,UNASSIGNED:0}; loc[r.wh||"UNASSIGNED"]=r.qty;
+      var it = normalize({ id:"I"+Date.now()+"_"+added, item:r.item, desc:r.desc, vendor:r.vendor,
+        loc:loc, initial:r.qty, history:[{t:nowISO(),kind:"import",delta:r.qty,before:0,after:r.qty,note:"CSV import (new)",loc:(r.wh||"UNASSIGNED")}] },0);
+      STATE.items.push(it); index[key]=it; added++;
+    }
+  });
+  save(); renderAll(); closeModal();
+  toast("Merged: "+updated+" updated, "+added+" added");
+}
+
+// ---------- Export / backup ----------
+function download(name, content, type){
+  var blob = new Blob([content], {type:type||"text/plain"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function stamp(){ var d=new Date(), p=function(n){return (n<10?"0":"")+n;};
+  return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+"-"+p(d.getHours())+p(d.getMinutes()); }
+function exportBackup(){
+  download("AlSahlawi-Stock-Backup-"+stamp()+".json", JSON.stringify(STATE,null,2), "application/json");
+  toast("Backup downloaded");
+}
+function csvCell(v){ v=(v==null?"":String(v)); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }
+function exportCSV(){
+  var lines = ["Item,Description,Preferred Vendor,ASA,Shanof,Unassigned,Total On Hand,Baseline,Status,LOW Threshold"];
+  STATE.items.forEach(function(it){
+    lines.push([csvCell(it.item),csvCell(it.desc),csvCell(it.vendor),
+      fmtQty(it.loc.ASA),fmtQty(it.loc.SHANOF),fmtQty(it.loc.UNASSIGNED),fmtQty(totalQty(it)),
+      fmtQty(it.initial),statusOf(it).toUpperCase(),(it.thr!=null?fmtQty(it.thr):"")].join(","));
+  });
+  download("AlSahlawi-Stock-"+stamp()+".csv", lines.join("\n"), "text/csv");
+  toast("CSV exported");
+}
+function downloadPortable(){
+  var clone = document.documentElement.cloneNode(true);
+  var sd = clone.querySelector("#seedData");
+  var payload = JSON.stringify({ items:STATE.items, threshold:STATE.threshold });
+  sd.textContent = payload.replace(/</g,"\\u003c");
+  var html = "<!DOCTYPE html>\n" + clone.outerHTML;
+  download("AlSahlawi-Stock-Portable-"+stamp()+".html", html, "text/html");
+  toast("Portable copy downloaded — send this file to any PC");
+}
+function restoreBackup(text){
+  try {
+    var p = JSON.parse(text);
+    if(!p || !Array.isArray(p.items)) throw new Error("bad");
+    p.items = p.items.map(normalize);
+    if(p.threshold==null) p.threshold = DEFAULT_THR;
+    STATE = p; save(); renderAll(); toast("Backup restored — "+STATE.items.length+" items");
+  } catch(e){ alert("That file isn't a valid Stock backup (.json)."); }
+}
+function resetToBaked(){
+  if(!confirm("Reset to the data baked into this file? Your current edits in this browser will be lost (export a backup first if unsure).")) return;
+  try { localStorage.removeItem(KEY); } catch(e){}
+  var seed = JSON.parse($("seedData").textContent||"[]");
+  STATE = seedToState(seed); save(); renderAll(); toast("Reset to baked data");
+}
+
+// ---------- Wire up ----------
+function init(){
+  STATE = loadState();
+  renderAll();
+  setMode("remove");
+
+  Array.prototype.forEach.call($("modeSeg").children, function(b){
+    b.onclick = function(){ setMode(b.getAttribute("data-mode")); }; });
+  $("whSelect").addEventListener("change", updateMoveLabels);
+
+  var li = $("lookupInput");
+  li.addEventListener("input", function(){ ui.selectedId=null; $("selectedInfo").style.display="none"; renderSugg(); });
+  li.addEventListener("focus", renderSugg);
+  li.addEventListener("keydown", function(e){
+    var box=$("suggBox"); var items=box.querySelectorAll(".sugg[data-id]");
+    if(!box.classList.contains("show")||!items.length) return;
+    if(e.key==="ArrowDown"){ e.preventDefault(); ui.suggIndex=Math.min(ui.suggIndex+1,items.length-1); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); ui.suggIndex=Math.max(ui.suggIndex-1,0); }
+    else if(e.key==="Enter"){ e.preventDefault(); var t=items[ui.suggIndex]||items[0]; var it=byId(t.getAttribute("data-id")); if(it) selectItem(it); return; }
+    else return;
+    items.forEach(function(el,i){ el.classList.toggle("active", i===ui.suggIndex); if(i===ui.suggIndex) el.scrollIntoView({block:"nearest"}); });
+  });
+  document.addEventListener("click", function(e){
+    if(!e.target.closest(".lookup")) hideSugg();
+    if(!e.target.closest(".menu-wrap")) $("saveMenu").classList.remove("show");
+  });
+
+  $("applyBtn").onclick = applyMovement;
+  $("qtyInput").addEventListener("keydown", function(e){ if(e.key==="Enter") applyMovement(); });
+
+  $("thrInput").addEventListener("change", function(){ STATE.threshold = num($("thrInput").value)||0; save(); renderAll(); });
+
+  $("tableSearch").addEventListener("input", renderTable);
+  $("statusFilter").addEventListener("change", renderTable);
+  document.querySelectorAll("thead th[data-sort]").forEach(function(th){
+    th.onclick = function(){ var k=th.getAttribute("data-sort");
+      if(ui.sortKey===k) ui.sortDir*=-1; else { ui.sortKey=k; ui.sortDir=1; } renderTable(); };
+  });
+
+  $("addItemBtn").onclick = openAddItem;
+  $("importCsvBtn").onclick = function(){ $("csvFile").click(); };
+  $("csvFile").onchange = function(e){ var f=e.target.files[0]; if(!f) return;
+    var rd=new FileReader(); rd.onload=function(){ importCSVText(rd.result); $("csvFile").value=""; }; rd.readAsText(f); };
+  $("jsonFile").onchange = function(e){ var f=e.target.files[0]; if(!f) return;
+    var rd=new FileReader(); rd.onload=function(){ restoreBackup(rd.result); $("jsonFile").value=""; }; rd.readAsText(f); };
+
+  $("saveMenuBtn").onclick = function(e){ e.stopPropagation(); $("saveMenu").classList.toggle("show"); };
+  $("saveMenu").querySelectorAll("button").forEach(function(b){
+    b.onclick = function(){
+      $("saveMenu").classList.remove("show");
+      var act=b.getAttribute("data-act");
+      if(act==="backup") exportBackup();
+      else if(act==="csv") exportCSV();
+      else if(act==="portable") downloadPortable();
+      else if(act==="restore") $("jsonFile").click();
+      else if(act==="print") window.print();
+      else if(act==="reset") resetToBaked();
+    };
+  });
+
+  $("overlay").addEventListener("click", function(e){ if(e.target===$("overlay")) closeModal(); });
+  document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeModal(); });
+}
+
+// ---------- ASA: approved devices + shared cloud ----------
+// Opening needs the person's name + password and an admin-approved device
+// (shared/asa-device-gate.js, its own list: "Stock Inventory devices").
+// Shared between approved devices through apps/st-<key>/:
+//   items/{id}      one record per stock item (with its history)
+//   settings/main   the default LOW threshold
+// This device keeps its copy for offline use. The first approved device seeds the cloud.
+var SC = { cloud:false, vault:"", admin:false, applying:false };
+var scSynced = {};                 // item id -> JSON last sent/received
+var scThr = null;
+var SC_OUTBOX = "alsahlawi_stock_outbox";
+
+function scTag(){ var t = Date.now(); return { dev: ASACloud.deviceId(), by: ASACloud.name(), ts: t, _u: t }; }
+function scStrip(d){ var o = {}; Object.keys(d).forEach(function(k){ if(["dev","by","ts","_u","_by","_device","_at","deleted"].indexOf(k)<0) o[k]=d[k]; }); return o; }
+
+// Every movement is signed with the person who made it.
+function scSign(){
+  var who = (window.ASACloud && ASACloud.name()) || "";
+  if(!who) return;
+  STATE.items.forEach(function(it){ (it.history||[]).forEach(function(h){ if(!h.by) h.by = who; }); });
+}
+
+function stockCloudSave(){
+  if(!SC.cloud || SC.applying) return;
+  var now = {};
+  STATE.items.forEach(function(it){
+    var js = JSON.stringify(it); now[it.id] = js;
+    if(scSynced[it.id] !== js) scPush("items", it.id, it);
+  });
+  Object.keys(scSynced).forEach(function(id){ if(!now[id] && scSynced[id] !== "deleted") { scPush("items", id, { id:id, deleted:true }); now[id] = "deleted"; } });
+  Object.keys(scSynced).forEach(function(id){ if(scSynced[id] === "deleted" && !now[id]) now[id] = "deleted"; });
+  scSynced = now;
+  if(STATE.threshold !== scThr){ scThr = STATE.threshold; scPush("settings", "main", { threshold: STATE.threshold }); }
+}
+function scPush(coll, id, doc){
+  var data = Object.assign({}, doc, scTag());
+  return ASACloud.put(SC.vault, coll, id, data).catch(function(e){
+    var box = {}; try { box = JSON.parse(localStorage.getItem(SC_OUTBOX) || "{}"); } catch(x){}
+    box[coll+":"+id] = { coll:coll, id:id, doc:doc };
+    try { localStorage.setItem(SC_OUTBOX, JSON.stringify(box)); } catch(x){}
+    if(String(e && e.code).indexOf("permission-denied")>=0) toast("The cloud refused this change — is this device still approved?");
+  });
+}
+function scFlush(){
+  var box = {}; try { box = JSON.parse(localStorage.getItem(SC_OUTBOX) || "{}"); } catch(x){}
+  try { localStorage.removeItem(SC_OUTBOX); } catch(x){}
+  return Promise.all(Object.keys(box).map(function(k){ var o = box[k]; return scPush(o.coll, o.id, o.doc); }));
+}
+// Replace this device's copy without sending it straight back.
+function scApply(){
+  SC.applying = true;
+  try { STATE.updatedAt = new Date().toISOString(); localStorage.setItem(KEY, JSON.stringify(STATE)); } catch(e){}
+  SC.applying = false;
+  renderAll();
+}
+
+function scSyncAll(){
+  return scFlush().then(function(){
+    return Promise.all([ASACloud.list(SC.vault, "items"), ASACloud.get(SC.vault, "settings", "main")]);
+  }).then(function(res){
+    var cloud = res[0], set = res[1];
+    var local = {}; STATE.items.forEach(function(it){ local[it.id] = it; });
+    var merged = [];
+    scSynced = {};
+    cloud.forEach(function(d){
+      delete local[d.id];
+      if(d.deleted){ scSynced[d.id] = "deleted"; return; }
+      var it = normalize(scStrip(d), 0); merged.push(it); scSynced[it.id] = JSON.stringify(it);
+    });
+    var onlyHere = Object.keys(local).map(function(k){ return local[k]; });
+    STATE.items = merged.concat(onlyHere);
+    if(set && set.threshold != null){ STATE.threshold = set.threshold; scThr = set.threshold; }
+    scApply();
+    if(onlyHere.length){ stockCloudSave(); toast(cloud.length ? "Shared "+onlyHere.length+" item(s) from this device" : "Stock list shared with the team ("+onlyHere.length+" items)"); }
+    else if(scThr === null){ stockCloudSave(); }
+  });
+}
+
+function scLive(){
+  ASACloud.watch(SC.vault, "items", Date.now() - 10*60*1000, function(changes){
+    var touched = false, who = "";
+    changes.forEach(function(c){
+      if(c.data.dev === ASACloud.deviceId()) return;
+      STATE.items = STATE.items.filter(function(x){ return x.id !== c.id; });
+      if(c.type !== "removed" && !c.data.deleted){ var it = normalize(scStrip(c.data), 0); STATE.items.push(it); scSynced[c.id] = JSON.stringify(it); }
+      else scSynced[c.id] = "deleted";
+      touched = true; who = c.data.by || who;
+    });
+    if(!touched) return;
+    scApply();
+    toast("Stock updated" + (who ? " by " + who : ""));
+  }).catch(function(){});
+  ASACloud.watchDoc(SC.vault, "settings", "main", function(d){
+    if(!d || d.dev === ASACloud.deviceId() || d.threshold == null || d.threshold === STATE.threshold) return;
+    STATE.threshold = d.threshold; scThr = d.threshold; scApply();
+  }).catch(function(){});
+}
+
+ASADeviceGate.open({ tool:"stock", prefix:"st", title:"Stock Inventory" }).then(function(ctx){
+  Object.assign(SC, ctx);
+  if(!SC.cloud) return;
+  scSyncAll().then(scLive).catch(function(){ toast("Working offline — changes will sync later"); });
+});
+
+document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>

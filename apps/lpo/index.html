@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LPO Generator — Al Sahlawi Aluminum</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="lpo"></script>
+<script src="../../shared/asa-device-gate.js"></script>
+<style>
+  a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:8px;white-space:nowrap}
+  a.asa-home:hover{background:rgba(255,255,255,.15)}
+  body.lpo-locked-sign #btnSig, body.lpo-locked-sign #btnStamp, body.lpo-locked-sign #btnSigRm, body.lpo-locked-sign #btnStampRm{display:none}
+</style>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+:root{
+  --brand:#3B73B9;
+  --brand-dark:#2a558a;
+  --ink:#1a1a1a;
+  --muted:#6b7280;
+  --line:#d9d9d9;
+  --bg:#f5f7fb;
+  --row:#fafbfd;
+  --ok:#1f9d55;
+  --danger:#c0392b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Segoe UI',Tahoma,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:14px;line-height:1.4;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar{
+  background:var(--brand);color:#fff;padding:10px 18px;
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  position:sticky;top:0;z-index:60;box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.toolbar h1{font-size:16px;margin:0;flex:1;font-weight:600;letter-spacing:.3px}
+.toolbar button{
+  background:#fff;color:var(--brand-dark);border:none;
+  padding:7px 14px;border-radius:5px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:.15s;
+}
+.toolbar button:hover{background:#e8effa}
+.toolbar button.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.6)}
+.toolbar button.ghost:hover{background:rgba(255,255,255,.15)}
+.toolbar button.wa{background:#25D366;color:#fff}
+.toolbar button.wa:hover{background:#1eb358}
+.save-status{font-size:12px;color:#d5ffe6;font-weight:600;opacity:0;transition:opacity .3s;margin-left:2px}
+.save-status.show{opacity:1}
+.toolbar button#btnPriceToggle.off{background:#e7ebf1;color:#6b7280}
+
+/* Hide pricing when Prices are turned Off */
+body.noprice .pricecell,
+body.noprice .amountcell{display:none !important}
+body.noprice .totals-wrap{display:none !important}
+
+/* ---------- Saved LPOs drawer ---------- */
+.drawer{
+  max-width:1080px;margin:14px auto 0;background:#fff;border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;display:none;box-shadow:0 2px 8px rgba(0,0,0,.08);
+}
+.drawer.open{display:block}
+.drawer h3{
+  margin:0;padding:11px 16px;background:#eaf0f9;color:var(--brand-dark);
+  font-size:14px;display:flex;align-items:center;gap:8px;
+}
+.drawer h3 .count{color:#8794a8;font-weight:600;font-size:12px}
+.drawer h3 .close{margin-left:auto;cursor:pointer;border:none;background:none;color:#8794a8;font-size:18px;font-weight:bold;line-height:1}
+.saved-list{max-height:340px;overflow:auto}
+.saved-item{
+  display:flex;align-items:center;gap:12px;padding:10px 16px;
+  border-top:1px solid #eef1f5;cursor:pointer;
+}
+.saved-item:hover{background:#f4f8fd}
+.saved-item .qn{font-weight:700;color:var(--brand-dark);min-width:130px}
+.saved-item .who{flex:1;color:#333;min-width:120px}
+.saved-item .amt{font-weight:700;color:#222;min-width:120px;text-align:right;font-variant-numeric:tabular-nums}
+.saved-item .dt{color:var(--muted);font-size:12px;min-width:96px;text-align:right}
+.saved-item .acts{display:flex;gap:6px}
+.saved-item .acts button{
+  border:1px solid var(--line);background:#fff;color:var(--brand-dark);
+  padding:4px 9px;border-radius:4px;font-size:11.5px;font-weight:600;cursor:pointer;
+}
+.saved-item .acts button:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
+.saved-item .acts button.del{color:var(--danger);border-color:#e3b6b1}
+.saved-item .acts button.del:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.saved-empty{padding:18px 16px;color:var(--muted);font-style:italic}
+
+.page{
+  max-width:1080px;margin:18px auto;background:#fff;
+  padding:30px 38px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-radius:6px;
+}
+
+/* ---------- Letterhead ---------- */
+.letterhead{
+  display:flex;gap:20px;align-items:center;
+  border-bottom:3px solid var(--brand);padding-bottom:14px;margin-bottom:16px;
+}
+.letterhead .logo{
+  width:118px;height:90px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:8px;padding:8px;
+  color:#2a2270;font-size:11px;text-align:center;
+  background:#E2E2E2;overflow:hidden;cursor:pointer;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+.letterhead .logo.custom{background:#fff}
+.logo-ph{display:none;color:#8a93a3;font-size:11px;font-weight:700;pointer-events:none}
+.letterhead .logo img{max-width:100%;max-height:100%;object-fit:contain}
+.letterhead .co-info{flex:1}
+.letterhead .co-name{
+  font-size:19px;font-weight:700;color:var(--brand-dark);
+  letter-spacing:.4px;margin-bottom:2px;
+}
+.letterhead .co-trn{font-size:11px;color:var(--muted);margin-bottom:6px}
+.letterhead .co-line{font-size:11.5px;line-height:1.5;color:#333}
+
+.lpo-title{
+  text-align:center;font-size:22px;font-weight:700;
+  color:var(--brand-dark);letter-spacing:3px;margin:12px 0 16px;
+}
+
+/* ---------- Meta ---------- */
+.meta{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px 28px;
+  font-size:12.5px;margin-bottom:16px;
+}
+.meta .row{display:flex;align-items:center;gap:8px}
+.meta label{font-weight:600;color:#444;min-width:96px}
+.meta input{
+  flex:1;padding:5px 8px;border:1px solid var(--line);
+  border-radius:4px;font-size:12.5px;font-family:inherit;
+}
+
+/* ---------- Supplier block ---------- */
+.parties{margin-bottom:16px}
+.parties .party{max-width:520px}
+.party{
+  border:1px solid var(--line);border-radius:6px;overflow:visible;
+  background:#fbfcfe;
+}
+.party .head{
+  background:var(--brand);color:#fff;padding:6px 12px;
+  font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:8px;
+  border-radius:5px 5px 0 0;
+}
+.party .head .tag{
+  font-size:10px;font-weight:600;background:rgba(255,255,255,.22);
+  padding:1px 7px;border-radius:10px;letter-spacing:.3px;
+}
+.party .body{padding:10px 12px}
+.pf{display:flex;align-items:center;gap:8px;margin-bottom:6px;position:relative}
+.pf label{font-weight:600;color:#555;min-width:74px;font-size:11.5px}
+.pf input{
+  flex:1;padding:5px 8px;border:1px solid var(--line);border-radius:4px;
+  font-size:12px;font-family:inherit;background:#fff;
+}
+.pf input:focus{outline:1px solid var(--brand);border-color:var(--brand)}
+.pf.name input{font-weight:700}
+.party-actions{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;
+  padding-top:8px;border-top:1px dashed #d5deeb;
+}
+.party-actions button{
+  background:#fff;color:var(--brand-dark);border:1px solid var(--brand);
+  padding:4px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;
+}
+.party-actions button:hover{background:var(--brand);color:#fff}
+.party-actions .count{font-size:11px;color:#888;margin-left:auto;align-self:center}
+
+/* Edit-saved-suppliers panel */
+.sup-manage{display:none;margin-top:8px;border:1px solid #d5deeb;border-radius:6px;background:#fff;overflow:hidden}
+.sup-manage.open{display:block}
+.sup-manage .sm-head{
+  background:#eef3fa;color:var(--brand-dark);font-weight:700;font-size:11.5px;
+  padding:6px 10px;display:flex;align-items:center;
+}
+.sup-manage .sm-head .x{margin-left:auto;cursor:pointer;border:none;background:none;color:#8794a8;font-weight:bold;font-size:15px;line-height:1}
+.sm-list{max-height:300px;overflow:auto}
+.sm-row{border-top:1px solid #eef1f5;padding:8px 10px}
+.sm-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 8px}
+.sm-grid label{font-size:9.5px;color:#8794a8;font-weight:600;display:block;margin-bottom:1px;text-transform:uppercase;letter-spacing:.3px}
+.sm-grid input{width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:11.5px;font-family:inherit}
+.sm-grid input:focus{outline:1px solid var(--brand);border-color:var(--brand)}
+.sm-grid .full{grid-column:1/3}
+.sm-actions{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.sm-actions button{padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--brand);background:#fff;color:var(--brand-dark)}
+.sm-actions button:hover{background:var(--brand);color:#fff}
+.sm-actions button.save{background:var(--brand);color:#fff}
+.sm-actions button.save:hover{background:var(--brand-dark)}
+.sm-actions button.del{border-color:#e3b6b1;color:var(--danger)}
+.sm-actions button.del:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.sm-empty{padding:14px 10px;color:var(--muted);font-style:italic;font-size:11.5px}
+
+/* Combobox dropdown */
+.combo-menu{
+  position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:40;
+  background:#fff;border:1px solid var(--brand);border-radius:5px;
+  max-height:230px;overflow-y:auto;box-shadow:0 6px 16px rgba(0,0,0,.14);
+  display:none;
+}
+.combo-menu.open{display:block}
+.combo-menu .opt{
+  padding:7px 11px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;
+}
+.combo-menu .opt:last-child{border-bottom:none}
+.combo-menu .opt:hover,.combo-menu .opt.active{background:#eaf0f9}
+.combo-menu .opt .nm{font-weight:700;color:var(--brand-dark)}
+.combo-menu .opt .sub{color:#888;font-size:10.5px;margin-top:1px}
+.combo-menu .opt .del{
+  float:right;color:var(--danger);font-weight:bold;border:none;background:none;
+  cursor:pointer;font-size:14px;line-height:1;padding:0 2px;
+}
+.combo-menu .opt .del:hover{color:#fff;background:var(--danger);border-radius:3px}
+.combo-menu .empty{padding:9px 11px;color:#999;font-style:italic;font-size:11.5px}
+
+.greeting{margin:6px 0 4px;font-size:13px}
+.intro{font-size:13px;margin-bottom:10px}
+
+/* ---------- Items table ---------- */
+table.items{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
+table.items th{
+  background:var(--brand);color:#fff;padding:7px 5px;text-align:center;
+  font-weight:600;border:1px solid var(--brand-dark);font-size:11px;
+}
+table.items td{border:1px solid var(--line);padding:2px;text-align:center;background:#fff}
+table.items tbody tr:nth-child(even) td{background:var(--row)}
+table.items input,table.items select,table.items textarea{
+  width:100%;border:none;background:transparent;padding:5px 6px;
+  font-size:12px;text-align:center;font-family:inherit;color:var(--ink);
+}
+table.items input:focus,table.items select:focus,table.items textarea:focus{outline:1px solid var(--brand);background:#fff}
+table.items td.itemname{position:relative;vertical-align:top}
+table.items td.itemname textarea{
+  text-align:left;resize:none;overflow:hidden;line-height:1.3;
+  min-height:28px;display:block;white-space:pre-wrap;word-break:break-word;
+}
+table.items .sn{width:32px;font-weight:600;color:#555}
+table.items .qty input,table.items .price input,table.items .amount{text-align:right;padding-right:9px}
+table.items .amount{font-weight:600;color:var(--brand-dark);background:#f0f5fc !important;font-size:12px}
+table.items td.unit{width:78px}
+table.items td.qtycell{width:74px}
+table.items td.pricecell{width:104px}
+table.items td.amountcell{width:112px}
+table.items .rowtools{width:52px;white-space:nowrap}
+table.items .rowtools button{
+  border:none;width:22px;height:22px;border-radius:4px;cursor:pointer;
+  font-weight:bold;line-height:1;padding:0;font-size:13px;
+}
+.star-btn{background:#fff3cf;color:#b7791f;margin-right:2px}
+.star-btn:hover{background:#f6c343;color:#fff}
+.star-btn.saved{background:#f6c343;color:#fff}
+.del-btn{background:#eee;color:#888}
+.del-btn:hover{background:var(--danger);color:#fff}
+
+/* item catalog dropdown */
+.item-menu{
+  position:absolute;top:100%;left:0;right:0;z-index:35;
+  background:#fff;border:1px solid var(--brand);border-top:none;
+  max-height:220px;overflow-y:auto;text-align:left;
+  box-shadow:0 6px 14px rgba(0,0,0,.13);display:none;
+}
+.item-menu.open{display:block}
+.item-menu .opt{padding:6px 10px;cursor:pointer;font-size:11.5px;border-bottom:1px solid #f0f0f0}
+.item-menu .opt:hover,.item-menu .opt.active{background:#eaf0f9}
+.item-menu .opt .nm{font-weight:600}
+.item-menu .opt .pr{float:right;color:var(--brand-dark);font-weight:700}
+.item-menu .opt .del{float:right;color:var(--danger);border:none;background:none;cursor:pointer;font-weight:bold;margin-left:8px}
+.item-menu .empty{padding:8px 10px;color:#999;font-style:italic;font-size:11px}
+
+.add-row-btn{
+  background:var(--brand);color:#fff;border:none;padding:7px 16px;
+  border-radius:4px;cursor:pointer;font-size:12px;font-weight:600;margin-top:2px;
+}
+.add-row-btn:hover{background:var(--brand-dark)}
+
+/* ---------- Totals ---------- */
+.totals-wrap{display:flex;justify-content:flex-end;margin-top:12px}
+.totals{width:320px;font-size:12.5px}
+.totals .trow{display:flex;justify-content:space-between;padding:5px 4px;border-bottom:1px solid #eef1f5}
+.totals .trow.grand{
+  border-top:2px solid var(--brand);border-bottom:none;margin-top:2px;
+  font-weight:700;font-size:15px;color:var(--brand-dark);padding-top:8px;
+}
+.totals .lbl{color:#555}
+.totals .val{font-weight:600;font-variant-numeric:tabular-nums}
+.itemcount{font-size:11.5px;color:var(--muted);margin-top:6px}
+
+/* ---------- Notes / signature ---------- */
+.notes{margin-top:22px;font-size:12px;color:#444;border-top:1px solid var(--line);padding-top:12px}
+.notes .lbl{font-weight:600;margin-bottom:4px}
+.notes textarea{
+  width:100%;border:1px solid var(--line);border-radius:4px;padding:6px 8px;
+  font-family:inherit;font-size:12px;min-height:52px;resize:vertical;
+}
+.terms{margin-top:8px;font-size:11px;color:#666;line-height:1.6}
+.signblock{margin-top:30px;width:300px;max-width:70%}
+.signstack{
+  position:relative;height:140px;border:1.5px dashed #c3ccda;border-radius:6px;
+  background:#fafbfd;display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.signstack.has{border-style:solid;border-color:#e0e6ee;background:#fff}
+.sig-layer{max-width:92%;max-height:122px;object-fit:contain;display:none}
+.stamp-layer{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%) rotate(-7deg);
+  max-width:72%;max-height:128px;object-fit:contain;
+  opacity:.9;mix-blend-mode:multiply;pointer-events:none;display:none;
+}
+.slot-ph{color:#9aa6b6;font-size:12px;font-weight:600;pointer-events:none}
+.sign-cap{border-top:1px solid #333;margin-top:6px;padding-top:4px;font-size:12px;color:#555;text-align:center}
+.sign-controls{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sign-controls button{
+  background:#fff;color:var(--brand-dark);border:1px solid var(--brand);
+  padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;
+}
+.sign-controls button:hover{background:var(--brand);color:#fff}
+.sign-controls button.rm{color:var(--danger);border-color:#e3b6b1}
+.sign-controls button.rm:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.ctl-sep{color:#ccc}
+.signfor{margin-top:14px;font-size:12px;font-weight:600;color:#333}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:6px;
+  font-size:13px;z-index:200;opacity:0;transition:.25s;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+.toast.show{opacity:1}
+
+/* ---------- Print ---------- */
+@media screen{.print-only{display:none}}
+@media print{
+  body{background:#fff}
+  .toolbar,.drawer,.add-row-btn,.rowtools,.party-actions,.combo-menu,.item-menu,.no-print{display:none !important}
+  @page{size:A4 portrait;margin:0}
+  .page{margin:0;padding:9mm 10mm;box-shadow:none;max-width:100%;border-radius:0}
+
+  .letterhead{padding-bottom:7px;margin-bottom:9px}
+  .letterhead .logo{width:96px;height:74px;background:#E2E2E2 !important;padding:6px}
+  .letterhead .logo.custom{background:#fff !important}
+  .letterhead .co-name{font-size:14pt}
+  .letterhead .co-trn{font-size:7.5pt}
+  .letterhead .co-line{font-size:8pt;line-height:1.35}
+
+  .lpo-title{font-size:14pt;margin:6px 0 9px;letter-spacing:2px}
+  .meta{font-size:9pt;gap:3px 20px;margin-bottom:8px}
+  .meta input{padding:1px 4px;font-size:9pt;border:none;border-bottom:1px solid #bbb}
+
+  .parties{margin-bottom:10px}
+  .party{background:#fff;border:1px solid #999;max-width:100%}
+  .party .head{background:#e8eef7 !important;color:#111 !important;padding:4px 10px;font-size:9.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .party .head .tag{background:rgba(0,0,0,.08);color:#333}
+  .party .body{padding:6px 10px}
+  .pf{margin-bottom:3px}
+  .pf label{font-size:8.5pt;min-width:66px}
+  .pf input{border:none;padding:1px 3px;font-size:9pt;background:none}
+  .pf.name input{font-size:9.5pt}
+  .greeting,.intro{font-size:9pt;margin:5px 0}
+
+  table.items{font-size:8.5pt}
+  table.items th{background:var(--brand) !important;color:#fff !important;padding:4px 3px;font-size:8pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.items td{padding:3px 3px;vertical-align:top}
+  table.items input,table.items select,table.items textarea{
+    font-size:8.5pt;padding:2px 3px;color:#000;
+    -webkit-appearance:none;appearance:none;
+  }
+  table.items td.itemname textarea{line-height:1.25;white-space:pre-wrap;word-break:break-word;overflow:visible}
+  table.items .amount{background:#eef4fb !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  table.items tbody tr.blank{display:none}
+
+  .totals{width:44%}
+  .totals .trow{font-size:9pt}
+  .totals .trow.grand{font-size:11pt}
+  .totals .trow.grand .val{color:#000}
+
+  .notes{font-size:8.5pt;margin-top:12px;padding-top:8px}
+  .notes textarea{border:none;padding:0;min-height:auto;resize:none;font-size:8.5pt}
+  .terms{font-size:8pt}
+  .signblock{width:265px;margin-top:20px}
+  .signstack{height:108px;border:none;background:none;border-radius:0}
+  .signstack:not(.has){border-bottom:1px solid #333}
+  .sig-layer{max-height:100px}
+  .stamp-layer{max-height:104px}
+  .sign-cap{font-size:8.5pt;border-top:1px solid #333}
+  .signfor{font-size:8.5pt;margin-top:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <a class="asa-home no-print" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+  <h1>LPO Generator</h1>
+  <span class="save-status" id="saveStatus">Saved ✓</span>
+  <button id="btnSaveLpo">💾 Save LPO</button>
+  <button id="btnSavedDrawer" class="ghost">📁 Saved LPOs</button>
+  <button id="btnNew" class="ghost">+ New</button>
+  <button id="btnLogo" class="ghost">🖼 Logo</button>
+  <button id="btnPriceToggle">Prices: On</button>
+  <button id="btnCSV">Copy CSV</button>
+  <button id="btnPDF">Save PDF</button>
+  <button id="btnShare" class="wa">Share</button>
+</div>
+
+<div class="drawer" id="savedDrawer">
+  <h3>Saved LPOs <span class="count" id="savedCount"></span>
+    <button class="close" id="btnCloseDrawer" title="Close">×</button>
+  </h3>
+  <div class="saved-list" id="savedList"></div>
+</div>
+
+<div class="page" id="lpoPage">
+
+  <!-- Letterhead -->
+  <div class="letterhead">
+    <div class="logo" id="logoBox" title="Click to add / change logo">
+      <img id="logoImg" src="logo.png" alt="Al Sahlawi" onerror="this.style.display='none';document.getElementById('logoPh').style.display='block'">
+      <span class="logo-ph" id="logoPh">＋ Add logo</span>
+    </div>
+    <input type="file" id="logoFile" accept="image/*" hidden>
+    <div class="co-info">
+      <div class="co-name">AL SAHLAWI BLDG. METAL CONST. IND. FACTORY LLC</div>
+      <div class="co-trn">TRN: 100353933300003</div>
+      <div class="co-line">
+        Tel (Off): +971-6-5386817 &nbsp;|&nbsp; Mob: +971 56 4991262 &nbsp;|&nbsp; Mob: +971 50 6263517<br>
+        Email: Info@sahlawialuminum.com &nbsp;|&nbsp; Web: www.sahlawialuminum.com<br>
+        P.O. Box: 80079, Opp. Etisalat Office, Emirates Industrial City, Sajaa, Sharjah — U.A.E.
+      </div>
+    </div>
+  </div>
+
+  <div class="lpo-title">LOCAL PURCHASE ORDER</div>
+
+  <!-- Meta -->
+  <div class="meta">
+    <div class="row"><label>LPO No.:</label><input id="docRef" type="text" placeholder="e.g. LPO-2026-001"></div>
+    <div class="row"><label>Date:</label><input id="docDate" type="text"></div>
+  </div>
+
+  <!-- Parties -->
+  <div class="parties">
+
+    <!-- SUPPLIER (TO) -->
+    <div class="party sup">
+      <div class="head">Supplier <span class="tag">TO — order goes here</span></div>
+      <div class="body">
+        <div class="pf name">
+          <label>Messrs</label>
+          <input id="sup_name" autocomplete="off" placeholder="Type supplier name…">
+          <div class="combo-menu" id="sup_menu"></div>
+        </div>
+        <div class="pf"><label>Contact</label><input id="sup_contact" placeholder="Contact person"></div>
+        <div class="pf"><label>Phone</label><input id="sup_phone" placeholder="Phone / mobile"></div>
+        <div class="pf"><label>Email</label><input id="sup_email" placeholder="Email"></div>
+        <div class="pf"><label>Address</label><input id="sup_address" placeholder="Address"></div>
+        <div class="pf"><label>TRN</label><input id="sup_trn" placeholder="Tax Reg. No."></div>
+        <div class="party-actions no-print">
+          <button id="btnSaveSup">💾 Save supplier</button>
+          <button id="btnManageSup">✎ Edit saved</button>
+          <button id="btnClearSup">Clear</button>
+          <span class="count" id="supCount"></span>
+        </div>
+        <div class="sup-manage no-print" id="supManage"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="greeting">Dear Sir,</div>
+  <div class="intro">Please supply the following materials as per the details below:</div>
+
+  <!-- Items -->
+  <table class="items" id="itemsTable">
+    <thead>
+      <tr>
+        <th class="sn">#</th>
+        <th style="min-width:200px">Item / Material Description</th>
+        <th class="qtycell">Qty</th>
+        <th class="unit">Unit</th>
+        <th class="pricecell">Unit Price (AED)</th>
+        <th class="amountcell">Amount (AED)</th>
+        <th class="rowtools no-print"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody"></tbody>
+  </table>
+
+  <button class="add-row-btn no-print" id="addRowBtn">+ Add Item</button>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals">
+      <div class="trow"><span class="lbl">Subtotal</span><span class="val" id="tSub">AED 0.00</span></div>
+      <div class="trow"><span class="lbl">VAT (5%)</span><span class="val" id="tVat">AED 0.00</span></div>
+      <div class="trow grand"><span class="lbl">Grand Total</span><span class="val" id="tGrand">AED 0.00</span></div>
+      <div class="itemcount" id="itemCount">0 items</div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="notes">
+    <div class="lbl">Remarks / Special Instructions:</div>
+    <textarea id="remarks" placeholder="e.g. Mill finish unless specified, delivery to Sajaa factory, include delivery note & tax invoice."></textarea>
+    <div class="terms">
+      1. Please quote our LPO No. on all invoices &amp; delivery notes. &nbsp; 2. Goods must match the description, quantity &amp; agreed price. &nbsp; 3. Prices are inclusive of delivery unless otherwise agreed.
+    </div>
+  </div>
+
+  <!-- Signature & Stamp (stamp overlays the signature) -->
+  <div class="signblock">
+    <div class="signstack" id="signStack">
+      <img id="sigImg" class="sig-layer" alt="">
+      <img id="stampImg" class="stamp-layer" alt="">
+      <div class="slot-ph" id="signPh">＋ Add signature &amp; stamp</div>
+    </div>
+    <div class="sign-cap">Authorized Signature &amp; Company Stamp</div>
+    <div class="sign-controls no-print">
+      <button type="button" id="btnSig">＋ Signature</button>
+      <button type="button" id="btnSigRm" class="rm">Remove</button>
+      <span class="ctl-sep">|</span>
+      <button type="button" id="btnStamp">＋ Stamp</button>
+      <button type="button" id="btnStampRm" class="rm">Remove</button>
+    </div>
+    <input type="file" id="sigFile" accept="image/*" hidden>
+    <input type="file" id="stampFile" accept="image/*" hidden>
+  </div>
+  <div class="signfor">For AL SAHLAWI BLDG. METAL CONST. IND. FACTORY LLC</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ================= Storage ================= */
+const K = {sup:'lpoasa_suppliers', cat:'lpoasa_catalog', draft:'lpoasa_draft', saved:'lpoasa_saved_lpos', logo:'lpoasa_logo'};
+const load = (k,def)=>{ try{ const v=JSON.parse(localStorage.getItem(k)); return v==null?def:v; }catch(e){ return def; } };
+const save = (k,v)=>{ localStorage.setItem(k,JSON.stringify(v)); try{ lpoCloudSave(k,v); }catch(e){} };
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+
+let suppliers = load(K.sup, []);
+let catalog   = load(K.cat, []);   // {id, supplierId, supplierName, name, unit, price}
+let savedLPOs = load(K.saved, []); // {id, savedAt, data}
+let currentSupplierId = null;      // set when a saved supplier is picked/saved
+let currentLpoId = null;           // id of the saved LPO currently open (null = unsaved)
+let showPrice = true;              // when false, price/amount columns + totals are hidden
+
+const UNITS = ['pcs','kg','m','mm','ton','set','box','bundle','ltr','sqm','ea'];
+
+const $ = id=>document.getElementById(id);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2000); }
+function flashSaved(){ const s=$('saveStatus'); s.classList.add('show'); clearTimeout(s._h); s._h=setTimeout(()=>s.classList.remove('show'),1200); }
+const money = n=>'AED '+(Number(n)||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+/* ================= Supplier combobox ================= */
+function supFields(){ return {name:$('sup_name').value.trim(),contact:$('sup_contact').value.trim(),phone:$('sup_phone').value.trim(),email:$('sup_email').value.trim(),address:$('sup_address').value.trim(),trn:$('sup_trn').value.trim()}; }
+
+function fillSupplier(s){
+  $('sup_name').value=s.name||''; $('sup_contact').value=s.contact||''; $('sup_phone').value=s.phone||'';
+  $('sup_email').value=s.email||''; $('sup_address').value=s.address||''; $('sup_trn').value=s.trn||'';
+  currentSupplierId = s.id||null;
+  refreshAllItemPrices();
+  scheduleSave();
+}
+
+function renderComboMenu(menuEl, list, filter, onPick, onDelete, subFn){
+  const f=(filter||'').toLowerCase();
+  const matches = list.filter(x=>!f || (x.name||'').toLowerCase().includes(f));
+  if(!list.length){ menuEl.innerHTML='<div class="empty">No saved entries yet — fill the fields and click Save.</div>'; menuEl.classList.add('open'); return; }
+  if(!matches.length){ menuEl.innerHTML='<div class="empty">No match — this will be saved as new.</div>'; menuEl.classList.add('open'); return; }
+  menuEl.innerHTML = matches.map(x=>
+    `<div class="opt" data-id="${x.id}"><button class="del" data-del="${x.id}" title="Delete">×</button>`+
+    `<div class="nm">${esc(x.name)}</div>`+(subFn(x)?`<div class="sub">${esc(subFn(x))}</div>`:'')+`</div>`).join('');
+  menuEl.classList.add('open');
+  menuEl.querySelectorAll('.opt').forEach(o=>{
+    o.addEventListener('mousedown',e=>{
+      if(e.target.dataset.del){ e.preventDefault(); e.stopPropagation(); onDelete(e.target.dataset.del); return; }
+      e.preventDefault(); onPick(list.find(x=>x.id===o.dataset.id)); menuEl.classList.remove('open');
+    });
+  });
+}
+const esc = s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Supplier combo wiring */
+const supMenu=$('sup_menu');
+$('sup_name').addEventListener('focus',()=>renderComboMenu(supMenu,suppliers,$('sup_name').value,fillSupplier,deleteSupplier,s=>[s.contact,s.phone].filter(Boolean).join(' · ')));
+$('sup_name').addEventListener('input',()=>{ currentSupplierId=null; renderComboMenu(supMenu,suppliers,$('sup_name').value,fillSupplier,deleteSupplier,s=>[s.contact,s.phone].filter(Boolean).join(' · ')); scheduleSave(); });
+
+document.addEventListener('mousedown',e=>{
+  if(!e.target.closest('.pf.name')){ supMenu.classList.remove('open'); }
+});
+
+function saveSupplier(){
+  const f=supFields();
+  if(!f.name){ toast('Enter a supplier name first'); return; }
+  const existing = suppliers.find(s=>s.name.toLowerCase()===f.name.toLowerCase());
+  if(existing){ Object.assign(existing,f); currentSupplierId=existing.id; toast('Supplier updated'); }
+  else { const s={id:uid(),...f}; suppliers.push(s); currentSupplierId=s.id; toast('Supplier saved'); }
+  save(K.sup,suppliers); updateCounts(); refreshAllItemPrices();
+}
+function deleteSupplier(id){
+  const s=suppliers.find(x=>x.id===id); if(!s) return;
+  if(!confirm(`Delete supplier "${s.name}"? Its saved item prices will also be removed.`)) return;
+  suppliers=suppliers.filter(x=>x.id!==id);
+  catalog=catalog.filter(c=>c.supplierId!==id);
+  save(K.sup,suppliers); save(K.cat,catalog);
+  if(currentSupplierId===id) currentSupplierId=null;
+  updateCounts(); renderComboMenu(supMenu,suppliers,$('sup_name').value,fillSupplier,deleteSupplier,s=>[s.contact,s.phone].filter(Boolean).join(' · '));
+  if($('supManage').classList.contains('open')) renderSupManage();
+  toast('Supplier deleted');
+}
+function updateCounts(){
+  $('supCount').textContent = suppliers.length?`${suppliers.length} saved`:'';
+}
+
+/* ---- Edit saved suppliers (rename + all fields) ---- */
+function supRowHtml(s){
+  const v=x=>esc(x||'');
+  return `<div class="sm-row" data-id="${s.id}"><div class="sm-grid">`+
+    `<div class="full"><label>Messrs (name)</label><input class="e-name" value="${v(s.name)}"></div>`+
+    `<div><label>Contact</label><input class="e-contact" value="${v(s.contact)}"></div>`+
+    `<div><label>Phone</label><input class="e-phone" value="${v(s.phone)}"></div>`+
+    `<div><label>Email</label><input class="e-email" value="${v(s.email)}"></div>`+
+    `<div><label>TRN</label><input class="e-trn" value="${v(s.trn)}"></div>`+
+    `<div class="full"><label>Address</label><input class="e-address" value="${v(s.address)}"></div>`+
+    `</div><div class="sm-actions">`+
+    `<button class="save">Save changes</button>`+
+    `<button class="load">Use in LPO</button>`+
+    `<button class="del">Delete</button></div></div>`;
+}
+function renderSupManage(){
+  const box=$('supManage');
+  const head='<div class="sm-head">Edit saved suppliers'+(suppliers.length?` (${suppliers.length})`:'')+'<button class="x" id="smClose" title="Close">×</button></div>';
+  box.innerHTML = head + (suppliers.length
+    ? '<div class="sm-list">'+suppliers.map(supRowHtml).join('')+'</div>'
+    : '<div class="sm-empty">No saved suppliers yet. Fill the fields above and click “Save supplier”.</div>');
+  $('smClose').addEventListener('click',()=>box.classList.remove('open'));
+  box.querySelectorAll('.sm-row').forEach(row=>{
+    const id=row.dataset.id;
+    row.querySelector('.save').addEventListener('click',()=>saveSupEdit(id,row));
+    row.querySelector('.del').addEventListener('click',()=>deleteSupplier(id));
+    row.querySelector('.load').addEventListener('click',()=>{ const s=suppliers.find(x=>x.id===id); if(s){ fillSupplier(s); box.classList.remove('open'); toast('Loaded '+s.name+' into the LPO'); } });
+  });
+}
+function saveSupEdit(id,row){
+  const s=suppliers.find(x=>x.id===id); if(!s) return;
+  const name=row.querySelector('.e-name').value.trim();
+  if(!name){ toast('Supplier name cannot be empty'); return; }
+  const oldName=s.name;
+  s.name=name;
+  s.contact=row.querySelector('.e-contact').value.trim();
+  s.phone=row.querySelector('.e-phone').value.trim();
+  s.email=row.querySelector('.e-email').value.trim();
+  s.trn=row.querySelector('.e-trn').value.trim();
+  s.address=row.querySelector('.e-address').value.trim();
+  if(name!==oldName){ catalog.forEach(c=>{ if(c.supplierId===id) c.supplierName=name; }); save(K.cat,catalog); }
+  save(K.sup,suppliers); updateCounts();
+  if(currentSupplierId===id){ fillSupplier(s); }   // keep the open LPO's supplier in sync
+  toast('“'+name+'” updated');
+}
+
+$('btnSaveSup').addEventListener('click',saveSupplier);
+$('btnManageSup').addEventListener('click',()=>{
+  const box=$('supManage');
+  if(box.classList.contains('open')) box.classList.remove('open');
+  else { renderSupManage(); box.classList.add('open'); }
+});
+$('btnClearSup').addEventListener('click',()=>{['sup_name','sup_contact','sup_phone','sup_email','sup_address','sup_trn'].forEach(i=>$(i).value=''); currentSupplierId=null; refreshAllItemPrices(); scheduleSave();});
+
+/* ================= Items ================= */
+const body=$('itemsBody');
+
+function unitOptions(sel){ return UNITS.map(u=>`<option ${u===sel?'selected':''}>${u}</option>`).join(''); }
+function autoGrow(el){ if(!el) return; el.style.height='auto'; el.style.height=(el.scrollHeight)+'px'; }
+
+function addRow(data){
+  data = data||{};
+  const tr=document.createElement('tr');
+  tr.innerHTML=
+    `<td class="sn"></td>`+
+    `<td class="itemname"><textarea class="i-name" rows="1" autocomplete="off" placeholder="Item / material description">${esc(data.name)}</textarea><div class="item-menu"></div></td>`+
+    `<td class="qtycell qty"><input class="i-qty" inputmode="decimal" value="${data.qty!=null?esc(data.qty):''}" placeholder="0"></td>`+
+    `<td class="unit"><select class="i-unit">${unitOptions(data.unit||'pcs')}</select></td>`+
+    `<td class="pricecell price"><input class="i-price" inputmode="decimal" value="${data.price!=null?esc(data.price):''}" placeholder="0.00"></td>`+
+    `<td class="amountcell amount">0.00</td>`+
+    `<td class="rowtools no-print"><button class="star-btn" title="Save this item to the selected supplier's price list">★</button><button class="del-btn" title="Delete row">×</button></td>`;
+  body.appendChild(tr);
+
+  const nameI=tr.querySelector('.i-name'), qtyI=tr.querySelector('.i-qty'),
+        unitS=tr.querySelector('.i-unit'), priceI=tr.querySelector('.i-price'),
+        menu=tr.querySelector('.item-menu');
+
+  const recompute=()=>{ recalcRow(tr); recalcTotals(); scheduleSave(); };
+  qtyI.addEventListener('input',recompute);
+  priceI.addEventListener('input',recompute);
+  unitS.addEventListener('change',recompute);
+  nameI.addEventListener('input',()=>{ autoGrow(nameI); tr.querySelector('.star-btn').classList.remove('saved'); openItemMenu(tr); scheduleSave(); });
+  nameI.addEventListener('focus',()=>openItemMenu(tr));
+  nameI.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); menu.classList.remove('open'); qtyI.focus(); } });
+  autoGrow(nameI);
+
+  tr.querySelector('.star-btn').addEventListener('click',()=>saveItemToCatalog(tr));
+  tr.querySelector('.del-btn').addEventListener('click',()=>{ tr.remove(); ensureRows(); renumber(); recalcTotals(); scheduleSave(); });
+
+  renumber(); recalcRow(tr);
+  return tr;
+}
+
+function openItemMenu(tr){
+  const menu=tr.querySelector('.item-menu');
+  const q=tr.querySelector('.i-name').value.trim().toLowerCase();
+  let items = catalog.filter(c=>currentSupplierId? c.supplierId===currentSupplierId : true);
+  if(q) items=items.filter(c=>c.name.toLowerCase().includes(q));
+  if(!currentSupplierId && catalog.length){
+    menu.innerHTML=`<div class="empty">Pick a saved supplier above to see its price list. Showing all saved items:</div>`+
+      items.slice(0,40).map(renderItemOpt).join('');
+  } else if(!items.length){
+    menu.innerHTML=`<div class="empty">${catalog.length? 'No saved items match. Type the item, then click ★ to save it for this supplier.':'No saved items yet. Type an item, then click ★ to save it.'}</div>`;
+  } else {
+    menu.innerHTML=items.slice(0,40).map(renderItemOpt).join('');
+  }
+  menu.classList.add('open');
+  menu.querySelectorAll('.opt').forEach(o=>{
+    o.addEventListener('mousedown',e=>{
+      if(e.target.dataset.del){ e.preventDefault(); e.stopPropagation(); deleteCatalogItem(e.target.dataset.del); openItemMenu(tr); return; }
+      e.preventDefault();
+      const it=catalog.find(c=>c.id===o.dataset.id); if(!it) return;
+      tr.querySelector('.i-name').value=it.name; autoGrow(tr.querySelector('.i-name'));
+      tr.querySelector('.i-unit').value=it.unit||'pcs';
+      tr.querySelector('.i-price').value=it.price!=null?it.price:'';
+      tr.querySelector('.star-btn').classList.add('saved');
+      menu.classList.remove('open');
+      recalcRow(tr); recalcTotals(); scheduleSave();
+    });
+  });
+}
+function renderItemOpt(it){
+  const sup = suppliers.find(s=>s.id===it.supplierId);
+  const supTag = (!currentSupplierId && sup)?` <span style="color:#999;font-size:10px">(${esc(sup.name)})</span>`:'';
+  return `<div class="opt" data-id="${it.id}"><button class="del" data-del="${it.id}" title="Delete saved item">×</button>`+
+    `<span class="pr">${money(it.price)}</span><span class="nm">${esc(it.name)}</span>`+
+    `<span style="color:#888;font-size:10px"> / ${esc(it.unit||'pcs')}</span>${supTag}</div>`;
+}
+document.addEventListener('mousedown',e=>{ if(!e.target.closest('.itemname')) document.querySelectorAll('.item-menu.open').forEach(m=>m.classList.remove('open')); });
+
+function saveItemToCatalog(tr){
+  const name=tr.querySelector('.i-name').value.trim();
+  const unit=tr.querySelector('.i-unit').value;
+  const price=parseFloat(tr.querySelector('.i-price').value)||0;
+  if(!name){ toast('Type an item name first'); return; }
+  if(!currentSupplierId){
+    if(!supFields().name){ toast('Select or save a supplier first — prices are stored per supplier'); return; }
+    saveSupplier(); if(!currentSupplierId) return;
+  }
+  const sup=suppliers.find(s=>s.id===currentSupplierId);
+  const existing=catalog.find(c=>c.supplierId===currentSupplierId && c.name.toLowerCase()===name.toLowerCase());
+  if(existing){ existing.unit=unit; existing.price=price; toast('Item price updated for '+sup.name); }
+  else { catalog.push({id:uid(),supplierId:currentSupplierId,supplierName:sup.name,name,unit,price}); toast('Item saved for '+sup.name); }
+  save(K.cat,catalog);
+  tr.querySelector('.star-btn').classList.add('saved');
+}
+function deleteCatalogItem(id){
+  catalog=catalog.filter(c=>c.id!==id); save(K.cat,catalog); toast('Saved item deleted');
+}
+/* When supplier changes, refill prices for rows whose item matches that supplier's catalog */
+function refreshAllItemPrices(){
+  body.querySelectorAll('tr').forEach(tr=>{
+    const name=tr.querySelector('.i-name').value.trim().toLowerCase();
+    if(!name||!currentSupplierId){ tr.querySelector('.star-btn').classList.remove('saved'); return; }
+    const it=catalog.find(c=>c.supplierId===currentSupplierId && c.name.toLowerCase()===name);
+    if(it){ tr.querySelector('.i-price').value=it.price; tr.querySelector('.i-unit').value=it.unit||'pcs'; tr.querySelector('.star-btn').classList.add('saved'); }
+    else tr.querySelector('.star-btn').classList.remove('saved');
+  });
+  recalcTotals();
+}
+
+function recalcRow(tr){
+  const qty=parseFloat(tr.querySelector('.i-qty').value)||0;
+  const price=parseFloat(tr.querySelector('.i-price').value)||0;
+  tr.querySelector('.amount').textContent=(qty*price).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function recalcTotals(){
+  let sub=0, count=0;
+  body.querySelectorAll('tr').forEach(tr=>{
+    const qty=parseFloat(tr.querySelector('.i-qty').value)||0;
+    const price=parseFloat(tr.querySelector('.i-price').value)||0;
+    const nm=tr.querySelector('.i-name').value.trim();
+    sub+=qty*price;
+    if(nm) count++;
+    tr.classList.toggle('blank', !nm && !qty && !price);
+  });
+  const vat=sub*0.05, grand=sub+vat;
+  $('tSub').textContent=money(sub);
+  $('tVat').textContent=money(vat);
+  $('tGrand').textContent=money(grand);
+  $('itemCount').textContent=count+(count===1?' item':' items');
+}
+function renumber(){ body.querySelectorAll('tr').forEach((tr,i)=>tr.querySelector('.sn').textContent=i+1); }
+function ensureRows(){ if(!body.children.length) addRow(); }
+
+$('addRowBtn').addEventListener('click',()=>{ const tr=addRow(); tr.querySelector('.i-name').focus(); scheduleSave(); });
+
+/* ================= Draft autosave / restore ================= */
+let saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveDraft,400); }
+function collect(){
+  return {
+    docRef:$('docRef').value, docDate:$('docDate').value,
+    sup:supFields(), currentSupplierId, currentLpoId, showPrice,
+    remarks:$('remarks').value,
+    sigImg:sigData, stampImg:stampData,
+    rows:[...body.querySelectorAll('tr')].map(tr=>({
+      name:tr.querySelector('.i-name').value, qty:tr.querySelector('.i-qty').value,
+      unit:tr.querySelector('.i-unit').value, price:tr.querySelector('.i-price').value
+    }))
+  };
+}
+function loadData(d){
+  d=d||{};
+  showPrice = d.showPrice!==false; applyPriceMode();
+  $('docRef').value=d.docRef||''; $('docDate').value=d.docDate||todayStr();
+  const s=d.sup||{};
+  $('sup_name').value=s.name||''; $('sup_contact').value=s.contact||''; $('sup_phone').value=s.phone||'';
+  $('sup_email').value=s.email||''; $('sup_address').value=s.address||''; $('sup_trn').value=s.trn||'';
+  currentSupplierId=d.currentSupplierId||null;
+  $('remarks').value=d.remarks||'';
+  applySign(d.sigImg, d.stampImg);
+  body.innerHTML='';
+  (d.rows&&d.rows.length?d.rows:[{},{},{}]).forEach(r=>addRow(r));
+  recalcTotals();
+}
+function saveDraft(){ save(K.draft,collect()); flashSaved(); }
+function restoreDraft(){
+  const d=load(K.draft,null);
+  if(!d){ $('docDate').value=todayStr(); addRow(); addRow(); addRow(); return; }
+  loadData(d);
+  currentLpoId=d.currentLpoId||null;
+}
+function todayStr(){ const d=new Date(); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+
+/* ================= Toolbar actions ================= */
+$('btnNew').addEventListener('click',()=>{
+  if(!confirm('Start a new blank LPO? Your saved LPOs, suppliers and item prices are kept.')) return;
+  ['docRef','remarks','sup_name','sup_contact','sup_phone','sup_email','sup_address','sup_trn'].forEach(i=>$(i).value='');
+  $('docDate').value=todayStr(); currentSupplierId=null; currentLpoId=null;
+  applySign('', '');
+  body.innerHTML=''; addRow(); addRow(); addRow();
+  recalcTotals(); saveDraft(); toast('New LPO started');
+});
+
+/* ================= Show / hide prices ================= */
+function applyPriceMode(){
+  document.body.classList.toggle('noprice', !showPrice);
+  const b=$('btnPriceToggle');
+  b.textContent='Prices: '+(showPrice?'On':'Off');
+  b.classList.toggle('off', !showPrice);
+  body.querySelectorAll('.i-name').forEach(autoGrow);
+}
+$('btnPriceToggle').addEventListener('click',()=>{ showPrice=!showPrice; applyPriceMode(); saveDraft(); toast(showPrice?'Prices shown':'Prices hidden — no totals'); });
+
+/* ================= Save / open / manage LPOs ================= */
+function lpoName(data){
+  const ref=((data&&data.docRef)||'').trim();
+  const sup=((data&&data.sup&&data.sup.name)||'').trim();
+  const base = ref ? (/^lpo/i.test(ref)?ref:'LPO-'+ref) : 'LPO';
+  return (base + (sup?' '+sup:'')).trim();
+}
+function sanitizeFile(s){ return (s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim() || 'LPO'; }
+function totalOf(data){
+  let sub=0; ((data&&data.rows)||[]).forEach(r=>{ sub+=(parseFloat(r.qty)||0)*(parseFloat(r.price)||0); });
+  return sub*1.05;
+}
+function saveLpo(){
+  const data=collect();
+  if(!data.docRef.trim() && !(data.sup&&data.sup.name.trim()) && !data.rows.some(r=>r.name.trim())){
+    toast('Nothing to save yet'); return;
+  }
+  let rec = currentLpoId ? savedLPOs.find(x=>x.id===currentLpoId) : null;
+  if(rec){ rec.data=data; rec.savedAt=Date.now(); }
+  else { rec={id:uid(), savedAt:Date.now(), data}; savedLPOs.push(rec); currentLpoId=rec.id; data.currentLpoId=currentLpoId; }
+  try{
+    save(K.saved,savedLPOs); save(K.draft,collect());
+    toast('LPO saved — '+savedLPOs.length+' on file'); renderSavedList();
+  }catch(err){
+    toast('Browser storage is full — delete some saved LPOs');
+  }
+}
+function openLpo(id){
+  const rec=savedLPOs.find(x=>x.id===id); if(!rec) return;
+  loadData(rec.data); currentLpoId=id; saveDraft(); closeDrawer();
+  toast('Opened '+lpoName(rec.data));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteLpo(id){
+  const rec=savedLPOs.find(x=>x.id===id); if(!rec) return;
+  if(!confirm('Delete saved LPO "'+lpoName(rec.data)+'"? This cannot be undone.')) return;
+  savedLPOs=savedLPOs.filter(x=>x.id!==id); save(K.saved,savedLPOs);
+  if(currentLpoId===id) currentLpoId=null;
+  renderSavedList(); toast('LPO deleted');
+}
+function renderSavedList(){
+  $('savedCount').textContent = savedLPOs.length?('· '+savedLPOs.length):'';
+  const list=$('savedList');
+  if(!savedLPOs.length){ list.innerHTML='<div class="saved-empty">No saved LPOs yet. Fill one in and click “Save LPO”.</div>'; return; }
+  const sorted=[...savedLPOs].sort((a,b)=>b.savedAt-a.savedAt);
+  list.innerHTML=sorted.map(rec=>{
+    const d=rec.data, nm=lpoName(d), sup=(d.sup&&d.sup.name)||'—';
+    const dt=new Date(rec.savedAt).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+    const cur = rec.id===currentLpoId ? ' style="background:#eef6ff"' : '';
+    return `<div class="saved-item" data-id="${rec.id}"${cur}>`+
+      `<span class="qn">${esc(d.docRef||'(no number)')}</span>`+
+      `<span class="who">${esc(sup)}</span>`+
+      `<span class="amt">${money(totalOf(d))}</span>`+
+      `<span class="dt">${dt}</span>`+
+      `<span class="acts"><button class="open">Open</button><button class="pdf">PDF</button><button class="del">Delete</button></span>`+
+      `</div>`;
+  }).join('');
+  list.querySelectorAll('.saved-item').forEach(row=>{
+    const id=row.dataset.id;
+    row.querySelector('.open').addEventListener('click',e=>{ e.stopPropagation(); openLpo(id); });
+    row.querySelector('.pdf').addEventListener('click',e=>{ e.stopPropagation(); openLpo(id); setTimeout(savePdf,350); });
+    row.querySelector('.del').addEventListener('click',e=>{ e.stopPropagation(); deleteLpo(id); });
+    row.addEventListener('click',()=>openLpo(id));
+  });
+}
+function openDrawer(){ renderSavedList(); $('savedDrawer').classList.add('open'); }
+function closeDrawer(){ $('savedDrawer').classList.remove('open'); }
+$('btnSaveLpo').addEventListener('click',saveLpo);
+$('btnSavedDrawer').addEventListener('click',()=>{ $('savedDrawer').classList.contains('open')?closeDrawer():openDrawer(); });
+$('btnCloseDrawer').addEventListener('click',closeDrawer);
+
+/* ================= Save as PDF (named file) ================= */
+function savePdf(){
+  const title=sanitizeFile(lpoName(collect()));
+  const prev=document.title;
+  document.title=title;
+  const restore=()=>{ document.title=prev; window.removeEventListener('afterprint',restore); };
+  window.addEventListener('afterprint',restore);
+  window.print();
+  setTimeout(restore,4000);
+}
+
+$('btnCSV').addEventListener('click',()=>{
+  const rows=[ showPrice ? ['#','Item','Qty','Unit','Unit Price (AED)','Amount (AED)'] : ['#','Item','Qty','Unit'] ];
+  let sub=0,i=0;
+  body.querySelectorAll('tr').forEach(tr=>{
+    const nm=tr.querySelector('.i-name').value.trim(); if(!nm) return;
+    const qty=parseFloat(tr.querySelector('.i-qty').value)||0;
+    const unit=tr.querySelector('.i-unit').value;
+    const price=parseFloat(tr.querySelector('.i-price').value)||0;
+    const amt=qty*price; sub+=amt; i++;
+    rows.push( showPrice ? [i,nm,qty,unit,price.toFixed(2),amt.toFixed(2)] : [i,nm,qty,unit] );
+  });
+  if(showPrice){
+    rows.push([]); rows.push(['','','','','Subtotal',sub.toFixed(2)]);
+    rows.push(['','','','','VAT 5%',(sub*0.05).toFixed(2)]);
+    rows.push(['','','','','Grand Total',(sub*1.05).toFixed(2)]);
+  }
+  const csv=rows.map(r=>r.map(c=>{ const s=String(c==null?'':c); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }).join(',')).join('\n');
+  navigator.clipboard.writeText(csv).then(()=>toast('LPO copied as CSV'),()=>toast('Copy failed'));
+});
+
+$('btnPDF').addEventListener('click',savePdf);
+
+$('btnShare').addEventListener('click',()=>{
+  const lines=[];
+  lines.push('*LOCAL PURCHASE ORDER — Al Sahlawi Aluminum*');
+  if($('docRef').value) lines.push('LPO No: '+$('docRef').value);
+  lines.push('Date: '+($('docDate').value||todayStr()));
+  if($('sup_name').value) lines.push('Supplier: '+$('sup_name').value);
+  lines.push('');
+  let sub=0,i=0;
+  body.querySelectorAll('tr').forEach(tr=>{
+    const nm=tr.querySelector('.i-name').value.trim(); if(!nm) return;
+    const qty=parseFloat(tr.querySelector('.i-qty').value)||0;
+    const unit=tr.querySelector('.i-unit').value;
+    const price=parseFloat(tr.querySelector('.i-price').value)||0;
+    const amt=qty*price; sub+=amt; i++;
+    lines.push( showPrice ? `${i}. ${nm} — ${qty} ${unit} × ${price.toFixed(2)} = ${amt.toFixed(2)}`
+                          : `${i}. ${nm} — ${qty} ${unit}` );
+  });
+  if(showPrice){
+    lines.push('');
+    lines.push('Subtotal: '+money(sub));
+    lines.push('VAT 5%: '+money(sub*0.05));
+    lines.push('*Grand Total: '+money(sub*1.05)+'*');
+  }
+  if($('remarks').value) lines.push('Remarks: '+$('remarks').value);
+  const url='https://wa.me/?text='+encodeURIComponent(lines.join('\n'));
+  window.open(url,'_blank');
+});
+
+/* ============ Signature & Stamp (stamp overlays signature) ============ */
+let sigData='', stampData='';
+function updateSignUI(){
+  $('sigImg').style.display   = sigData?'block':'none';
+  $('stampImg').style.display = stampData?'block':'none';
+  $('signPh').style.display   = (sigData||stampData)?'none':'block';
+  $('signStack').classList.toggle('has', !!(sigData||stampData));
+}
+function setSlot(type, dataURL){
+  if(type==='sig'){ sigData=dataURL||''; $('sigImg').src=sigData; }
+  else { stampData=dataURL||''; $('stampImg').src=stampData; }
+  updateSignUI();
+}
+function downscaleImage(file, cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=680; let w=img.width, h=img.height;
+      if(w>max||h>max){ const s=Math.min(max/w,max/h); w=Math.round(w*s); h=Math.round(h*s); }
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      cb(c.toDataURL('image/png'));
+    };
+    img.onerror=()=>toast('Could not read that image');
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function pickImage(type){
+  const inp=$(type+'File'), f=inp.files[0]; if(!f) return;
+  downscaleImage(f,url=>{ setSlot(type,url); saveDraft(); adminSetSign(); toast((type==='sig'?'Signature':'Company stamp')+' added'); });
+  inp.value='';
+}
+$('btnSig').addEventListener('click',()=>$('sigFile').click());
+$('btnStamp').addEventListener('click',()=>$('stampFile').click());
+$('sigFile').addEventListener('change',()=>pickImage('sig'));
+$('stampFile').addEventListener('change',()=>pickImage('stamp'));
+$('btnSigRm').addEventListener('click',()=>{ setSlot('sig',''); saveDraft(); adminSetSign(); toast('Signature removed'); });
+$('btnStampRm').addEventListener('click',()=>{ setSlot('stamp',''); saveDraft(); adminSetSign(); toast('Stamp removed'); });
+
+/* ================= Company logo (persists across all LPOs) ================= */
+function applyLogo(){
+  const data=load(K.logo,null), img=$('logoImg'), box=$('logoBox'), ph=$('logoPh');
+  if(data){ img.src=data; img.style.display=''; ph.style.display='none'; box.classList.add('custom'); }
+}
+function pickLogo(){
+  const inp=$('logoFile'), f=inp.files[0]; if(!f) return;
+  downscaleImage(f,url=>{
+    try{ save(K.logo,url); }catch(e){ toast('Image too large — try a smaller file'); return; }
+    applyLogo(); toast('Logo updated');
+  });
+  inp.value='';
+}
+$('btnLogo').addEventListener('click',()=>{
+  if(load(K.logo,null)){
+    if(!confirm('Choose a new logo image?\n\nOK = pick a new one   ·   Cancel = remove logo & revert to default')){
+      localStorage.removeItem(K.logo);
+      $('logoImg').src='logo.png'; $('logoBox').classList.remove('custom'); toast('Reverted to default logo');
+      return;
+    }
+  }
+  $('logoFile').click();
+});
+$('logoBox').addEventListener('click',()=>$('logoFile').click());
+$('logoFile').addEventListener('change',pickLogo);
+
+/* ================= ASA: approved devices + shared cloud =================
+   Opening needs the person's name + password and an admin-approved device
+   (shared/asa-device-gate.js). Suppliers, saved prices and saved LPOs are
+   then shared between approved devices through the cloud folder
+   apps/lpo-<key>/{suppliers,catalog,lpos}; this device keeps its copy for
+   offline use. The signature + company stamp are set by the admin
+   (apps/lpo-<key>/assets/signstamp) and used on every device.          */
+let LPO = { cloud: false, vault: '', admin: false, applying: false };
+const LPO_COLL = { lpoasa_suppliers: 'suppliers', lpoasa_catalog: 'catalog', lpoasa_saved_lpos: 'lpos' };
+const LPO_OUTBOX = 'lpoasa_outbox', LPO_SIGN = 'lpoasa_company_sign';
+let lpoSynced = { suppliers: new Map(), catalog: new Map(), lpos: new Map() };
+let companySign = (() => { try { return JSON.parse(localStorage.getItem(LPO_SIGN)) || null; } catch (e) { return null; } })();
+
+const META = ['dev', 'by', 'ts', '_u', '_by', '_device', '_at', 'deleted'];
+const strip = d => { const o = { ...d }; META.forEach(k => delete o[k]); return o; };
+function toDoc(coll, item) {
+  // Saved LPOs travel without the signature/stamp images — the company ones are used.
+  if (coll === 'lpos') return { id: item.id, savedAt: item.savedAt || 0, data: JSON.stringify({ ...item.data, sigImg: '', stampImg: '' }) };
+  return { ...item };
+}
+function fromDoc(coll, d) {
+  if (coll === 'lpos') { let data = {}; try { data = JSON.parse(d.data); } catch (e) {} return { id: d.id, savedAt: d.savedAt, data }; }
+  return strip(d);
+}
+
+/* every save of a list sends only what changed */
+function lpoCloudSave(k, arr) {
+  const coll = LPO_COLL[k];
+  if (!coll || !LPO.cloud || LPO.applying || !Array.isArray(arr)) return;
+  const before = lpoSynced[coll], now = new Map();
+  for (const item of arr) {
+    const doc = toDoc(coll, item), js = JSON.stringify(doc);
+    now.set(item.id, js);
+    if (before.get(item.id) !== js) lpoPush(coll, item.id, doc);
+  }
+  for (const id of before.keys()) if (!now.has(id)) lpoPush(coll, id, { id, deleted: true });
+  lpoSynced[coll] = now;
+}
+async function lpoPush(coll, id, doc) {
+  try {
+    await ASACloud.put(LPO.vault, coll, id, { ...doc, dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now(), _u: Date.now() });
+  } catch (e) {
+    const box = JSON.parse(localStorage.getItem(LPO_OUTBOX) || '{}');
+    box[coll + ':' + id] = { coll, id, doc };
+    localStorage.setItem(LPO_OUTBOX, JSON.stringify(box));
+    if (String(e && e.code).includes('permission-denied')) toast('The cloud refused this change — is this device still approved?');
+  }
+}
+async function lpoFlush() {
+  const box = JSON.parse(localStorage.getItem(LPO_OUTBOX) || '{}');
+  localStorage.removeItem(LPO_OUTBOX);
+  for (const o of Object.values(box)) await lpoPush(o.coll, o.id, o.doc);
+}
+
+/* replace a list with the merged version without echoing it back to the cloud */
+function lpoApply(coll, arr) {
+  LPO.applying = true;
+  try {
+    if (coll === 'suppliers') { suppliers = arr; save(K.sup, suppliers); }
+    if (coll === 'catalog') { catalog = arr; save(K.cat, catalog); }
+    if (coll === 'lpos') { savedLPOs = arr; save(K.saved, savedLPOs); }
+  } finally { LPO.applying = false; }
+}
+function lpoRender() { updateCounts(); refreshAllItemPrices(); renderSavedList(); }
+const lpoList = coll => coll === 'suppliers' ? suppliers : coll === 'catalog' ? catalog : savedLPOs;
+
+async function lpoSyncAll() {
+  await lpoFlush();
+  for (const coll of ['suppliers', 'catalog', 'lpos']) {
+    const cloud = await ASACloud.list(LPO.vault, coll);
+    const local = new Map(lpoList(coll).map(x => [x.id, x]));
+    const merged = [], seen = new Map();
+    for (const d of cloud) {
+      if (d.deleted) { local.delete(d.id); seen.set(d.id, JSON.stringify({ id: d.id, deleted: true })); continue; }
+      const item = fromDoc(coll, d);
+      merged.push(item); local.delete(d.id);
+      seen.set(d.id, JSON.stringify(toDoc(coll, item)));
+    }
+    const onlyHere = [...local.values()];                 // saved on this device before it was approved
+    lpoSynced[coll] = seen;
+    lpoApply(coll, merged.concat(onlyHere));
+    if (onlyHere.length) lpoCloudSave(Object.keys(LPO_COLL).find(k => LPO_COLL[k] === coll), lpoList(coll));
+  }
+  lpoRender();
+}
+
+function lpoLive() {
+  for (const coll of ['suppliers', 'catalog', 'lpos']) {
+    ASACloud.watch(LPO.vault, coll, Date.now() - 10 * 60 * 1000, changes => {
+      let arr = lpoList(coll).slice(), touched = false;
+      for (const c of changes) {
+        if (c.data.dev === ASACloud.deviceId()) continue;   // our own change
+        arr = arr.filter(x => x.id !== c.id);
+        if (c.type !== 'removed' && !c.data.deleted) arr.push(fromDoc(coll, c.data));
+        lpoSynced[coll].set(c.id, JSON.stringify(c.data.deleted ? { id: c.id, deleted: true } : toDoc(coll, fromDoc(coll, c.data))));
+        touched = true;
+      }
+      if (!touched) return;
+      lpoApply(coll, arr); lpoRender();
+      if (coll === 'lpos') toast('Saved LPOs updated by the team');
+    }).catch(() => {});
+  }
+  ASACloud.watchDoc(LPO.vault, 'assets', 'signstamp', d => { if (d) useCompanySign(d); }).catch(() => {});
+}
+
+/* signature + stamp: the admin's, everywhere */
+function useCompanySign(d) {
+  companySign = { sig: d.sig || '', stamp: d.stamp || '' };
+  try { localStorage.setItem(LPO_SIGN, JSON.stringify(companySign)); } catch (e) {}
+  setSlot('sig', companySign.sig); setSlot('stamp', companySign.stamp);
+}
+function applySign(sig, stamp) {
+  if (companySign && (LPO.cloud || !LPO.admin)) { setSlot('sig', companySign.sig); setSlot('stamp', companySign.stamp); return; }
+  setSlot('sig', sig || ''); setSlot('stamp', stamp || '');
+}
+async function adminSetSign() {
+  if (!LPO.admin || !LPO.cloud) return;
+  try {
+    await ASACloud.put(LPO.vault, 'assets', 'signstamp', { sig: sigData, stamp: stampData, by: ASACloud.name(), ts: Date.now() });
+    companySign = { sig: sigData, stamp: stampData };
+    localStorage.setItem(LPO_SIGN, JSON.stringify(companySign));
+    toast('Signature & stamp saved for every device');
+  } catch (e) { toast('Could not save for everyone: ' + ASACloud.friendly(e)); }
+}
+
+async function lpoStart(ctx) {
+  LPO = { ...LPO, ...ctx };
+  // Only the admin may change the signature and stamp once the cloud is on.
+  document.body.classList.toggle('lpo-locked-sign', !LPO.admin && (LPO.cloud || !!companySign));
+  if (!LPO.cloud) { applySign(sigData, stampData); return; }
+  try {
+    const a = await ASACloud.get(LPO.vault, 'assets', 'signstamp');
+    if (a) useCompanySign(a);
+    await lpoSyncAll();
+    lpoLive();
+  } catch (e) { toast('Working offline — changes will sync later'); }
+}
+
+ASADeviceGate.open({ tool: 'lpo', prefix: 'lpo', title: 'LPO Generator' }).then(lpoStart);
+
+/* ================= Init ================= */
+updateCounts();
+applyLogo();
+restoreDraft();
+applyPriceMode();
+ensureRows();
+recalcTotals();
+renderSavedList();
+window.addEventListener('beforeunload',saveDraft);
+</script>
+</body>
+</html>

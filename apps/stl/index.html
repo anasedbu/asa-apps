@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STL Payment Tracker</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="stl"></script>
+<script src="../../shared/asa-device-gate.js"></script>
+<style>
+  a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid currentColor;border-radius:8px;white-space:nowrap;margin-right:12px;opacity:.8}
+  a.asa-home:hover{opacity:1}
+</style>
+<style>
+  :root { --blue:#3B73B9; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f5f7fa; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  header { background:var(--blue); color:#fff; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:20px; font-weight:600; }
+  .wrap { max-width:900px; margin:0 auto; padding:20px; }
+  button { font:inherit; cursor:pointer; border-radius:8px; border:1px solid var(--line); background:#fff; color:var(--ink); padding:8px 14px; }
+  button.primary { background:var(--blue); border-color:var(--blue); color:#fff; }
+  header button { background:rgba(255,255,255,.15); border-color:rgba(255,255,255,.4); color:#fff; }
+  header button.primary { background:#fff; color:var(--blue); border-color:#fff; font-weight:600; }
+  button.danger { color:#b91c1c; border-color:#fecaca; }
+  button:hover { filter:brightness(.96); }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin:8px 0 10px; }
+  .list { background:#fff; border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .row { display:grid; grid-template-columns:110px 1fr auto 28px; gap:14px; align-items:center; padding:14px 16px; border-bottom:1px solid var(--line); cursor:pointer; }
+  .row:last-child { border-bottom:none; }
+  .row:hover { background:#f0f5fc; }
+  .date { font-weight:600; }
+  .date small { display:block; font-weight:400; color:var(--muted); font-size:12px; }
+  .item { font-weight:500; }
+  .sub { color:var(--muted); font-size:13px; margin-top:2px; }
+  .amt { font-weight:600; white-space:nowrap; text-align:right; }
+  .pdf { font-size:11px; font-weight:700; color:#fff; background:#c0392b; border-radius:4px; padding:2px 4px; text-align:center; }
+  .pdf.none { background:none; }
+  .empty { padding:30px; text-align:center; color:var(--muted); }
+  details { margin-top:28px; }
+  summary { cursor:pointer; font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-bottom:10px; }
+  .paid .row { opacity:.75; }
+  .tools { margin-top:28px; display:flex; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--muted); align-items:center; }
+  .tools button { font-size:13px; padding:6px 10px; }
+
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow:auto; z-index:10; }
+  .overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:14px; width:100%; max-width:480px; padding:22px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
+  .modal h3 { margin:0 0 16px; font-size:18px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 4px; }
+  input { width:100%; font:inherit; padding:10px; border:1px solid var(--line); border-radius:8px; }
+  input:focus { outline:2px solid var(--blue); border-color:transparent; }
+  .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap; }
+  .actions .left { margin-right:auto; }
+  dl { display:grid; grid-template-columns:130px 1fr; gap:8px 12px; margin:0; }
+  dt { color:var(--muted); font-size:14px; }
+  dd { margin:0; font-weight:500; }
+  .pdfbox { margin-top:18px; border:2px dashed var(--line); border-radius:10px; padding:16px; text-align:center; }
+  .pdfbox.has { border-style:solid; border-color:#cfe0f3; background:#f5f9fe; }
+  .pdfbox .name { font-weight:500; word-break:break-all; margin-bottom:10px; }
+  .pdfbox .btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .pdfbox.drag { border-color:var(--blue); background:#eef4fb; }
+  @media (max-width:560px) {
+    .row { grid-template-columns:1fr auto; }
+    .row .date { grid-column:1 / -1; }
+    .row .pdf { display:none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+  <h1>STL Payment Tracker</h1>
+  <button class="primary" onclick="openForm()">+ Add STL</button>
+</header>
+
+<div class="wrap">
+  <h2>Upcoming payments</h2>
+  <div class="list" id="upcoming"></div>
+
+  <details id="historyBox">
+    <summary>History (paid) — <span id="paidCount">0</span></summary>
+    <div class="list paid" id="history"></div>
+  </details>
+
+  <div class="tools">
+    Backup:
+    <button onclick="exportBackup()">Export backup file</button>
+    <button onclick="document.getElementById('importFile').click()">Restore from backup</button>
+    <input type="file" id="importFile" accept=".json" hidden onchange="importBackup(this.files[0]); this.value=''">
+  </div>
+</div>
+
+<!-- Add / Edit form -->
+<div class="overlay" id="formOverlay" onclick="if(event.target===this)closeForm()">
+  <div class="modal">
+    <h3 id="formTitle">Add STL</h3>
+    <form onsubmit="saveForm(event)">
+      <label>Item</label>
+      <input id="fItem" required placeholder="e.g. 6063 T5 profiles – AREXCO">
+      <label>Total amount (Amount + Profit), AED</label>
+      <input id="fAmount" required inputmode="decimal" placeholder="e.g. 100,000 + 25,400" oninput="previewAmount()">
+      <div id="fAmountPreview" style="font-size:12px;color:#666;margin-top:4px;min-height:16px"></div>
+      <label>Maturity date</label>
+      <input id="fDate" type="date" required>
+      <label>Bank name</label>
+      <input id="fBank" placeholder="e.g. Emirates Islamic">
+      <label>STL reference number</label>
+      <input id="fRef" placeholder="e.g. STL-2026-00123">
+      <label id="fPdfLabel">STL confirmation PDF (optional)</label>
+      <input id="fPdf" type="file" accept="application/pdf">
+      <div class="actions">
+        <button type="button" onclick="closeForm()">Cancel</button>
+        <button type="submit" class="primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Detail view -->
+<div class="overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="modal">
+    <h3 id="dTitle"></h3>
+    <dl id="dInfo"></dl>
+    <div class="pdfbox" id="pdfBox"></div>
+    <input type="file" id="pdfInput" accept="application/pdf" hidden onchange="attachPdf(this.files[0]); this.value=''">
+    <div class="actions">
+      <button class="danger left" onclick="deleteStl()">Delete</button>
+      <button onclick="editStl()">Edit</button>
+      <button class="primary" id="paidBtn" onclick="togglePaid()">Mark as paid</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- Storage (IndexedDB: holds both STL records and PDFs) ----------
+const DB_NAME = 'stl-tracker', DB_VER = 1;
+let db;
+function openDb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, DB_VER);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('stls')) d.createObjectStore('stls', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('pdfs')) d.createObjectStore('pdfs'); // key = stl id, value = {name, blob}
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function tx(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode);
+    const req = fn(t.objectStore(store));
+    t.oncomplete = () => res(req && req.result);
+    t.onerror = () => rej(t.error);
+  });
+}
+const getAllLocal = s => tx(s, 'readonly', st => st.getAll());
+const getLocal    = (s, k) => tx(s, 'readonly', st => st.get(k));
+const putLocal    = (s, v, k) => tx(s, 'readwrite', st => k === undefined ? st.put(v) : st.put(v, k));
+const delLocal    = (s, k) => tx(s, 'readwrite', st => st.delete(k));
+const clearLocal  = s => tx(s, 'readwrite', st => st.clear());
+
+// ---------- State ----------
+let stls = [];
+let currentId = null, editingId = null;
+
+const fmtAmt = n => 'AED ' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDate = s => new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+const weekday = s => new Date(s + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long' });
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+async function load() {
+  stls = await getAll('stls');
+  render();
+}
+
+function rowHtml(s) {
+  const sub = [s.bank, s.ref].filter(Boolean).map(esc).join(' · ');
+  return `<div class="row" onclick="openDetail('${s.id}')">
+    <div class="date">${fmtDate(s.maturity)}<small>${weekday(s.maturity)}</small></div>
+    <div><div class="item">${esc(s.item)}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>
+    <div class="amt">${fmtAmt(s.amount)}</div>
+    <div class="pdf ${s.pdfName ? '' : 'none'}" title="${s.pdfName ? 'PDF attached' : ''}">${s.pdfName ? 'PDF' : ''}</div>
+  </div>`;
+}
+
+function render() {
+  const upcoming = stls.filter(s => !s.paid).sort((a, b) => a.maturity.localeCompare(b.maturity));
+  const paid = stls.filter(s => s.paid).sort((a, b) => b.maturity.localeCompare(a.maturity));
+  document.getElementById('upcoming').innerHTML = upcoming.length
+    ? upcoming.map(rowHtml).join('')
+    : '<div class="empty">No upcoming STL payments. Click “+ Add STL” to add one.</div>';
+  document.getElementById('history').innerHTML = paid.length
+    ? paid.map(rowHtml).join('')
+    : '<div class="empty">No paid STLs yet.</div>';
+  document.getElementById('paidCount').textContent = paid.length;
+}
+
+// ---------- Add / Edit ----------
+function openForm(s) {
+  editingId = s ? s.id : null;
+  document.getElementById('formTitle').textContent = s ? 'Edit STL' : 'Add STL';
+  document.getElementById('fItem').value = s ? s.item : '';
+  document.getElementById('fAmount').value = s ? Number(s.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '';
+  document.getElementById('fAmountPreview').textContent = '';
+  document.getElementById('fDate').value = s ? s.maturity : '';
+  document.getElementById('fBank').value = s ? (s.bank || '') : '';
+  document.getElementById('fRef').value = s ? (s.ref || '') : '';
+  document.getElementById('fPdf').value = '';
+  // PDF on the edit form is handled from the detail view instead
+  document.getElementById('fPdf').style.display = s ? 'none' : '';
+  document.getElementById('fPdfLabel').style.display = s ? 'none' : '';
+  document.getElementById('formOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('fItem').focus(), 50);
+}
+function closeForm() { document.getElementById('formOverlay').classList.remove('open'); }
+
+// Accepts plain numbers or sums like "100,000 + 25,400.50 - 1,000". Returns null if invalid.
+function parseAmount(text) {
+  const t = String(text).replace(/AED/gi, '').replace(/[,\s]/g, '');
+  if (!/^[+-]?\d*\.?\d+([+-]\d*\.?\d+)*$/.test(t)) return null;
+  const total = (t.match(/[+-]?\d*\.?\d+/g) || []).reduce((sum, n) => sum + parseFloat(n), 0);
+  return Math.round(total * 100) / 100;
+}
+function previewAmount() {
+  const v = document.getElementById('fAmount').value;
+  const out = document.getElementById('fAmountPreview');
+  if (!/[+-]/.test(v.replace(/^\s*[+-]/, ''))) { out.textContent = ''; return; }
+  const n = parseAmount(v);
+  out.textContent = n === null ? 'Check the amount format' : '= ' + fmtAmt(n);
+}
+
+async function saveForm(e) {
+  e.preventDefault();
+  const amount = parseAmount(document.getElementById('fAmount').value);
+  if (amount === null) { alert('Please enter a valid amount.'); return; }
+  const existing = editingId ? stls.find(x => x.id === editingId) : null;
+  const s = {
+    ...(existing || { id: 'stl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), paid: false, created: new Date().toISOString() }),
+    item: document.getElementById('fItem').value.trim(),
+    amount,
+    maturity: document.getElementById('fDate').value,
+    bank: document.getElementById('fBank').value.trim(),
+    ref: document.getElementById('fRef').value.trim(),
+  };
+  const file = !existing && document.getElementById('fPdf').files[0];
+  if (file) {
+    await putOne('pdfs', { name: file.name, blob: file }, s.id);
+    s.pdfName = file.name;
+  }
+  await putOne('stls', s);
+  closeForm();
+  await load();
+  if (existing) openDetail(s.id);
+}
+
+// ---------- Detail view ----------
+function openDetail(id) {
+  currentId = id;
+  const s = stls.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('dTitle').textContent = s.item;
+  document.getElementById('dInfo').innerHTML = `
+    <dt>Total amount</dt><dd>${fmtAmt(s.amount)}</dd>
+    <dt>Maturity date</dt><dd>${fmtDate(s.maturity)} (${weekday(s.maturity)})</dd>
+    <dt>Bank</dt><dd>${esc(s.bank) || '—'}</dd>
+    <dt>STL reference</dt><dd>${esc(s.ref) || '—'}</dd>
+    <dt>Status</dt><dd>${s.paid ? 'Paid' + (s.paidOn ? ' on ' + fmtDate(s.paidOn) : '') : 'Upcoming'}</dd>`;
+  document.getElementById('paidBtn').textContent = s.paid ? 'Move back to upcoming' : 'Mark as paid';
+  renderPdfBox(s);
+  document.getElementById('detailOverlay').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailOverlay').classList.remove('open'); currentId = null; }
+
+function renderPdfBox(s) {
+  const box = document.getElementById('pdfBox');
+  if (s.pdfName) {
+    box.className = 'pdfbox has';
+    box.innerHTML = `<div class="name">📄 ${esc(s.pdfName)}</div>
+      <div class="btns">
+        <button class="primary" onclick="viewPdf()">Open PDF</button>
+        <button onclick="downloadPdf()">Download</button>
+        <button onclick="document.getElementById('pdfInput').click()">Replace</button>
+        <button class="danger" onclick="removePdf()">Remove</button>
+      </div>`;
+  } else {
+    box.className = 'pdfbox';
+    box.innerHTML = `<div class="sub" style="margin-bottom:10px">No STL confirmation attached yet.<br>Drag a PDF here, or:</div>
+      <button class="primary" onclick="document.getElementById('pdfInput').click()">Attach STL Confirmation PDF</button>`;
+  }
+}
+
+// Drag & drop a PDF onto the box
+const pdfBoxEl = document.getElementById('pdfBox');
+pdfBoxEl.addEventListener('dragover', e => { e.preventDefault(); pdfBoxEl.classList.add('drag'); });
+pdfBoxEl.addEventListener('dragleave', () => pdfBoxEl.classList.remove('drag'));
+pdfBoxEl.addEventListener('drop', e => {
+  e.preventDefault(); pdfBoxEl.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) attachPdf(f);
+});
+
+async function attachPdf(file) {
+  if (!file || !currentId) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { alert('Please choose a PDF file.'); return; }
+  await putOne('pdfs', { name: file.name, blob: file }, currentId);
+  const s = stls.find(x => x.id === currentId);
+  s.pdfName = file.name;
+  await putOne('stls', s);
+  render(); renderPdfBox(s);
+}
+async function viewPdf() {
+  const rec = await getOne('pdfs', currentId);
+  if (!rec) return alert('PDF not found.');
+  const url = URL.createObjectURL(new Blob([rec.blob], { type: 'application/pdf' }));
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+async function downloadPdf() {
+  const rec = await getOne('pdfs', currentId);
+  if (!rec) return alert('PDF not found.');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(rec.blob);
+  a.download = rec.name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+async function removePdf() {
+  if (!confirm('Remove the attached PDF?')) return;
+  await delOne('pdfs', currentId);
+  const s = stls.find(x => x.id === currentId);
+  delete s.pdfName;
+  await putOne('stls', s);
+  render(); renderPdfBox(s);
+}
+
+async function togglePaid() {
+  const s = stls.find(x => x.id === currentId);
+  s.paid = !s.paid;
+  s.paidOn = s.paid ? new Date().toISOString().slice(0, 10) : undefined;
+  await putOne('stls', s);
+  closeDetail();
+  render();
+}
+function editStl() {
+  const s = stls.find(x => x.id === currentId);
+  closeDetail();
+  openForm(s);
+}
+async function deleteStl() {
+  const s = stls.find(x => x.id === currentId);
+  if (!confirm(`Delete "${s.item}" and its PDF? This cannot be undone.`)) return;
+  await delOne('stls', s.id);
+  await delOne('pdfs', s.id);
+  closeDetail();
+  await load();
+}
+
+// ---------- Backup (includes PDFs) ----------
+const blobToB64 = b => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); });
+async function exportBackup() {
+  const pdfs = {};
+  for (const s of stls) {
+    if (!s.pdfName) continue;
+    const rec = await getOne('pdfs', s.id);
+    if (rec) pdfs[s.id] = { name: rec.name, data: await blobToB64(rec.blob) };
+  }
+  const blob = new Blob([JSON.stringify({ app: 'stl-tracker', exported: new Date().toISOString(), stls, pdfs })], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `STL-Backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+}
+async function importBackup(file) {
+  if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { return alert('That is not a valid backup file.'); }
+  if (data.app !== 'stl-tracker' || !Array.isArray(data.stls)) return alert('That is not an STL Tracker backup file.');
+  if (!confirm(`Restore ${data.stls.length} STL(s) from this backup? This replaces everything currently in the tracker.`)) return;
+  await clearSt('stls'); await clearSt('pdfs');
+  for (const s of data.stls) await putOne('stls', s);
+  for (const [id, p] of Object.entries(data.pdfs || {})) {
+    const blob = await (await fetch(p.data)).blob();
+    await putOne('pdfs', { name: p.name, blob }, id);
+  }
+  await load();
+  alert('Backup restored.');
+}
+
+
+// ---------- ASA: approved devices + shared cloud ----------
+// Opening needs the person's name + password and an admin-approved device
+// (shared/asa-device-gate.js, its own list: "STL Payment devices").
+// Shared between approved devices through apps/stl-<key>/:
+//   stls/{id}                one record per STL
+//   files/{id} + pdf/{id}_{n} the PDF confirmation, in pieces; downloaded when first opened
+// This device keeps its copy for offline use.
+let SL = { cloud: false, vault: '', admin: false };
+const SL_OUTBOX = 'asa_stl_outbox', SL_CHUNK = 900000;
+const slTag = () => ({ dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now() });
+const slStrip = d => { const o = { ...d }; ['dev', 'by', 'ts', '_by', '_device', '_at', 'deleted'].forEach(k => delete o[k]); return o; };
+const slB64 = b => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',')[1]); fr.readAsDataURL(b); });
+
+function slQueue(job) {
+  let box = {}; try { box = JSON.parse(localStorage.getItem(SL_OUTBOX) || '{}'); } catch (e) {}
+  box[job.kind + ':' + job.id] = job; localStorage.setItem(SL_OUTBOX, JSON.stringify(box));
+}
+async function slSend(job) {
+  try {
+    if (job.kind === 'stl') {
+      const s = await getLocal('stls', job.id);
+      if (s) await ASACloud.put(SL.vault, 'stls', s.id, { ...JSON.parse(JSON.stringify(s)), ...slTag() });
+    } else if (job.kind === 'stlDel') {
+      await ASACloud.put(SL.vault, 'stls', job.id, { id: job.id, deleted: true, _u: Date.now(), ...slTag() });
+    } else if (job.kind === 'pdf') {
+      const rec = await getLocal('pdfs', job.id);
+      if (rec && rec.blob) {
+        const b64 = await slB64(rec.blob), n = Math.max(1, Math.ceil(b64.length / SL_CHUNK));
+        for (let i = 0; i < n; i++) await ASACloud.put(SL.vault, 'pdf', job.id + '_' + i, { data: b64.slice(i * SL_CHUNK, (i + 1) * SL_CHUNK), ...slTag() });
+        await ASACloud.put(SL.vault, 'files', job.id, { name: rec.name || '', type: rec.blob.type || 'application/pdf', chunks: n, size: rec.blob.size, ...slTag() });
+      }
+    } else if (job.kind === 'pdfDel') {
+      await ASACloud.put(SL.vault, 'files', job.id, { deleted: true, ...slTag() });
+    }
+  } catch (e) {
+    slQueue(job);
+    if (String(e && e.code).includes('permission-denied')) alert('The cloud refused this change — is this device still approved?');
+  }
+}
+async function slFlush() {
+  let box = {}; try { box = JSON.parse(localStorage.getItem(SL_OUTBOX) || '{}'); } catch (e) {}
+  localStorage.removeItem(SL_OUTBOX);
+  for (const j of Object.values(box)) await slSend(j);
+}
+
+/* the original storage calls, now: this device first, then the cloud */
+async function getAll(s) { const all = await getAllLocal(s); return s === 'stls' ? all.filter(x => !x.deleted) : all; }
+async function putOne(s, v, k) {
+  if (s === 'stls') v._u = Date.now();
+  await putLocal(s, v, k);
+  if (SL.cloud) slSend(s === 'stls' ? { kind: 'stl', id: v.id } : { kind: 'pdf', id: k });
+}
+async function delOne(s, k) {
+  await delLocal(s, k);
+  if (SL.cloud) slSend(s === 'stls' ? { kind: 'stlDel', id: k } : { kind: 'pdfDel', id: k });
+}
+async function clearSt(s) {
+  // "Restore backup" replaces everything — for everyone, once shared.
+  if (SL.cloud && s === 'stls') {
+    for (const x of await getAllLocal('stls')) { slSend({ kind: 'stlDel', id: x.id }); slSend({ kind: 'pdfDel', id: x.id }); }
+  }
+  await clearLocal(s);
+}
+async function getOne(s, k) {
+  const here = await getLocal(s, k);
+  if (here || s !== 'pdfs' || !SL.cloud) return here;
+  try {
+    const meta = await ASACloud.get(SL.vault, 'files', k);
+    if (!meta || meta.deleted) return undefined;
+    const parts = await Promise.all(Array.from({ length: meta.chunks || 1 }, (_, i) => ASACloud.get(SL.vault, 'pdf', k + '_' + i)));
+    if (parts.some(p => !p)) throw new Error('Part of this PDF is missing in the cloud');
+    const bin = Uint8Array.from(atob(parts.map(p => p.data).join('')), c => c.charCodeAt(0));
+    const rec = { name: meta.name, blob: new Blob([bin], { type: meta.type || 'application/pdf' }) };
+    await putLocal('pdfs', rec, k);
+    return rec;
+  } catch (e) { alert('Could not download this PDF: ' + ASACloud.friendly(e)); return undefined; }
+}
+
+/* merge this device and the cloud: newest version of each STL wins */
+async function slSyncAll() {
+  await slFlush();
+  const cloud = await ASACloud.list(SL.vault, 'stls');
+  const local = new Map((await getAllLocal('stls')).map(s => [s.id, s]));
+  for (const c of cloud) {
+    const l = local.get(c.id);
+    local.delete(c.id);
+    if (c.deleted) { if (l) { await delLocal('stls', c.id); await delLocal('pdfs', c.id); } continue; }
+    if (!l || (c._u || 0) > (l._u || 0)) {
+      if (l && l.pdfName !== c.pdfName) await delLocal('pdfs', c.id);   // replaced elsewhere: fetch the new one when opened
+      await putLocal('stls', slStrip(c));
+    } else if ((l._u || 0) > (c._u || 0)) slSend({ kind: 'stl', id: c.id });
+  }
+  const onlyHere = [...local.values()];
+  for (const s of onlyHere) {
+    await slSend({ kind: 'stl', id: s.id });
+    if (s.pdfName) await slSend({ kind: 'pdf', id: s.id });
+  }
+  await load();
+}
+
+function slLive() {
+  ASACloud.watch(SL.vault, 'stls', Date.now() - 10 * 60 * 1000, async changes => {
+    let touched = false;
+    for (const c of changes) {
+      if (c.data.dev === ASACloud.deviceId()) continue;
+      const l = await getLocal('stls', c.id);
+      if (c.type === 'removed' || c.data.deleted) { if (l) { await delLocal('stls', c.id); await delLocal('pdfs', c.id); touched = true; } continue; }
+      if (!l || (c.data._u || 0) >= (l._u || 0)) {
+        if (l && l.pdfName !== c.data.pdfName) await delLocal('pdfs', c.id);
+        await putLocal('stls', slStrip({ ...c.data, id: c.id })); touched = true;
+      }
+    }
+    if (touched) await load();
+  }).catch(() => {});
+}
+
+ASADeviceGate.open({ tool: 'stl', prefix: 'stl', title: 'STL Payment Tracker' }).then(async ctx => {
+  SL = { ...SL, ...ctx };
+  if (!SL.cloud) return;
+  try { if (!db) db = await openDb(); await slSyncAll(); slLive(); }
+  catch (e) { console.warn('STL sync', e); }
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeForm(); closeDetail(); } });
+
+openDb().then(d => { db = d; if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); load(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Procurement Tracker · Al Sahlawi</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="procurement"></script>
+<script src="../../shared/asa-device-gate.js"></script>
+<style>
+  a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid currentColor;border-radius:8px;white-space:nowrap;margin-right:12px;opacity:.85}
+  a.asa-home:hover{opacity:1}
+</style>
+<style>
+  :root{
+    --brand:#3B73B9; --brand-d:#2c5a94; --brand-l:#eaf1fa;
+    --ink:#1d2430; --muted:#6b7686; --line:#e3e7ee; --bg:#f5f7fa; --card:#fff;
+    --red:#d33a3a; --red-l:#fdeeee; --green:#2e9b5f; --green-l:#e8f6ee; --amber:#c98a12;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  /* header */
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+  .bar{max-width:980px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .bar h1{font-size:18px;margin:0;flex:1;letter-spacing:.2px}
+  .bar h1 small{display:block;font-size:12px;color:var(--muted);font-weight:500}
+  .btn{border:1px solid var(--line);background:var(--card);border-radius:9px;padding:8px 14px;font-weight:600}
+  .btn:hover{background:var(--bg)}
+  .btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn.primary:hover{background:var(--brand-d)}
+  .btn.danger{color:var(--red);border-color:#f0c9c9}
+  .btn.danger.armed{background:var(--red);color:#fff;border-color:var(--red)}
+  .btn.sm{padding:5px 10px;font-size:13px}
+
+  .tabs{max-width:980px;margin:0 auto;padding:0 16px;display:flex;gap:4px}
+  .tab{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+  .tab.on{color:var(--brand);border-bottom-color:var(--brand)}
+  .tab .n{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--bg);font-size:12px;color:var(--muted)}
+  .tab.on .n{background:var(--brand-l);color:var(--brand)}
+  .tab .late-n{background:var(--red);color:#fff}
+
+  .tools{max-width:980px;margin:14px auto 0;padding:0 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .search{flex:1;min-width:200px;border:1px solid var(--line);background:var(--card);border-radius:9px;padding:9px 12px}
+  .search:focus,.f input:focus,.f textarea:focus{outline:2px solid var(--brand-l);border-color:var(--brand)}
+  .chk{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:14px;user-select:none}
+
+  /* list */
+  main{max-width:980px;margin:12px auto 60px;padding:0 16px;display:grid;gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:var(--r);
+    padding:12px 14px;cursor:pointer;display:grid;gap:6px;transition:box-shadow .15s}
+  .card:hover{box-shadow:0 3px 12px rgba(20,40,80,.08)}
+  .card.lpo{border-left-color:var(--brand)}
+  .card.china{border-left-color:var(--amber)}
+  .card.late{border-left-color:var(--red);background:var(--red-l);border-color:#f3cccc}
+  .card.done{border-left-color:var(--green)}
+  .r1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .r1 b{font-size:16px}
+  .ref{color:var(--muted);font-size:13px}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:2px 7px;border-radius:6px}
+  .badge.lpo{background:var(--brand-l);color:var(--brand)}
+  .badge.china{background:#fbf1dc;color:var(--amber)}
+  .stage{margin-left:auto;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--bg);color:var(--muted)}
+  .stage.recv{background:var(--green-l);color:var(--green)}
+  .r2{display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+  .r2 span b{color:var(--ink);font-weight:600}
+  .latetxt{color:var(--red);font-weight:700}
+  .r3{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .doc{font-size:12px;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:2px 8px;color:var(--brand)}
+  .doc:hover{border-color:var(--brand)}
+  .next{margin-left:auto}
+  .empty{text-align:center;color:var(--muted);padding:60px 10px}
+  .empty .btn{margin-top:12px}
+
+  /* modal */
+  dialog{border:0;padding:0;border-radius:16px;width:min(680px,96vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+  dialog::backdrop{background:rgba(20,30,50,.45)}
+  .m-head{position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;gap:10px;z-index:2}
+  .m-head h2{margin:0;font-size:17px;flex:1}
+  .x{border:0;background:none;font-size:22px;line-height:1;color:var(--muted);padding:2px 6px}
+  .m-body{padding:16px 18px;display:grid;gap:18px}
+  .m-foot{position:sticky;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:12px 18px;display:flex;gap:8px}
+  .m-foot .sp{flex:1}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{border:0;background:var(--card);padding:8px 16px;font-weight:600;color:var(--muted)}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--brand);color:#fff}
+
+  .sec{display:grid;gap:10px}
+  .sec h3{margin:0;font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--brand)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .f{display:grid;gap:4px}
+  .f.full{grid-column:1/-1}
+  .f label{font-size:12.5px;font-weight:600;color:var(--muted)}
+  .f input,.f textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;width:100%}
+  .f textarea{resize:vertical;min-height:38px}
+
+  .steps{display:flex;gap:4px;flex-wrap:wrap}
+  .steps button{flex:1;min-width:90px;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:7px 6px;font-size:13px;font-weight:600;color:var(--muted)}
+  .steps button.past{background:var(--brand-l);color:var(--brand);border-color:#cfe0f3}
+  .steps button.cur{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+  .slots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .slot{border:1.5px dashed #cdd5e0;border-radius:10px;padding:10px;display:grid;gap:6px;background:#fafbfd}
+  .slot.has{border-style:solid;border-color:#cfe0f3;background:var(--brand-l)}
+  .slot.drag{border-color:var(--brand);background:#e1ecfa}
+  .slot .lbl{font-size:12.5px;font-weight:600;color:var(--muted)}
+  .slot .fname{font-size:13px;color:var(--brand);font-weight:600;word-break:break-all;text-decoration:underline;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+  .slot .acts{display:flex;gap:6px}
+  .slot .add{border:0;background:none;color:var(--brand);font-weight:600;text-align:left;padding:2px 0}
+  .hint{font-size:12px;color:var(--muted)}
+  .china-only,.lpo-only{display:none}
+  .is-china .china-only{display:grid}
+  .is-lpo .lpo-only{display:grid}
+
+  .menu{position:relative}
+  .menu-list{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);display:none;min-width:200px;overflow:hidden}
+  .menu-list.open{display:block}
+  .menu-list button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 14px}
+  .menu-list button:hover{background:var(--bg)}
+
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#1d2430;color:#fff;padding:10px 18px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media (max-width:600px){
+    .grid,.slots{grid-template-columns:1fr}
+    dialog{width:100vw;max-height:100vh;height:100vh;border-radius:0}
+    .bar h1 small{display:none}
+    .tab{padding:10px 9px;font-size:14px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+    <h1>Procurement Tracker<small>Al Sahlawi Aluminium · Local LPOs &amp; China shipments</small></h1>
+    <div class="menu">
+      <button class="btn" id="backupBtn">Backup ▾</button>
+      <div class="menu-list" id="backupMenu">
+        <button id="exportBtn">⬇ Export backup file</button>
+        <button id="importBtn">⬆ Restore from backup</button>
+      </div>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <button class="btn primary" id="newBtn">+ New Order</button>
+  </div>
+  <nav class="tabs" id="tabs"></nav>
+</header>
+
+<div class="tools">
+  <input class="search" id="search" placeholder="Search supplier, reference, shipper, vessel…">
+</div>
+
+<main id="list"></main>
+
+<dialog id="modal">
+  <form method="dialog" id="form" autocomplete="off" onsubmit="return false">
+    <div class="m-head">
+      <h2 id="mTitle">New Order</h2>
+      <button type="button" class="x" id="mClose" title="Close (Esc)">×</button>
+    </div>
+    <div class="m-body" id="mBody">
+
+      <div class="sec">
+        <div class="seg" id="typeSeg">
+          <button type="button" data-type="lpo">Local LPO</button>
+          <button type="button" data-type="china">China Order</button>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>Order</h3>
+        <div class="grid">
+          <div class="f"><label>Supplier *</label><input data-k="supplier" placeholder="e.g. AREXCO"></div>
+          <div class="f"><label>Reference (LPO / PI No.)</label><input data-k="ref" placeholder="e.g. LPO-1042"></div>
+          <div class="f"><label>Order placed</label><input type="date" data-k="orderDate"></div>
+          <div class="f"><label>Expected arrival</label><input type="date" data-k="eta"></div>
+          <div class="f full"><label>Items / notes</label><textarea data-k="notes" rows="1" placeholder="Optional"></textarea></div>
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>Stage</h3>
+        <div class="steps" id="steps"></div>
+      </div>
+
+      <div class="sec lpo-only">
+        <h3>Document</h3>
+        <div class="slots" data-slots="lpo"></div>
+      </div>
+
+      <div class="sec china-only">
+        <h3>Shipping</h3>
+        <div class="grid">
+          <div class="f"><label>Shipper name</label><input data-k="shipper"></div>
+          <div class="f"><label>Vessel number</label><input data-k="vessel"></div>
+        </div>
+        <div class="slots" data-slots="bl"></div>
+      </div>
+
+      <div class="sec china-only">
+        <h3>Shipping Payment</h3>
+        <div class="grid">
+          <div class="f"><label>Payment expected</label><input data-k="payExpected" placeholder="e.g. USD 12,400"></div>
+          <div class="f"><label>Payment actual</label><input data-k="payActual" placeholder="e.g. USD 12,650"></div>
+        </div>
+        <div class="slots" data-slots="supplierBill,shipperBill"></div>
+      </div>
+
+      <div class="sec china-only">
+        <h3>Delivery</h3>
+        <div class="slots" data-slots="do"></div>
+      </div>
+
+      <div class="sec china-only">
+        <h3>Jino's share</h3>
+        <div class="grid">
+          <div class="f"><label>Jino payment amount (owes me)</label><input data-k="jinoPay" placeholder="e.g. AED 8,000"></div>
+          <div class="f"><label>Jino material amount</label><input data-k="jinoMaterial" placeholder="e.g. 1.2 tons"></div>
+          <div class="f"><label>Jino total items</label><input data-k="jinoItems" placeholder="e.g. 140 pcs"></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="m-foot">
+      <button type="button" class="btn danger" id="mDelete">Delete</button>
+      <span class="sp"></span>
+      <button type="button" class="btn" id="mCancel">Cancel</button>
+      <button type="button" class="btn primary" id="mSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- config ---------- */
+const STAGES = {
+  lpo:   ['Ordered','Received'],
+  china: ['Ordered','Shipped','At Port','Cleared','Received']
+};
+const FILES = {
+  lpo:'LPO', bl:'Bill of Lading', supplierBill:'Supplier Bill',
+  shipperBill:'Shipper Bill', do:'Delivery Order (DO)'
+};
+const FILE_KEYS = { lpo:['lpo'], china:['bl','supplierBill','shipperBill','do'] };
+const FIELDS = ['supplier','ref','orderDate','eta','notes','shipper','vessel','payExpected','payActual','jinoPay','jinoMaterial','jinoItems'];
+const TABS = [['all','All'],['lpo','Local LPOs'],['china','China'],['recv','Received']];
+
+/* ---------- IndexedDB (orders + PDF blobs) ---------- */
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('asa_procurement',1);
+    r.onupgradeneeded = ()=>{
+      const d = r.result;
+      if(!d.objectStoreNames.contains('orders')) d.createObjectStore('orders',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('files'))  d.createObjectStore('files');
+    };
+    r.onsuccess = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+  });
+}
+function tx(store, mode, fn){
+  return new Promise((res,rej)=>{
+    const t = db.transaction(store, mode), req = fn(t.objectStore(store));
+    let out; if(req) req.onsuccess = ()=>{ out = req.result; };
+    t.oncomplete = ()=>res(out);
+    t.onerror = ()=>rej(t.error);
+  });
+}
+const dbAllLocal    = ()=>tx('orders','readonly', s=>s.getAll());
+const dbGetLocal    = id=>tx('orders','readonly', s=>s.get(id));
+const dbPutLocal    = o =>tx('orders','readwrite',s=>s.put(o));
+const dbDelLocal    = id=>tx('orders','readwrite',s=>s.delete(id));
+const fileGetLocal  = k =>tx('files','readonly', s=>s.get(k));
+const filePutLocal  = (k,v)=>tx('files','readwrite',s=>s.put(v,k));
+const fileDelLocal  = k =>tx('files','readwrite',s=>s.delete(k));
+const fkey = (id,key)=>id+'__'+key;
+
+/* ---------- helpers ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const todayISO = ()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);};
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso){ if(!iso) return '—'; const [y,m,d]=iso.split('-'); return `${+d} ${MON[m-1]} ${y}`; }
+function daysLate(o){
+  if(!o.eta || isReceived(o)) return 0;
+  const diff = Math.round((Date.parse(todayISO()) - Date.parse(o.eta))/86400000);
+  return diff>0 ? diff : 0;
+}
+const stagesOf = o=>STAGES[o.type];
+const isReceived = o=>o.stage >= stagesOf(o).length-1;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1800); }
+
+/* ---------- state ---------- */
+let orders = [];
+let tab = localStorage.getItem('proc_tab') || 'all';
+let cur = null;   // order being edited: {o, isNew, pending:{key: File|null}}
+
+/* ---------- list ---------- */
+function sortOrders(list){
+  return list.sort((a,b)=>{
+    const ra=isReceived(a), rb=isReceived(b);
+    if(ra!==rb) return ra?1:-1;
+    if(!a.eta !== !b.eta) return a.eta?-1:1;
+    return ra ? (b.eta||'').localeCompare(a.eta||'') : (a.eta||'').localeCompare(b.eta||'');
+  });
+}
+function renderTabs(){
+  $('#tabs').innerHTML = TABS.map(([k,label])=>{
+    const set = tabOrders(k);
+    const late = set.filter(o=>daysLate(o)>0).length;
+    return `<button class="tab ${tab===k?'on':''}" data-tab="${k}">${label}<span class="n">${set.length}</span>${late?`<span class="n late-n" title="Late">${late} late</span>`:''}</button>`;
+  }).join('');
+}
+/* open tabs show orders still on the way; the Received tab shows everything that has arrived */
+function tabOrders(k){
+  if(k==='recv') return orders.filter(isReceived);
+  return orders.filter(o=>!isReceived(o) && (k==='all'||o.type===k));
+}
+function render(){
+  renderTabs();
+  const q = $('#search').value.trim().toLowerCase();
+  let list = tabOrders(tab);
+  if(q) list = list.filter(o=>['supplier','ref','notes','shipper','vessel'].some(k=>(o[k]||'').toLowerCase().includes(q)));
+  sortOrders(list);
+
+  if(!list.length){
+    $('#list').innerHTML = `<div class="empty">${q?'No orders match your search.':tab==='recv'?'No received orders yet.':'No open orders here.'}
+      <br><button class="btn primary" onclick="openNew()">+ New Order</button></div>`;
+    return;
+  }
+  $('#list').innerHTML = list.map(cardHTML).join('');
+}
+function cardHTML(o){
+  const st = stagesOf(o), late = daysLate(o), recv = isReceived(o);
+  const docs = FILE_KEYS[o.type].filter(k=>o.att?.[k])
+    .map(k=>`<button class="doc" data-doc="${k}" data-id="${o.id}" title="${esc(o.att[k])}">📄 ${FILES[k]}</button>`).join('');
+  const extra = o.type==='china' ? [
+      o.shipper && `<span>Shipper <b>${esc(o.shipper)}</b></span>`,
+      o.vessel  && `<span>Vessel <b>${esc(o.vessel)}</b></span>`,
+      o.jinoPay && `<span>Jino owes <b>${esc(o.jinoPay)}</b></span>`
+    ].filter(Boolean).join('') : '';
+  const nextBtn = recv ? '' : `<button class="btn sm next" data-next="${o.id}">Mark ${st[o.stage+1]} →</button>`;
+  return `<div class="card ${o.type} ${late?'late':''} ${recv?'done':''}" data-open="${o.id}">
+    <div class="r1">
+      <span class="badge ${o.type}">${o.type==='lpo'?'LPO':'China'}</span>
+      <b>${esc(o.supplier)||'(no supplier)'}</b>
+      ${o.ref?`<span class="ref">${esc(o.ref)}</span>`:''}
+      <span class="stage ${recv?'recv':''}">${st[o.stage]}</span>
+    </div>
+    <div class="r2">
+      <span>Ordered <b>${fmtDate(o.orderDate)}</b></span>
+      <span>Arrival <b>${fmtDate(o.eta)}</b></span>
+      ${late?`<span class="latetxt">⚠ ${late} day${late>1?'s':''} late</span>`:''}
+      ${extra}
+    </div>
+    ${(docs||nextBtn)?`<div class="r3">${docs}${nextBtn}</div>`:''}
+  </div>`;
+}
+
+/* ---------- modal ---------- */
+const modal = $('#modal');
+function blankOrder(type){
+  const o = {id:uid(), type, stage:0, att:{}, orderDate:todayISO()};
+  FIELDS.forEach(k=>{ if(o[k]===undefined) o[k]=''; });
+  return o;
+}
+function openNew(){ openModal(blankOrder(tab==='china'?'china':'lpo'), true); }
+function openEdit(id){ const o=orders.find(x=>x.id===id); if(o) openModal(structuredClone(o), false); }
+
+function openModal(o, isNew){
+  cur = {o, isNew, pending:{}};
+  $('#mTitle').textContent = isNew ? 'New Order' : (o.supplier || 'Edit Order');
+  document.querySelectorAll('[data-k]').forEach(el=>{ el.value = o[el.dataset.k] || ''; });
+  $('#mDelete').style.visibility = isNew ? 'hidden' : 'visible';
+  disarmDelete();
+  applyType();
+  modal.showModal();
+  if(isNew) setTimeout(()=>modal.querySelector('[data-k="supplier"]').focus(),30);
+  else modal.querySelector('.m-body').scrollTop = 0;
+}
+function applyType(){
+  const t = cur.o.type;
+  $('#mBody').className = 'm-body is-'+t;
+  document.querySelectorAll('#typeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.type===t));
+  cur.o.stage = Math.min(cur.o.stage, STAGES[t].length-1);
+  renderSteps(); renderSlots();
+}
+function renderSteps(){
+  const st = STAGES[cur.o.type];
+  $('#steps').innerHTML = st.map((s,i)=>
+    `<button type="button" data-step="${i}" class="${i<cur.o.stage?'past':i===cur.o.stage?'cur':''}">${i<cur.o.stage?'✓ ':''}${s}</button>`).join('');
+}
+function slotName(key){
+  if(key in cur.pending) return cur.pending[key]?.name || '';
+  return cur.o.att?.[key] || '';
+}
+function renderSlots(){
+  document.querySelectorAll('[data-slots]').forEach(box=>{
+    box.innerHTML = box.dataset.slots.split(',').map(key=>{
+      const name = slotName(key);
+      return `<div class="slot ${name?'has':''}" data-slot="${key}">
+        <div class="lbl">${FILES[key]}</div>
+        ${name
+          ? `<button type="button" class="fname" data-view="${key}" title="Open">📄 ${esc(name)}</button>
+             <div class="acts"><button type="button" class="btn sm" data-pick="${key}">Replace</button>
+             <button type="button" class="btn sm danger" data-remove="${key}">Remove</button></div>`
+          : `<button type="button" class="add" data-pick="${key}">+ Attach PDF</button>
+             <span class="hint">or drop a file here</span>`}
+      </div>`;
+    }).join('');
+  });
+}
+function setFile(key, file){
+  if(!file) return;
+  if(file.type && file.type!=='application/pdf' && !/\.pdf$/i.test(file.name)){ toast('Please choose a PDF file'); return; }
+  cur.pending[key] = file; renderSlots();
+}
+async function viewFile(key, id){
+  let blob;
+  if(cur && cur.o.id===id && key in cur.pending) blob = cur.pending[key];
+  else { const rec = await fileGet(fkey(id,key)); blob = rec?.blob; }
+  if(!blob){ toast('File not found'); return; }
+  const url = URL.createObjectURL(blob.type ? blob : new Blob([blob],{type:'application/pdf'}));
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url), 60000);
+}
+
+async function save(){
+  const o = cur.o;
+  document.querySelectorAll('[data-k]').forEach(el=>{ o[el.dataset.k] = el.value.trim(); });
+  if(!o.supplier){ toast('Please enter the supplier'); modal.querySelector('[data-k="supplier"]').focus(); return; }
+  o.att = o.att || {};
+  for(const [key,file] of Object.entries(cur.pending)){
+    if(file){ await filePut(fkey(o.id,key), {name:file.name, type:file.type||'application/pdf', blob:file}); o.att[key]=file.name; }
+    else { await fileDel(fkey(o.id,key)); delete o.att[key]; }
+  }
+  o.updatedAt = Date.now(); if(cur.isNew) o.createdAt = o.updatedAt;
+  await dbPut(o);
+  const i = orders.findIndex(x=>x.id===o.id);
+  if(i>=0) orders[i]=o; else orders.push(o);
+  toast(isReceived(o) ? 'Saved · moved to Received' : 'Saved');
+  closeModal(); render();
+}
+async function removeOrder(){
+  const o = cur.o;
+  for(const k of Object.keys(o.att||{})) await fileDel(fkey(o.id,k));
+  await dbDel(o.id);
+  orders = orders.filter(x=>x.id!==o.id);
+  closeModal(); render(); toast('Order deleted');
+}
+function closeModal(){ modal.close(); cur=null; }
+
+/* two-tap delete instead of a browser confirm box */
+function disarmDelete(){ const b=$('#mDelete'); b.classList.remove('armed'); b.textContent='Delete'; clearTimeout(b._h); }
+$('#mDelete').onclick = ()=>{
+  const b=$('#mDelete');
+  if(b.classList.contains('armed')) return removeOrder();
+  b.classList.add('armed'); b.textContent='Tap again to delete';
+  b._h = setTimeout(disarmDelete, 3000);
+};
+
+/* ---------- events ---------- */
+$('#tabs').onclick = e=>{ const b=e.target.closest('[data-tab]'); if(!b) return; tab=b.dataset.tab; localStorage.setItem('proc_tab',tab); render(); };
+$('#search').oninput = render;
+$('#newBtn').onclick = openNew;
+
+$('#list').onclick = async e=>{
+  const doc = e.target.closest('[data-doc]');
+  if(doc){ e.stopPropagation(); return viewFile(doc.dataset.doc, doc.dataset.id); }
+  const nx = e.target.closest('[data-next]');
+  if(nx){
+    e.stopPropagation();
+    const o = orders.find(x=>x.id===nx.dataset.next);
+    o.stage = Math.min(o.stage+1, stagesOf(o).length-1); o.updatedAt=Date.now();
+    await dbPut(o); render(); toast(`${o.supplier}: ${stagesOf(o)[o.stage]}`);
+    return;
+  }
+  const c = e.target.closest('[data-open]'); if(c) openEdit(c.dataset.open);
+};
+
+$('#typeSeg').onclick = e=>{ const b=e.target.closest('[data-type]'); if(b){ cur.o.type=b.dataset.type; applyType(); } };
+$('#steps').onclick = e=>{ const b=e.target.closest('[data-step]'); if(b){ cur.o.stage=+b.dataset.step; renderSteps(); } };
+
+const picker = Object.assign(document.createElement('input'),{type:'file',accept:'application/pdf,.pdf'});
+picker.onchange = ()=>{ setFile(picker._key, picker.files[0]); picker.value=''; };
+$('#mBody').addEventListener('click', e=>{
+  const p=e.target.closest('[data-pick]');   if(p){ picker._key=p.dataset.pick; picker.click(); return; }
+  const r=e.target.closest('[data-remove]'); if(r){ cur.pending[r.dataset.remove]=null; renderSlots(); return; }
+  const v=e.target.closest('[data-view]');   if(v){ viewFile(v.dataset.view, cur.o.id); }
+});
+['dragover','dragleave','drop'].forEach(ev=>$('#mBody').addEventListener(ev, e=>{
+  const s=e.target.closest('[data-slot]'); if(!s) return;
+  e.preventDefault();
+  s.classList.toggle('drag', ev==='dragover');
+  if(ev==='drop') setFile(s.dataset.slot, e.dataTransfer.files[0]);
+}));
+
+$('#mSave').onclick = save;
+$('#mCancel').onclick = closeModal;
+$('#mClose').onclick = closeModal;
+modal.addEventListener('cancel', ()=>{ cur=null; });
+modal.addEventListener('keydown', e=>{ if(e.key==='Enter' && (e.ctrlKey||e.metaKey)) save(); });
+
+/* ---------- backup ---------- */
+$('#backupBtn').onclick = e=>{ e.stopPropagation(); $('#backupMenu').classList.toggle('open'); };
+document.addEventListener('click', ()=>$('#backupMenu').classList.remove('open'));
+const blobToB64 = b=>new Promise(r=>{ const fr=new FileReader(); fr.onload=()=>r(fr.result.split(',')[1]); fr.readAsDataURL(b); });
+
+$('#exportBtn').onclick = async ()=>{
+  toast('Preparing backup…');
+  const files = [];
+  for(const o of orders) for(const k of Object.keys(o.att||{})){
+    const rec = await fileGet(fkey(o.id,k));
+    if(rec) files.push({key:fkey(o.id,k), name:rec.name, type:rec.type, data:await blobToB64(rec.blob)});
+  }
+  const data = JSON.stringify({app:'asa-procurement', version:1, exportedAt:new Date().toISOString(), orders, files});
+  const a = Object.assign(document.createElement('a'),{
+    href:URL.createObjectURL(new Blob([data],{type:'application/json'})),
+    download:`Procurement-Backup-${todayISO()}.json`});
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+  toast(`Backup saved · ${orders.length} orders, ${files.length} PDFs`);
+};
+$('#importBtn').onclick = ()=>$('#importFile').click();
+$('#importFile').onchange = async e=>{
+  const f = e.target.files[0]; e.target.value=''; if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(data.app!=='asa-procurement') throw new Error('not a backup');
+    for(const x of data.files||[]){
+      const bin = Uint8Array.from(atob(x.data), c=>c.charCodeAt(0));
+      await filePut(x.key, {name:x.name, type:x.type, blob:new Blob([bin],{type:x.type||'application/pdf'})});
+    }
+    for(const o of data.orders||[]) await dbPut(o);
+    orders = await dbAll(); render();
+    toast(`Restored ${data.orders.length} orders`);
+  }catch(err){ toast('That file is not a valid Procurement backup'); }
+};
+
+
+/* ---------- ASA: approved devices + shared cloud ----------
+   Opening needs the person's name + password and an admin-approved device
+   (shared/asa-device-gate.js, its own list: "Procurement devices").
+   Shared between approved devices through apps/pr-<key>/:
+     orders/{id}                 one record per order
+     files/{id__key}             PDF details; the PDF itself in pdf/{id__key}_{n} pieces
+   PDFs download the first time someone opens them on a device.
+   This device keeps its copy for offline use.                              */
+let PR = { cloud:false, vault:'', admin:false };
+const PR_OUTBOX = 'asa_proc_outbox', PR_CHUNK = 900000;
+const prTag = () => ({ dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now() });
+const prStrip = d => { const o = { ...d }; ['dev','by','ts','_by','_device','_at','deleted'].forEach(k => delete o[k]); return o; };
+const prBlob64 = b => new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(',')[1]); fr.readAsDataURL(b); });
+
+function prQueue(job){
+  let box = {}; try { box = JSON.parse(localStorage.getItem(PR_OUTBOX) || '{}'); } catch(e){}
+  box[job.kind + ':' + job.id] = job; localStorage.setItem(PR_OUTBOX, JSON.stringify(box));
+}
+async function prSend(job){
+  try{
+    if (job.kind === 'order'){
+      const o = await dbGetLocal(job.id);
+      if (o) await ASACloud.put(PR.vault, 'orders', o.id, { ...o, ...prTag() });
+    } else if (job.kind === 'orderDel'){
+      await ASACloud.put(PR.vault, 'orders', job.id, { id: job.id, deleted: true, updatedAt: Date.now(), ...prTag() });
+    } else if (job.kind === 'file'){
+      const rec = await fileGetLocal(job.id);
+      if (rec && rec.blob){
+        const b64 = await prBlob64(rec.blob), n = Math.max(1, Math.ceil(b64.length / PR_CHUNK));
+        for (let i = 0; i < n; i++) await ASACloud.put(PR.vault, 'pdf', job.id + '_' + i, { data: b64.slice(i * PR_CHUNK, (i + 1) * PR_CHUNK), ...prTag() });
+        await ASACloud.put(PR.vault, 'files', job.id, { name: rec.name || '', type: rec.type || 'application/pdf', chunks: n, size: rec.blob.size, ...prTag() });
+      }
+    } else if (job.kind === 'fileDel'){
+      await ASACloud.put(PR.vault, 'files', job.id, { deleted: true, ...prTag() });
+    }
+    return true;
+  }catch(e){
+    prQueue(job);
+    if (String(e && e.code).includes('permission-denied')) toast('The cloud refused this change — is this device still approved?');
+    return false;
+  }
+}
+async function prFlush(){
+  let box = {}; try { box = JSON.parse(localStorage.getItem(PR_OUTBOX) || '{}'); } catch(e){}
+  localStorage.removeItem(PR_OUTBOX);
+  for (const j of Object.values(box)) await prSend(j);
+}
+
+/* the original storage calls, now: this device first, then the cloud */
+async function dbAll(){ return (await dbAllLocal()).filter(o => !o.deleted); }
+async function dbPut(o){ o.updatedAt = o.updatedAt || Date.now(); await dbPutLocal(o); if (PR.cloud) prSend({ kind:'order', id:o.id }); }
+async function dbDel(id){ await dbDelLocal(id); if (PR.cloud) prSend({ kind:'orderDel', id }); }
+async function filePut(k, v){ await filePutLocal(k, v); if (PR.cloud) prSend({ kind:'file', id:k }); }
+async function fileDel(k){ await fileDelLocal(k); if (PR.cloud) prSend({ kind:'fileDel', id:k }); }
+async function fileGet(k){
+  const here = await fileGetLocal(k);
+  if (here || !PR.cloud) return here;
+  try{
+    const meta = await ASACloud.get(PR.vault, 'files', k);
+    if (!meta || meta.deleted) return undefined;
+    toast('Downloading PDF…');
+    const parts = await Promise.all(Array.from({ length: meta.chunks || 1 }, (_, i) => ASACloud.get(PR.vault, 'pdf', k + '_' + i)));
+    if (parts.some(p => !p)) throw new Error('Part of this PDF is missing in the cloud');
+    const bin = Uint8Array.from(atob(parts.map(p => p.data).join('')), c => c.charCodeAt(0));
+    const rec = { name: meta.name, type: meta.type, blob: new Blob([bin], { type: meta.type || 'application/pdf' }) };
+    await filePutLocal(k, rec);
+    return rec;
+  }catch(e){ toast('Could not download this PDF: ' + ASACloud.friendly(e)); return undefined; }
+}
+
+/* merge this device and the cloud: newest version of each order wins */
+async function prSyncAll(){
+  await prFlush();
+  const cloud = await ASACloud.list(PR.vault, 'orders');
+  const local = new Map((await dbAllLocal()).map(o => [o.id, o]));
+  for (const c of cloud){
+    const l = local.get(c.id);
+    if (c.deleted){ if (l) await dbDelLocal(c.id); local.delete(c.id); continue; }
+    if (!l || (c.updatedAt || 0) > (l.updatedAt || 0)) await dbPutLocal(prStrip(c));
+    else if ((l.updatedAt || 0) > (c.updatedAt || 0)) prSend({ kind:'order', id:c.id });
+    local.delete(c.id);
+  }
+  const onlyHere = [...local.values()].filter(o => !o.deleted);
+  for (const o of onlyHere){
+    await prSend({ kind:'order', id:o.id });
+    for (const k of Object.keys(o.att || {})) await prSend({ kind:'file', id:fkey(o.id, k) });
+  }
+  if (onlyHere.length) toast(`Shared ${onlyHere.length} order(s) from this device`);
+  orders = await dbAll(); render();
+}
+
+function prLive(){
+  ASACloud.watch(PR.vault, 'orders', Date.now() - 10 * 60 * 1000, async changes => {
+    let touched = false, who = '';
+    for (const c of changes){
+      if (c.data.dev === ASACloud.deviceId()) continue;
+      const l = await dbGetLocal(c.id);
+      if (c.type === 'removed' || c.data.deleted){ if (l) await dbDelLocal(c.id); touched = true; continue; }
+      if (!l || (c.data.updatedAt || 0) >= (l.updatedAt || 0)){
+        // A PDF that was replaced elsewhere must be fetched again here.
+        if (l) for (const k of Object.keys(l.att || {})) if (JSON.stringify((l.att||{})[k]) !== JSON.stringify((c.data.att||{})[k])) await fileDelLocal(fkey(c.id, k));
+        await dbPutLocal(prStrip({ ...c.data, id: c.id })); touched = true; who = c.data.by || who;
+      }
+    }
+    if (!touched) return;
+    orders = await dbAll(); render();
+    if (who) toast('Orders updated by ' + who);
+  }).catch(() => {});
+}
+
+ASADeviceGate.open({ tool:'procurement', prefix:'pr', title:'Procurement Tracker' }).then(async ctx => {
+  PR = { ...PR, ...ctx };
+  if (!PR.cloud) return;
+  try { if (!db) db = await openDB(); await prSyncAll(); prLive(); }
+  catch(e){ toast('Working offline — changes will sync later'); }
+});
+
+/* ---------- start ---------- */
+(async ()=>{
+  db = await openDB();
+  navigator.storage?.persist?.();
+  orders = await dbAll();
+  render();
+})();
+</script>
+</body>
+</html>

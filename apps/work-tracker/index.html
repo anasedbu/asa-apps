@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3B73B9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Fabrication Work Tracker</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="work-tracker"></script>
+<style>
+  .lock-box{width:min(320px, 90vw)}
+  .wt-form{display:grid;gap:10px;text-align:left}
+  .wt-form input{width:100%;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:16px;background:#fff;outline:none}
+  .wt-form input:focus{border-color:var(--blue)}
+  .wt-msg{color:var(--red);font-size:14px;min-height:18px;text-align:center}
+  .wt-note{color:var(--muted);font-size:12.5px;text-align:center}
+  .wt-home{display:inline-block;margin-top:18px;color:var(--muted);font-size:14px;text-decoration:none}
+</style>
+<style>
+  :root{
+    --blue:#3B73B9; --green:#2E9E5B; --ink:#1d2330; --muted:#8a93a3;
+    --line:#e8ebf0; --bg:#f6f7f9; --card:#fff; --red:#d64545;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);font-size:16px}
+  button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+  input,textarea{font:inherit;color:inherit}
+  .hidden{display:none!important}
+
+  /* ---------- Lock ---------- */
+  #lock{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+  .lock-box{text-align:center;width:260px}
+  .lock-box h1{font-size:18px;font-weight:600;letter-spacing:.2px;margin-bottom:6px}
+  .lock-box p{color:var(--muted);font-size:14px;margin-bottom:26px}
+  .pin{display:flex;gap:12px;justify-content:center;margin-bottom:22px}
+  .pin span{width:14px;height:14px;border-radius:50%;border:2px solid var(--blue);transition:.15s}
+  .pin span.on{background:var(--blue)}
+  .keys{display:grid;grid-template-columns:repeat(3,72px);gap:14px;justify-content:center}
+  .keys button{height:72px;border-radius:50%;background:#fff;font-size:24px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .keys button:active{background:#e9eef6}
+  .keys .ghost{background:none;box-shadow:none;font-size:15px;color:var(--muted)}
+  .shake{animation:shake .35s}
+  @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+  /* ---------- App ---------- */
+  .wrap{max-width:640px;margin:0 auto;padding:0 18px 100px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 14px}
+  header h1{font-size:20px;font-weight:700}
+  .icon-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+  .icon-btn:active{background:#eceff3}
+  .tabs{display:flex;gap:6px;margin-bottom:16px}
+  .tabs button{padding:7px 14px;border-radius:20px;font-size:14px;color:var(--muted);background:#eceff3}
+  .tabs button.on{background:var(--ink);color:#fff}
+  .list{display:flex;flex-direction:column;gap:12px}
+  .card{background:var(--card);border-radius:16px;padding:18px 18px 16px;text-align:left;width:100%;
+    box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card:active{transform:scale(.99)}
+  .card .name{font-size:19px;font-weight:650;margin-bottom:4px;word-break:break-word}
+  .card .date{font-size:14px;color:var(--muted);margin-bottom:14px}
+  .date.late{color:var(--red)}
+  .bar{height:8px;border-radius:8px;background:#edf0f4;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:8px;transition:width .4s,background .4s}
+  .empty{text-align:center;color:var(--muted);padding:70px 0;font-size:15px}
+  .fab{position:fixed;right:22px;bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;
+    background:var(--blue);color:#fff;font-size:30px;line-height:1;box-shadow:0 6px 18px rgba(59,115,185,.4)}
+
+  /* ---------- Detail panel ---------- */
+  .panel{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .panel .wrap{padding-bottom:60px}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:16px 0 8px}
+  .top .link{color:var(--blue);font-size:16px;padding:8px 0}
+  .d-name{font-size:24px;font-weight:700;margin:6px 0 4px;word-break:break-word}
+  .d-date{color:var(--muted);font-size:15px;margin-bottom:14px}
+  .d-pct{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:8px 0 22px}
+  .info{background:#fff;border-radius:14px;padding:4px 16px;margin-bottom:22px}
+  .info div{display:flex;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:15px}
+  .info div:last-child{border:0}
+  .info span:first-child{color:var(--muted);flex-shrink:0}
+  .info span:last-child{text-align:right;word-break:break-word;white-space:pre-wrap}
+  .info a{color:var(--blue);text-decoration:none}
+  .sec{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:0 4px 10px}
+  .steps{background:#fff;border-radius:14px;overflow:hidden}
+  .step{border-bottom:1px solid var(--line);padding:14px 14px 14px 12px}
+  .step:last-child{border:0}
+  .step-row{display:flex;align-items:center;gap:12px}
+  .tick{width:28px;height:28px;border-radius:50%;border:2px solid #cfd5de;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .tick svg{opacity:0;width:15px;height:15px}
+  .step.done .tick{background:var(--green);border-color:var(--green)}
+  .step.done .tick svg{opacity:1}
+  .step-txt{flex:1;min-width:0;text-align:left;padding:2px 0}
+  .step-txt b{display:block;font-weight:500;font-size:15.5px}
+  .step.done .step-txt b{color:var(--muted)}
+  .step-txt small{font-size:12.5px;color:var(--muted)}
+  .step.next .step-txt b{color:var(--blue);font-weight:650}
+  .cam{position:relative;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+  .cam:active{background:#eef1f5}
+  .cam em{position:absolute;top:1px;right:0;background:var(--blue);color:#fff;font-style:normal;font-size:10.5px;
+    min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+  .thumbs{display:flex;gap:8px;overflow-x:auto;margin:12px 0 2px 40px;padding-bottom:2px}
+  .thumbs img{width:64px;height:64px;object-fit:cover;border-radius:10px;flex-shrink:0;background:#eee}
+
+  /* ---------- Sheets / modals ---------- */
+  .veil{position:fixed;inset:0;background:rgba(20,25,35,.45);z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:92vh;overflow-y:auto}
+  @media(min-width:600px){.veil{align-items:center}.sheet{border-radius:20px}}
+  .sheet h2{font-size:18px;margin-bottom:16px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fafbfc;outline:none}
+  .field input:focus,.field textarea:focus{border-color:var(--blue);background:#fff}
+  .field textarea{min-height:80px;resize:vertical}
+  .btns{display:flex;gap:10px;margin-top:8px}
+  .btn{flex:1;padding:14px;border-radius:12px;font-weight:600;background:#eef1f5}
+  .btn.pri{background:var(--blue);color:#fff}
+  .btn.danger{background:none;color:var(--red);font-weight:500;margin-top:10px;width:100%}
+  .menu button{display:block;width:100%;text-align:left;padding:15px 4px;border-bottom:1px solid var(--line);font-size:16px}
+  .menu button:last-child{border:0}
+  .menu small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+
+  /* ---------- Photo viewer ---------- */
+  #viewer{position:fixed;inset:0;background:#000;z-index:60;display:flex;flex-direction:column}
+  #viewer .vbar{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;color:#fff}
+  #viewer .vbar button{color:#fff;padding:8px;font-size:15px}
+  #viewer .vimg{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #viewer img{max-width:100%;max-height:100%;object-fit:contain}
+  #viewer .vcap{color:#bbb;text-align:center;font-size:13px;padding:10px 10px calc(16px + env(safe-area-inset-bottom))}
+  #viewer .nav{position:absolute;top:50%;transform:translateY(-50%);color:#fff;font-size:34px;padding:20px 14px;opacity:.7}
+
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;z-index:90;opacity:0;transition:.25s;pointer-events:none}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- Password screen: nothing else is drawn until the code is entered -->
+<div id="lock">
+  <div class="lock-box" id="lockBox"></div>
+</div>
+
+<div id="app" class="hidden"></div>
+<input type="file" id="photoInput" accept="image/*" multiple class="hidden">
+<input type="file" id="importInput" accept=".json,application/json" class="hidden">
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Settings
+   ============================================================ */
+// Access: ASA name + password and an admin-approved device (see the end of this script).
+const STEPS = [
+  'Quotation Sizes (Adv Payment)',
+  'Agreement Approval',
+  'Final Sizes',
+  'Material Approval',
+  'Fabrication',
+  'Finishing',
+  'Payment Reminder #1',
+  'Powder Coating',
+  'Payment Reminder #2',
+  'Site Fixing',
+  'Final Payment'
+];
+
+/* ============================================================
+   Storage (IndexedDB on this device).
+   All reads/writes go through these few functions, so switching
+   to an online database later only means replacing this block.
+   ============================================================ */
+const DB_NAME = 'asa_work_tracker';
+let db;
+function openDB(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 1);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      d.createObjectStore('jobs', {keyPath:'id'});
+      const p = d.createObjectStore('photos', {keyPath:'id'});
+      p.createIndex('jobId', 'jobId');
+    };
+    r.onsuccess = () => { db = r.result; res(); };
+    r.onerror = () => rej(r.error);
+  });
+}
+function tx(store, mode, fn){
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode);
+    const out = fn(t.objectStore(store));
+    t.oncomplete = () => res(out && 'result' in out ? out.result : undefined);
+    t.onerror = () => rej(t.error);
+  });
+}
+const getAllLocal    = store       => tx(store, 'readonly',  s => s.getAll());
+const putLocal       = (store, v)  => tx(store, 'readwrite', s => s.put(v));
+const delLocal       = (store, id) => tx(store, 'readwrite', s => s.delete(id));
+const photosForLocal = jobId => tx('photos', 'readonly', s => s.index('jobId').getAll(jobId));
+
+/* ============================================================
+   State + helpers
+   ============================================================ */
+let jobs = [];
+let tab = 'running';
+let openId = null;
+let photoCache = [];        // photos of the open job
+let pendingStep = null;     // which step the camera was tapped for
+
+const $ = s => document.querySelector(s);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const doneCount = j => j.steps.filter(s => s.done).length;
+const pct = j => Math.round(doneCount(j) / STEPS.length * 100);
+const isComplete = j => doneCount(j) === STEPS.length;
+
+function fmtDate(iso){
+  if(!iso) return 'No date set';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+}
+function isLate(j){
+  if(!j.date || isComplete(j)) return false;
+  const t = new Date(); t.setHours(0,0,0,0);
+  return new Date(j.date + 'T00:00:00') < t;
+}
+// Blue at 0% -> green at 100%
+function barColor(p){
+  const a = [59,115,185], b = [46,158,91], f = p / 100;
+  return `rgb(${a.map((v,i) => Math.round(v + (b[i]-v)*f)).join(',')})`;
+}
+function barHTML(j){
+  const p = pct(j);
+  return `<div class="bar"><i style="width:${Math.max(p, 2)}%;background:${barColor(p)}"></i></div>`;
+}
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 1800);
+}
+const ICON = {
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  cam:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>',
+  dots:'<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>'
+};
+
+/* ============================================================
+   Lock screen
+   ============================================================ */
+let entered = '';
+function buildKeys(){
+  const k = $('#keys');
+  [1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(v => {
+    const b = document.createElement('button');
+    b.textContent = v;
+    if(v === '') b.style.visibility = 'hidden';
+    if(v === '⌫') b.className = 'ghost';
+    b.onclick = () => press(String(v));
+    k.appendChild(b);
+  });
+  document.addEventListener('keydown', e => {
+    if($('#lock').classList.contains('hidden')) return;
+    if(/^\d$/.test(e.key)) press(e.key);
+    if(e.key === 'Backspace') press('⌫');
+  });
+}
+function press(v){
+  if(v === '⌫') entered = entered.slice(0, -1);
+  else if(entered.length < 4) entered += v;
+  [...$('#pin').children].forEach((s,i) => s.classList.toggle('on', i < entered.length));
+  if(entered.length === 4){
+    if(entered === PASSCODE){
+      sessionStorage.setItem('wt_unlocked', '1');
+      setTimeout(unlock, 120);
+    } else {
+      const p = $('#pin'); p.classList.add('shake');
+      setTimeout(() => { p.classList.remove('shake'); entered = ''; press(''); }, 380);
+    }
+  }
+}
+async function unlock(){
+  $('#lock').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  await openDB();
+  jobs = await getAll('jobs');
+  renderList();
+}
+function lock(){
+  sessionStorage.removeItem('wt_unlocked');
+  location.reload();
+}
+
+/* ============================================================
+   Main list
+   ============================================================ */
+function renderList(){
+  const running = jobs.filter(j => !isComplete(j));
+  const done = jobs.filter(isComplete);
+  const shown = (tab === 'running' ? running : done).slice().sort((a,b) =>
+    tab === 'running'
+      ? (a.date || '9999').localeCompare(b.date || '9999')
+      : (b.completedAt || '').localeCompare(a.completedAt || ''));
+
+  $('#app').innerHTML = `
+    <div class="wrap">
+      <header>
+        <h1>Work Tracker</h1>
+        <button class="icon-btn" onclick="openMenu()" aria-label="Menu">${ICON.dots}</button>
+      </header>
+      <div class="tabs">
+        <button class="${tab==='running'?'on':''}" onclick="setTab('running')">Running ${running.length}</button>
+        <button class="${tab==='done'?'on':''}" onclick="setTab('done')">Completed ${done.length}</button>
+      </div>
+      <div class="list">
+        ${shown.length ? shown.map(j => `
+          <button class="card" onclick="openJob('${j.id}')">
+            <div class="name">${esc(j.name)}</div>
+            <div class="date ${isLate(j)?'late':''}">${fmtDate(j.date)}</div>
+            ${barHTML(j)}
+          </button>`).join('')
+        : `<div class="empty">${tab==='running' ? 'No running jobs.<br>Tap + to add one.' : 'No completed jobs yet.'}</div>`}
+      </div>
+    </div>
+    ${tab==='running' ? '<button class="fab" onclick="editJob()" aria-label="Add job">+</button>' : ''}
+    <div id="panelHost"></div>`;
+}
+function setTab(t){ tab = t; renderList(); }
+
+/* ============================================================
+   Job detail
+   ============================================================ */
+async function openJob(id){
+  openId = id;
+  photoCache = await photosFor(id);
+  renderDetail();
+}
+function closeJob(){
+  openId = null; photoCache = [];
+  renderList();
+}
+function renderDetail(){
+  const j = jobs.find(x => x.id === openId);
+  if(!j) return closeJob();
+  const nextIdx = j.steps.findIndex(s => !s.done);
+  const rows = [];
+  if(j.jobNo) rows.push(['Job No.', esc(j.jobNo)]);
+  if(j.site){
+    const url = /^https?:\/\//i.test(j.site) ? j.site : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(j.site);
+    rows.push(['Site', `<a href="${esc(url)}" target="_blank" rel="noopener">Open map</a>`]);
+  }
+  if(j.notes) rows.push(['Notes', esc(j.notes)]);
+
+  let host = $('#panelHost');
+  host.innerHTML = `
+    <div class="panel" id="panel">
+      <div class="wrap">
+        <div class="top">
+          <button class="link" onclick="closeJob()">‹ Back</button>
+          <button class="link" onclick="editJob('${j.id}')">Edit</button>
+        </div>
+        <div class="d-name">${esc(j.name)}</div>
+        <div class="d-date ${isLate(j)?'late':''}">Expected completion · ${fmtDate(j.date)}</div>
+        ${barHTML(j)}
+        <div class="d-pct"><span>${doneCount(j)} of ${STEPS.length} steps</span><span>${pct(j)}%</span></div>
+
+        ${rows.length ? `<div class="info">${rows.map(r => `<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>` : ''}
+
+        <div class="sec">Steps</div>
+        <div class="steps">
+          ${j.steps.map((s,i) => {
+            const ph = photoCache.filter(p => p.step === i).sort((a,b) => a.ts - b.ts);
+            return `
+            <div class="step ${s.done?'done':''} ${i===nextIdx?'next':''}">
+              <div class="step-row">
+                <button class="tick" onclick="toggleStep(${i})" aria-label="Mark done">${ICON.check}</button>
+                <button class="step-txt" onclick="toggleStep(${i})">
+                  <b>${i+1}. ${STEPS[i]}</b>
+                  ${s.done ? `<small>Done ${fmtDate(s.done)}</small>` : ''}
+                </button>
+                <button class="cam" onclick="addPhotos(${i})" aria-label="Add photos">${ICON.cam}${ph.length?`<em>${ph.length}</em>`:''}</button>
+              </div>
+              ${ph.length ? `<div class="thumbs">${ph.map(p => `<img src="${p.thumb}" onclick="viewPhoto('${p.id}')" alt="">`).join('')}</div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+async function toggleStep(i){
+  const j = jobs.find(x => x.id === openId);
+  const wasComplete = isComplete(j);
+  j.steps[i].done = j.steps[i].done ? null : new Date().toISOString().slice(0,10);
+  j.completedAt = isComplete(j) ? new Date().toISOString() : null;
+  j.updated = Date.now();
+  const scroll = $('#panel').scrollTop;
+  await putItem('jobs', j);
+  renderDetail();
+  $('#panel').scrollTop = scroll;
+  if(!wasComplete && isComplete(j)) toast('Job complete — moved to Completed');
+}
+
+/* ============================================================
+   Add / edit job
+   ============================================================ */
+function editJob(id){
+  const j = id ? jobs.find(x => x.id === id) : {};
+  showSheet(`
+    <h2>${id ? 'Edit job' : 'New job'}</h2>
+    <div class="field"><label>Customer name</label><input id="f_name" value="${esc(j.name)}" autocomplete="off"></div>
+    <div class="field"><label>Expected completion date</label><input id="f_date" type="date" value="${esc(j.date)}"></div>
+    <div class="field"><label>Job / Contract no. (optional)</label><input id="f_no" value="${esc(j.jobNo)}" autocomplete="off"></div>
+    <div class="field"><label>Site location — Google Maps link or address (optional)</label><input id="f_site" value="${esc(j.site)}" autocomplete="off"></div>
+    <div class="field"><label>Notes (optional)</label><textarea id="f_notes">${esc(j.notes)}</textarea></div>
+    <div class="btns">
+      <button class="btn" onclick="closeSheet()">Cancel</button>
+      <button class="btn pri" onclick="saveJob('${id||''}')">Save</button>
+    </div>
+    ${id ? `<button class="btn danger" onclick="askDelete('${id}')">Delete job</button>` : ''}
+  `);
+  if(!id) setTimeout(() => $('#f_name').focus(), 50);
+}
+async function saveJob(id){
+  const name = $('#f_name').value.trim();
+  if(!name){ $('#f_name').focus(); toast('Enter the customer name'); return; }
+  let j = id ? jobs.find(x => x.id === id) : null;
+  if(!j){
+    j = {id: uid(), created: Date.now(), steps: STEPS.map(() => ({done:null})), completedAt:null};
+    jobs.push(j);
+  }
+  Object.assign(j, {
+    name,
+    date: $('#f_date').value,
+    jobNo: $('#f_no').value.trim(),
+    site: $('#f_site').value.trim(),
+    notes: $('#f_notes').value.trim(),
+    updated: Date.now()
+  });
+  await putItem('jobs', j);
+  closeSheet();
+  if(id && openId) renderDetail();
+  else { tab = 'running'; renderList(); await openJob(j.id); }
+}
+
+function askDelete(id){
+  showSheet(`
+    <h2>Delete this job?</h2>
+    <p style="color:var(--muted);margin-bottom:18px">The job and all of its photos will be removed for everyone.</p>
+    <div class="btns">
+      <button class="btn" onclick="editJob('${id}')">Cancel</button>
+      <button class="btn pri" style="background:var(--red)" onclick="deleteJob('${id}')">Delete</button>
+    </div>`);
+}
+async function deleteJob(id){
+  const ph = await photosFor(id);
+  for(const p of ph) await delItem('photos', p.id);
+  await delItem('jobs', id);
+  jobs = jobs.filter(j => j.id !== id);
+  closeSheet(); closeJob();
+  toast('Job deleted');
+}
+
+/* ============================================================
+   Photos
+   ============================================================ */
+function addPhotos(step){
+  pendingStep = step;
+  const inp = $('#photoInput'); inp.value = ''; inp.click();
+}
+$('#photoInput').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  if(!files.length || openId == null) return;
+  toast(`Saving ${files.length} photo${files.length>1?'s':''}…`);
+  for(const f of files){
+    try{
+      const img = await loadImage(f);
+      const blob = await shrink(img, 1600, 0.82, 'blob');
+      const thumb = await shrink(img, 220, 0.7, 'url');
+      const p = {id: uid(), jobId: openId, step: pendingStep, blob, thumb, ts: Date.now()};
+      await putItem('photos', p);
+      photoCache.push(p);
+    }catch(err){ toast('Could not read one photo'); }
+  }
+  const scroll = $('#panel').scrollTop;
+  renderDetail(); $('#panel').scrollTop = scroll;
+  toast('Photos saved');
+});
+function loadImage(file){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = rej;
+    img.src = url;
+  });
+}
+function shrink(img, max, q, as){
+  const r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  if(as === 'url') return Promise.resolve(c.toDataURL('image/jpeg', q));
+  return new Promise(res => c.toBlob(res, 'image/jpeg', q));
+}
+
+let viewList = [], viewIdx = 0, viewUrl = null;
+function viewPhoto(id){
+  const p = photoCache.find(x => x.id === id);
+  viewList = photoCache.filter(x => x.step === p.step).sort((a,b) => a.ts - b.ts);
+  viewIdx = viewList.findIndex(x => x.id === id);
+  drawViewer();
+}
+function drawViewerLocal(){
+  const p = viewList[viewIdx];
+  if(viewUrl) URL.revokeObjectURL(viewUrl);
+  viewUrl = URL.createObjectURL(p.blob);
+  let v = $('#viewer');
+  if(!v){ v = document.createElement('div'); v.id = 'viewer'; document.body.appendChild(v); }
+  v.innerHTML = `
+    <div class="vbar">
+      <button onclick="closeViewer()">‹ Close</button>
+      <span style="font-size:14px">${viewIdx+1} / ${viewList.length}</span>
+      <button onclick="askDeletePhoto()" style="color:#ff7b7b">Delete</button>
+    </div>
+    <div class="vimg"><img src="${viewUrl}" alt=""></div>
+    ${viewIdx > 0 ? '<button class="nav" style="left:0" onclick="stepViewer(-1)">‹</button>' : ''}
+    ${viewIdx < viewList.length-1 ? '<button class="nav" style="right:0" onclick="stepViewer(1)">›</button>' : ''}
+    <div class="vcap">${STEPS[p.step]} · ${new Date(p.ts).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</div>`;
+  // swipe left/right
+  let x0 = null;
+  v.ontouchstart = e => x0 = e.touches[0].clientX;
+  v.ontouchend = e => {
+    if(x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if(Math.abs(dx) > 50) stepViewer(dx < 0 ? 1 : -1);
+  };
+}
+function stepViewer(d){
+  const n = viewIdx + d;
+  if(n >= 0 && n < viewList.length){ viewIdx = n; drawViewer(); }
+}
+function closeViewer(){
+  if(viewUrl) URL.revokeObjectURL(viewUrl); viewUrl = null;
+  $('#viewer')?.remove();
+}
+function askDeletePhoto(){
+  showSheet(`
+    <h2>Delete this photo?</h2>
+    <div class="btns">
+      <button class="btn" onclick="closeSheet()">Cancel</button>
+      <button class="btn pri" style="background:var(--red)" onclick="deletePhoto()">Delete</button>
+    </div>`, 70);
+}
+async function deletePhoto(){
+  const p = viewList[viewIdx];
+  await delItem('photos', p.id);
+  photoCache = photoCache.filter(x => x.id !== p.id);
+  viewList.splice(viewIdx, 1);
+  closeSheet();
+  if(!viewList.length) closeViewer();
+  else { viewIdx = Math.min(viewIdx, viewList.length-1); drawViewer(); }
+  const scroll = $('#panel').scrollTop;
+  renderDetail(); $('#panel').scrollTop = scroll;
+}
+
+/* ============================================================
+   Sheet (bottom pop-up) + menu + backup
+   ============================================================ */
+function showSheet(html, z){
+  closeSheet();
+  const v = document.createElement('div');
+  v.className = 'veil'; v.id = 'veil';
+  if(z) v.style.zIndex = z;
+  v.innerHTML = `<div class="sheet">${html}</div>`;
+  v.onclick = e => { if(e.target === v) closeSheet(); };
+  document.body.appendChild(v);
+}
+function closeSheet(){ $('#veil')?.remove(); }
+
+function openMenu(){
+  showSheet(`
+    <div class="menu">
+      <button onclick="exportBackup()">Save backup<small>Download all jobs and photos as one file</small></button>
+      <button onclick="closeSheet();$('#importInput').click()">Restore backup<small>Load a backup file into this device</small></button>
+      <button onclick="lock()">Lock<small>Ask for name and password again</small></button>
+      <button onclick="location.href='../../index.html'">ASA Home<small>Back to all ASA apps</small></button>
+    </div>`);
+}
+const blobToB64 = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+const b64ToBlob = async s => (await fetch(s)).blob();
+
+async function exportBackup(){
+  closeSheet(); toast('Preparing backup…');
+  const photos = await getAll('photos');
+  const out = {app:'fabrication-work-tracker', version:1, exported:new Date().toISOString(), jobs,
+    photos: await Promise.all(photos.map(async p => ({...p, blob: await blobToB64(p.blob)})))};
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(out)], {type:'application/json'}));
+  a.download = `Work Tracker Backup ${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+$('#importInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if(!f) return;
+  try{
+    const data = JSON.parse(await f.text());
+    if(data.app !== 'fabrication-work-tracker') throw 0;
+    for(const j of data.jobs) await putItem('jobs', j);
+    for(const p of data.photos) await putItem('photos', {...p, blob: await b64ToBlob(p.blob)});
+    jobs = await getAll('jobs');
+    renderList();
+    toast(`Restored ${data.jobs.length} jobs`);
+  }catch(err){ toast('That is not a Work Tracker backup'); }
+});
+
+/* ============================================================
+   Start
+   ============================================================ */
+
+/* ============================================================
+   ASA ACCESS + CLOUD
+   1. Name + password again every time the Work Tracker is opened.
+   2. Only people the admin has ticked for the Work Tracker can open it.
+   3. Jobs and photos are shared live (cloud folder apps/wt-data), with this
+      device's copy kept for offline use.
+   ============================================================ */
+const WT_APP = 'work-tracker';
+const OK_KEY = 'wt_device_ok';          // remembers "this device was approved" for offline use
+let WT = { cloud: false, app: '', admin: false };
+let wtStopWatch = null;
+
+function lockScreen(html){ $('#lock').classList.remove('hidden'); $('#app').classList.add('hidden'); $('#lockBox').innerHTML = html; }
+function buildKeys(){}                   // the old 4-digit keypad is gone
+function press(){}
+function lock(){ location.reload(); }    // "Lock": ask for name + password again
+
+/* ---------- 1. name + password ---------- */
+function showLogin(msg){
+  const s = ASACloud.session() || {};
+  lockScreen(`
+    <h1>Fabrication Work Tracker</h1>
+    <p>Enter your name and password to open the Work Tracker.</p>
+    <form id="wtForm" class="wt-form" autocomplete="on">
+      <input id="wtUser" name="username" autocomplete="username" placeholder="Your name" value="${esc(s.name || '')}">
+      <input id="wtPass" name="password" type="password" autocomplete="current-password" placeholder="Password">
+      <button type="submit" class="btn pri" id="wtGo">Open</button>
+      <div class="wt-msg" id="wtMsg">${esc(msg || '')}</div>
+      ${s.setup ? '<div class="wt-note">Setup mode — the password is checked once the cloud is connected.</div>' : ''}
+    </form>
+    <a class="wt-home" href="../../index.html">&larr; ASA Home</a>`);
+  $(s.name ? '#wtPass' : '#wtUser').focus();
+  $('#wtForm').onsubmit = async e => {
+    e.preventDefault();
+    $('#wtGo').disabled = true; $('#wtGo').textContent = 'Checking…'; $('#wtMsg').textContent = '';
+    const r = await ASACloud.checkPassword($('#wtUser').value, $('#wtPass').value);
+    $('#wtGo').disabled = false; $('#wtGo').textContent = 'Open';
+    if (!r.ok){ $('#wtMsg').textContent = r.message; $('#wtPass').select(); return; }
+    checkDevice();
+  };
+}
+
+/* ---------- 2. is this device approved? ---------- */
+function waitScreen(title, msg, icon){
+  lockScreen(`
+    <div style="font-size:40px;margin-bottom:8px">${icon}</div>
+    <h1>${esc(title)}</h1>
+    <p>${msg}</p>
+    <p style="font-size:12.5px">Device: ${esc(ASACloud.deviceLabel())} · ID ${esc(ASACloud.deviceId().slice(0, 8))}</p>
+    <a class="wt-home" href="../../index.html">&larr; ASA Home</a>`);
+}
+
+// After the password check: open the tracker. Who may use it is the admin's per-person
+// tick (checked by asa-gate.js and the cloud rules); data lives in apps/wt-data.
+async function checkDevice(){
+  const s = ASACloud.session();
+  const mode = !ASACloud.configured() || s.setup ? 'local' : s.offline ? 'offline' : 'cloud';
+  if (mode === 'offline') toast('Offline — showing this device’s copy');
+  WT = { cloud: mode === 'cloud', app: mode === 'cloud' ? 'wt-data' : '', admin: s.role === 'admin' };
+  if (WT.cloud){ try{ await ASACloud.add(WT_APP, 'access', { device: ASACloud.deviceLabel(), devId: ASACloud.deviceId() }); }catch(e){} }
+  return openTracker();
+}
+
+async function openTracker(){
+  await unlock();                        // the original: opens this device's store, shows the list
+  if (WT.cloud){ await syncAll(); startLive(); }
+}
+
+/* ---------- 3. storage: this device first, then the cloud ---------- */
+function openDB(){
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB_NAME, 2);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('jobs')) d.createObjectStore('jobs', {keyPath:'id'});
+      if (!d.objectStoreNames.contains('photos')){ const p = d.createObjectStore('photos', {keyPath:'id'}); p.createIndex('jobId', 'jobId'); }
+      if (!d.objectStoreNames.contains('outbox')) d.createObjectStore('outbox', {keyPath:'key'});
+    };
+    r.onsuccess = () => { db = r.result; res(); };
+    r.onerror = () => rej(r.error);
+  });
+}
+const getLocal = (store, id) => tx(store, 'readonly', s => s.get(id));
+const devTag = () => ({ dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now() });
+const blobToData = b => new Promise(r => { const f = new FileReader(); f.onload = () => r(f.result); f.readAsDataURL(b); });
+
+async function getAll(store){
+  const all = await getAllLocal(store);
+  return store === 'jobs' ? all.filter(j => !j.deleted) : all;
+}
+async function putItem(store, v){
+  if (store === 'jobs') v._u = Date.now();
+  await putLocal(store, v);
+  if (WT.cloud) cloudSend(store, v.id);
+}
+async function delItem(store, id){
+  // A deleted job or photo is kept as a small "deleted" marker so other devices drop it too.
+  const v = await getLocal(store, id);
+  if (store === 'jobs' && v){ v.deleted = true; v._u = Date.now(); await putLocal('jobs', v); }
+  else await delLocal(store, id);
+  if (WT.cloud) cloudSend(store, id, true);
+}
+async function photosFor(jobId){
+  if (WT.cloud){
+    try{
+      const meta = await ASACloud.where(WT.app, 'photos', 'jobId', '==', jobId);
+      for (const m of meta){
+        const have = await getLocal('photos', m.id);
+        if (m.deleted){ if (have) await delLocal('photos', m.id); continue; }
+        if (!have) await putLocal('photos', { id: m.id, jobId: m.jobId, step: m.step, ts: m.pts || m.ts, thumb: m.thumb, blob: null });
+      }
+    }catch(e){ /* offline — use this device's copy */ }
+  }
+  return photosForLocal(jobId);
+}
+
+// Every change goes out now, or waits in the outbox until the connection is back.
+async function cloudSend(store, id, del){
+  try{
+    if (store === 'jobs'){
+      const j = await getLocal('jobs', id);
+      if (j) await ASACloud.put(WT.app, 'jobs', id, { ...j, ...devTag() });
+    } else if (del){
+      await ASACloud.put(WT.app, 'photos', id, { id, deleted: true, jobId: '', ...devTag() });
+    } else {
+      const p = await getLocal('photos', id);
+      if (!p) return;
+      if (p.blob) await ASACloud.put(WT.app, 'photoData', id, { img: await blobToData(p.blob), ...devTag() });
+      await ASACloud.put(WT.app, 'photos', id, { id, jobId: p.jobId, step: p.step, pts: p.ts, thumb: p.thumb, ...devTag() });
+    }
+    await delLocal('outbox', store + ':' + id).catch(() => {});
+  }catch(e){
+    await putLocal('outbox', { key: store + ':' + id, store, id, del: !!del });
+    if (String(e && e.code).includes('permission-denied')) toast('The cloud refused this change — is this device still approved?');
+  }
+}
+async function flushOutbox(){
+  for (const o of await getAllLocal('outbox')) await cloudSend(o.store, o.id, o.del);
+}
+
+// The full photo is fetched from the cloud the first time it is opened on this device.
+async function ensureBlob(p){
+  if (p.blob || !WT.cloud) return;
+  const d = await ASACloud.get(WT.app, 'photoData', p.id);
+  if (!d || !d.img) throw new Error('Photo not found in the cloud');
+  p.blob = await (await fetch(d.img)).blob();
+  await putLocal('photos', p);
+}
+async function drawViewer(){
+  const p = viewList[viewIdx];
+  if (!p.blob){
+    toast('Loading photo…');
+    try{ await ensureBlob(p); }catch(e){ toast('Could not load this photo: ' + ASACloud.friendly(e)); return; }
+  }
+  drawViewerLocal();
+}
+
+/* merge this device and the cloud: newest version of each job wins */
+async function syncAll(){
+  try{
+    await flushOutbox();
+    const cloudJobs = await ASACloud.list(WT.app, 'jobs');
+    const local = new Map((await getAllLocal('jobs')).map(j => [j.id, j]));
+    for (const c of cloudJobs){
+      const l = local.get(c.id);
+      if (!l || (c._u || 0) > (l._u || 0)){ const { dev, by, ts, _by, _device, _at, ...job } = c; await putLocal('jobs', job); }
+      local.delete(c.id);
+    }
+    const onlyHere = [...local.values()];
+    for (const j of onlyHere){
+      await cloudSend('jobs', j.id);
+      for (const p of await photosForLocal(j.id)) await cloudSend('photos', p.id);
+    }
+    if (onlyHere.length) toast(`Shared ${onlyHere.length} job(s) from this device`);
+    jobs = await getAll('jobs');
+    if (openId) { photoCache = await photosFor(openId); renderDetail(); } else renderList();
+  }catch(e){ toast('Working offline — changes will sync later'); }
+}
+
+function startLive(){
+  ASACloud.watch(WT.app, 'jobs', Date.now() - 10 * 60 * 1000, async changes => {
+    let touched = false;
+    for (const c of changes){
+      if (c.data.dev === ASACloud.deviceId()) continue;           // our own change coming back
+      const l = await getLocal('jobs', c.id);
+      if (!l || (c.data._u || 0) > (l._u || 0)){
+        const { dev, by, ts, _by, _device, _at, ...job } = c.data;
+        await putLocal('jobs', job); touched = true;
+        if (!job.deleted && by) toast(`${by} updated ${job.name}`);
+      }
+    }
+    if (!touched) return;
+    jobs = await getAll('jobs');
+    if (openId){
+      if (!jobs.find(j => j.id === openId)) return closeJob();
+      const scroll = $('#panel') ? $('#panel').scrollTop : 0;
+      photoCache = await photosFor(openId); renderDetail();
+      if ($('#panel')) $('#panel').scrollTop = scroll;
+    } else renderList();
+  }).then(stop => wtStopWatch = stop).catch(() => {});
+}
+
+/* ---------- start ---------- */
+ASAGate.ready.then(() => showLogin());
+
+if(navigator.storage?.persist) navigator.storage.persist();
+</script>
+</body>
+</html>

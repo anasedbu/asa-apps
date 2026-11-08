@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f1720">
+<title>Powder Coating — Live Floor Tracker</title>
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="powder"></script>
+<script src="../../shared/asa-device-gate.js"></script>
+<style>
+  a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:6px 10px;border:1px solid rgba(255,255,255,.35);border-radius:8px;white-space:nowrap;margin-right:8px}
+</style>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+<!-- Firebase SDK is ~370 KB of JavaScript. Loading it with `defer` keeps it off the
+     critical path: the page paints, and the board fills itself from the phone's saved
+     copy / a plain REST call, long before this finishes downloading and compiling. -->
+<style>
+  :root{
+    --bg:#0e141b; --bg2:#141c26; --card:#182330; --card2:#1e2b3a;
+    --line:#26374a; --text:#eef4fb; --mut:#93a6bd; --mut2:#63788f;
+    --accent:#3B73B9; --accent2:#5b8fd6; --ok:#26b673; --okbg:#123726;
+    --warn:#e8a13a; --danger:#e5574e; --live:#2fd97a;
+    --shadow:0 10px 30px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.4;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden;
+    padding-bottom:90px;
+  }
+  /* ---------- Header ---------- */
+  header{
+    position:sticky; top:0; z-index:40;
+    background:linear-gradient(180deg,#111a24 0%,#0e141bee 100%);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+    padding:10px 14px 0;
+  }
+  .htop{display:flex; align-items:center; gap:10px}
+  .brand{display:flex; align-items:center; gap:9px; min-width:0}
+  .logo{
+    width:34px;height:34px;border-radius:9px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--accent),#2b568d);
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+    box-shadow:0 3px 10px rgba(59,115,185,.4)
+  }
+  .btitle{font-size:15px;font-weight:800;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bsub{font-size:11px;color:var(--mut);margin-top:1px;display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--mut2);flex:0 0 auto}
+  .dot.on{background:var(--live);box-shadow:0 0 0 0 rgba(47,217,122,.6);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,217,122,.5)}70%{box-shadow:0 0 0 7px rgba(47,217,122,0)}100%{box-shadow:0 0 0 0 rgba(47,217,122,0)}}
+  .clock{margin-left:auto;text-align:right;flex:0 0 auto}
+  .clocktime{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+  .clockdate{font-size:10px;color:var(--mut)}
+  .lockbtn{
+    flex:0 0 auto;margin-left:8px;background:var(--card2);border:1px solid var(--line);
+    color:var(--mut);width:38px;height:38px;border-radius:10px;font-size:16px;cursor:pointer
+  }
+  .lockbtn.admin{background:var(--okbg);border-color:#1f6d47;color:var(--live)}
+  /* ---------- Tabs ---------- */
+  .tabs{display:flex;gap:4px;margin-top:10px}
+  .tab{
+    flex:1;text-align:center;padding:11px 6px;font-size:13.5px;font-weight:700;
+    color:var(--mut);border:none;background:none;cursor:pointer;position:relative;
+    border-bottom:2.5px solid transparent
+  }
+  .tab.active{color:var(--text);border-bottom-color:var(--accent2)}
+  .tab .cnt{
+    display:inline-block;min-width:19px;padding:1px 6px;border-radius:20px;
+    background:var(--card2);color:var(--mut);font-size:11px;margin-left:5px;font-weight:800
+  }
+  .tab.active .cnt{background:var(--accent);color:#fff}
+  /* ---------- Content ---------- */
+  main{padding:14px 12px 0;max-width:640px;margin:0 auto}
+  .empty{text-align:center;color:var(--mut2);padding:60px 20px;font-size:14px}
+  .empty .big{font-size:40px;margin-bottom:10px}
+  /* Loading skeleton — shown until the first snapshot lands */
+  .sk{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:10px;
+      padding:13px 14px;display:flex;gap:12px;align-items:center}
+  .sk i{display:block;border-radius:8px;
+      background:linear-gradient(90deg,#1e2b3a 25%,#2a3b4f 37%,#1e2b3a 63%);
+      background-size:400% 100%;animation:shim 1.3s ease infinite}
+  .sk .s1{width:46px;height:46px;border-radius:11px;flex:0 0 auto}
+  .sk .s2{flex:1;min-width:0}
+  .sk .s2 i{height:11px;margin-bottom:7px}
+  .sk .s2 i:first-child{width:46%}
+  .sk .s2 i:last-child{width:30%;margin-bottom:0}
+  @keyframes shim{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  .morebtn{width:100%;padding:12px;margin:2px 0 14px;border-radius:11px;background:var(--card2);
+      border:1px solid var(--line);color:var(--mut);font-size:13.5px;font-weight:700;cursor:pointer}
+  .morebtn:disabled{opacity:.5}
+  /* Search */
+  .searchwrap{position:relative;margin-bottom:12px}
+  .searchwrap input{
+    width:100%;padding:12px 14px 12px 40px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--text);font-size:15px;outline:none
+  }
+  .searchwrap input:focus{border-color:var(--accent2)}
+  .searchwrap .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--mut2);font-size:16px}
+  /* ---------- Job card ---------- */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    margin-bottom:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.2);
+    transition:border-color .15s
+  }
+  .card.open{border-color:var(--accent2)}
+  .chead{display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer}
+  .swatch{
+    width:46px;height:46px;border-radius:11px;flex:0 0 auto;border:2px solid rgba(255,255,255,.14);
+    display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
+    color:rgba(0,0,0,.45);text-align:center;line-height:1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)
+  }
+  .cmain{flex:1;min-width:0}
+  .cral{font-size:11.5px;font-weight:800;color:var(--accent2);letter-spacing:.4px;text-transform:uppercase}
+  .ccust{font-size:16.5px;font-weight:800;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cmeta{font-size:11.5px;color:var(--mut);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .timer{
+    font-variant-numeric:tabular-nums;font-weight:700;color:var(--live);
+    background:rgba(47,217,122,.1);padding:1px 7px;border-radius:6px;font-size:11px
+  }
+  .timer.done{color:var(--mut);background:var(--card2)}
+  .cthumb{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:0 0 auto;border:1px solid var(--line)}
+  .chev{color:var(--mut2);font-size:13px;flex:0 0 auto;transition:transform .2s}
+  .card.open .chev{transform:rotate(90deg)}
+  .order{
+    position:absolute;left:-1px;top:-1px;background:var(--accent);color:#fff;font-size:10px;
+    font-weight:800;padding:2px 7px;border-bottom-right-radius:9px
+  }
+  .chead{position:relative}
+  /* Detail body */
+  .cbody{display:none;padding:0 14px 14px;border-top:1px solid var(--line);margin-top:-1px}
+  .card.open .cbody{display:block;animation:fade .2s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .drow{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid var(--bg2);font-size:14px}
+  .drow:last-of-type{border-bottom:none}
+  .dlab{color:var(--mut);width:96px;flex:0 0 auto;font-size:12.5px;font-weight:600;padding-top:1px}
+  .dval{flex:1;min-width:0;white-space:pre-wrap;word-break:break-word}
+  .imgs{display:flex;gap:8px;flex-wrap:wrap;padding-top:11px}
+  .imgs img{
+    width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in
+  }
+  .imgs .ph{width:88px;height:88px;border-radius:10px;border:1px solid var(--line);background:var(--card2);
+    display:flex;align-items:center;justify-content:center;font-size:20px;opacity:.5}
+  .actions{display:flex;gap:8px;margin-top:13px}
+  .actions button{flex:1;padding:12px;border-radius:11px;font-size:14px;font-weight:800;border:none;cursor:pointer}
+  .bdone{background:var(--ok);color:#fff}
+  .breopen{background:var(--card2);color:var(--text);border:1px solid var(--line)!important}
+  .bedit{background:var(--card2);color:var(--accent2);border:1px solid var(--line)!important;flex:0 0 auto!important;width:52px}
+  .bdel{background:var(--card2);color:var(--danger);border:1px solid var(--line)!important;flex:0 0 auto!important;width:52px}
+  /* ---------- FAB ---------- */
+  .fab{
+    position:fixed;right:18px;bottom:22px;z-index:45;width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),#2b568d);color:#fff;border:none;font-size:30px;
+    box-shadow:0 8px 24px rgba(59,115,185,.5);cursor:pointer;display:flex;align-items:center;justify-content:center
+  }
+  .fab:active{transform:scale(.94)}
+  .hidden{display:none!important}
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed;inset:0;z-index:60;background:rgba(4,8,12,.72);backdrop-filter:blur(3px);
+    display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s
+  }
+  .overlay.show{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:640px;background:var(--bg2);border-radius:20px 20px 0 0;
+    border-top:1px solid var(--line);max-height:92vh;overflow-y:auto;
+    transform:translateY(100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);
+    box-shadow:var(--shadow)
+  }
+  .overlay.show .sheet{transform:translateY(0)}
+  .shead{
+    position:sticky;top:0;background:var(--bg2);padding:16px 16px 12px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;justify-content:space-between;z-index:2
+  }
+  .shead h3{margin:0;font-size:17px;font-weight:800}
+  .xbtn{background:var(--card2);border:none;color:var(--mut);width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer}
+  .sbody{padding:16px}
+  label.fl{display:block;font-size:12.5px;font-weight:700;color:var(--mut);margin:0 0 6px 2px}
+  .field{margin-bottom:15px}
+  input.f,textarea.f,select.f{
+    width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+    background:var(--card);color:var(--text);font-size:16px;outline:none;font-family:inherit
+  }
+  input.f:focus,textarea.f:focus{border-color:var(--accent2)}
+  textarea.f{resize:vertical;min-height:70px}
+  .ralrow{display:flex;gap:10px;align-items:center}
+  .ralprev{width:52px;height:52px;border-radius:12px;flex:0 0 auto;border:2px solid var(--line);background:#333;
+    display:flex;align-items:center;justify-content:center;font-size:9px;color:rgba(255,255,255,.5)}
+  .hint{font-size:11.5px;color:var(--mut2);margin-top:5px;margin-left:2px}
+  .imgpick{
+    border:1.5px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--mut);
+    font-size:13px;cursor:pointer;background:var(--card)
+  }
+  .imgpick .pi{font-size:26px;display:block;margin-bottom:4px}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .thumbs .tw{position:relative}
+  .thumbs img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  .thumbs .rm{position:absolute;top:-6px;right:-6px;background:var(--danger);color:#fff;border:none;
+    width:22px;height:22px;border-radius:50%;font-size:13px;cursor:pointer;line-height:1}
+  .save{width:100%;padding:15px;border-radius:13px;background:var(--accent);color:#fff;border:none;
+    font-size:16px;font-weight:800;cursor:pointer;margin-top:4px}
+  .save:disabled{opacity:.5}
+  /* PIN */
+  .pinbody{padding:22px 20px 26px;text-align:center}
+  .pinbody .pi{font-size:40px}
+  .pinbody h3{margin:8px 0 4px;font-size:19px}
+  .pinbody p{color:var(--mut);font-size:13px;margin:0 0 18px}
+  .pininput{width:180px;text-align:center;font-size:26px;letter-spacing:10px;font-weight:800;
+    padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--text);outline:none}
+  .pinmsg{color:var(--danger);font-size:13px;height:18px;margin:10px 0 0}
+  /* Lightbox */
+  .lightbox{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.94);display:none;
+    align-items:center;justify-content:center;padding:20px}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+  .lightbox .lx{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.12);color:#fff;
+    border:none;width:42px;height:42px;border-radius:50%;font-size:22px;cursor:pointer}
+  /* Toast */
+  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);z-index:90;
+    background:#0b1017;border:1px solid var(--line);color:var(--text);padding:12px 18px;border-radius:12px;
+    font-size:13.5px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;max-width:90%}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.ok{border-color:#1f6d47}.toast.err{border-color:#7a2f2b}
+  /* Config warning */
+  .setup{background:#3a2a12;border:1px solid #7a5a1e;color:#f2d59a;padding:12px 14px;border-radius:12px;
+    font-size:12.5px;margin:14px 12px 0;line-height:1.5}
+  .setup b{color:#ffe6ad}
+  .stagepill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px}
+  .stagepill.active{background:rgba(232,161,58,.16);color:var(--warn)}
+  .stagepill.done{background:var(--okbg);color:var(--live)}
+  .due{font-size:11px;font-weight:700;color:var(--accent2);background:rgba(91,143,214,.14);
+    padding:1px 7px;border-radius:6px;white-space:nowrap}
+  .due.over{color:var(--danger);background:rgba(229,87,78,.15)}
+  .reorder{display:flex;flex-direction:column;gap:4px;flex:0 0 auto}
+  .rbtn{width:34px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--card2);
+    color:var(--accent2);font-size:12px;font-weight:800;cursor:pointer;line-height:1;padding:0}
+  .rbtn:active{background:var(--accent);color:#fff}
+  .rbtn:disabled{opacity:.3;cursor:default;color:var(--mut2)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="htop">
+    <div class="brand">
+      <div class="logo">🎨</div>
+      <div style="min-width:0">
+        <div class="btitle">Powder Coating — Live Floor</div>
+        <div class="bsub"><span class="dot" id="connDot"></span><span id="connTxt">Connecting…</span></div>
+      </div>
+    </div>
+    <div class="clock">
+      <div class="clocktime" id="clockTime">--:--</div>
+      <div class="clockdate" id="clockDate"></div>
+    </div>
+    <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA</a>
+    <button class="lockbtn" id="lockBtn" title="Admin">🔒</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" id="tabActive" onclick="switchTab('active')">On the Floor <span class="cnt" id="cntActive">0</span></button>
+    <button class="tab" id="tabDone" onclick="switchTab('done')">Completed <span class="cnt" id="cntDone">0</span></button>
+  </div>
+</header>
+
+<div id="setupWarn" class="setup hidden">
+  <b>⚙️ One-time setup needed.</b> Firebase isn't connected yet, so live sharing is off and nothing will save.
+  Open this file and paste your Firebase config where it says <b>PASTE FIREBASE CONFIG</b>. Full steps are in <b>SETUP.md</b>.
+</div>
+
+<div id="pcImportBar" class="setup hidden" style="background:#1d1b4d;border-color:#3b3780;color:#e2e2f2">
+  <b>Admin — bring over the old jobs.</b> Copies every job and photo from the old Powder Coating database into the
+  ASA cloud. Do this once, then lock the old database (steps in the setup guide).
+  <button class="morebtn" id="pcImpBtn" onclick="importOld()" style="margin:10px 0 0">Import from the old database ▸</button>
+</div>
+<div id="migrateBar" class="setup hidden" style="background:#16283d;border-color:#2b567f;color:#cfe3fb">
+  <b>⚡ Speed up this board.</b> Some older jobs still keep their photos inside the job record, which is
+  what makes the page slow to open. Move them out once — best on Wi-Fi, takes a minute.
+  <button class="morebtn" id="migBtn" onclick="migratePhotos()" style="margin:10px 0 0">Move old photos out ▸</button>
+</div>
+
+<main>
+  <div id="activeView">
+    <div id="activeSkel"><div class="sk"><i class="s1"></i><div class="s2"><i></i><i></i></div></div><div class="sk"><i class="s1"></i><div class="s2"><i></i><i></i></div></div><div class="sk"><i class="s1"></i><div class="s2"><i></i><i></i></div></div></div>
+    <div id="activeList"></div>
+    <div class="empty hidden" id="activeEmpty"><div class="big">🏭</div>Nothing on the floor right now.<br>Tap ➕ to add a job.</div>
+  </div>
+  <div id="doneView" class="hidden">
+    <div class="searchwrap">
+      <span class="ico">🔎</span>
+      <input id="searchBox" type="search" placeholder="Search by customer or RAL…" oninput="onSearch()">
+    </div>
+    <div id="doneSkel" class="hidden"><div class="sk"><i class="s1"></i><div class="s2"><i></i><i></i></div></div><div class="sk"><i class="s1"></i><div class="s2"><i></i><i></i></div></div></div>
+    <div id="doneList"></div>
+    <button class="morebtn hidden" id="moreBtn" onclick="loadMoreDone()">Load older jobs</button>
+    <div class="empty hidden" id="doneEmpty"><div class="big">✅</div>No completed jobs yet.</div>
+  </div>
+</main>
+
+<button class="fab hidden" id="fab" onclick="openForm()">＋</button>
+
+<!-- Add/Edit sheet -->
+<div class="overlay" id="formOverlay">
+  <div class="sheet">
+    <div class="shead"><h3 id="formTitle">New Job</h3><button class="xbtn" onclick="closeForm()">✕</button></div>
+    <div class="sbody">
+      <div class="field">
+        <label class="fl">Powder RAL Number</label>
+        <div class="ralrow">
+          <input class="f" id="fRal" placeholder="e.g. RAL 9005" oninput="updateRalPreview()" autocomplete="off">
+          <div class="ralprev" id="ralPrev">RAL</div>
+        </div>
+        <div class="hint" id="ralName"></div>
+      </div>
+      <div class="field">
+        <label class="fl">Finish <span style="font-weight:400;color:var(--mut2)">(optional)</span></label>
+        <input class="f" id="fFinish" list="finishList" placeholder="e.g. Matte, Sahara, Gloss, Textured" autocomplete="off">
+        <datalist id="finishList">
+          <option value="Matte"></option><option value="Gloss"></option><option value="Satin"></option>
+          <option value="Sahara"></option><option value="Textured"></option><option value="Fine Texture"></option>
+          <option value="Wrinkle"></option><option value="Metallic"></option><option value="Semi-Gloss"></option>
+        </datalist>
+      </div>
+      <div class="field">
+        <label class="fl">Customer Name</label>
+        <input class="f" id="fCust" placeholder="e.g. Al Sahlawi Aluminum" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="fl">Expected completion <span style="font-weight:400;color:var(--mut2)">(optional)</span></label>
+        <input class="f" id="fExpected" type="datetime-local">
+        <div class="hint">When the material should be ready. Shown to everyone on the card.</div>
+      </div>
+      <div class="field">
+        <label class="fl">Description / Items <span style="font-weight:400;color:var(--mut2)">(optional)</span></label>
+        <textarea class="f" id="fDesc" placeholder="e.g. 40 window frames, matte finish, deliver Thursday"></textarea>
+      </div>
+      <div class="field">
+        <label class="fl">Quantity <span style="font-weight:400;color:var(--mut2)">(optional)</span></label>
+        <input class="f" id="fQty" placeholder="e.g. 40 pcs" autocomplete="off">
+      </div>
+      <div class="field">
+        <label class="fl">Photos of material <span style="font-weight:400;color:var(--mut2)">(optional)</span></label>
+        <div class="imgpick" onclick="document.getElementById('fImgInput').click()">
+          <span class="pi">📷</span>Tap to add photos (camera or gallery)
+        </div>
+        <input type="file" id="fImgInput" accept="image/*" multiple capture="environment" class="hidden" onchange="handleImgs(event)">
+        <div class="thumbs" id="formThumbs"></div>
+        <div class="hint" id="imgHint"></div>
+      </div>
+      <button class="save" id="saveBtn" onclick="saveJob()">Add to Floor</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN sheet -->
+<div class="overlay" id="pinOverlay">
+  <div class="sheet">
+    <div class="pinbody">
+      <div class="pi">🔐</div>
+      <h3 id="pinTitle">Admin Access</h3>
+      <p id="pinSub">Enter your PIN to add or edit jobs</p>
+      <input class="pininput" id="pinInput" type="tel" inputmode="numeric" maxlength="8" placeholder="••••">
+      <div class="pinmsg" id="pinMsg"></div>
+      <button class="save" style="max-width:200px;margin:14px auto 0" onclick="checkPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('show')">
+  <button class="lx">✕</button><img id="lightimg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   1) PASTE FIREBASE CONFIG  — replace the object below.
+      Get it from Firebase Console → Project settings →
+      "Your apps" → Web app → SDK setup and configuration.
+   ============================================================ */
+const firebaseConfig = { apiKey: 'ASA' };   // data now lives in the ASA cloud (see the end of this script)
+
+/* ============================================================
+   2) SET YOUR ADMIN PIN — only you should know this.
+      Everyone with the link can VIEW; only the PIN can edit.
+   ============================================================ */
+const ADMIN_PIN = null;   // replaced by ASA logins + approved devices
+
+/* ============================================================
+   RAL Classic colour reference (approx. screen hex).
+   Used to show a real colour swatch next to each RAL number.
+   ============================================================ */
+const RAL = {
+"1000":"#BEBD7F","1001":"#C2B078","1002":"#C6A664","1003":"#E5BE01","1004":"#CDA434","1005":"#A98307","1006":"#E4A010","1007":"#DC9D00","1011":"#8A6642","1012":"#C7B446","1013":"#EAE6CA","1014":"#E1CC4F","1015":"#E6D690","1016":"#EDFF21","1017":"#F5D033","1018":"#F8F32B","1019":"#9E9764","1020":"#999950","1021":"#F3DA0B","1023":"#FAD201","1024":"#AEA04B","1026":"#FFFF00","1027":"#9D9101","1028":"#F4A900","1032":"#D6AE01","1033":"#F3A505","1034":"#EFA94A","1035":"#6A5D4D","1036":"#705335","1037":"#F39F18",
+"2000":"#ED760E","2001":"#C93C20","2002":"#CB2821","2003":"#FF7514","2004":"#F44611","2005":"#FF2301","2007":"#FFA420","2008":"#F75E25","2009":"#F54021","2010":"#D84B20","2011":"#EC7C26","2012":"#E55137","2013":"#C35831",
+"3000":"#AF2B1E","3001":"#A52019","3002":"#A2231D","3003":"#9B111E","3004":"#75151E","3005":"#5E2129","3007":"#412227","3009":"#642424","3011":"#781F19","3012":"#C1876B","3013":"#A12312","3014":"#D36E70","3015":"#EA899A","3016":"#B32821","3017":"#E63244","3018":"#D53032","3020":"#CC0605","3022":"#D95030","3024":"#F80000","3026":"#FE0000","3027":"#C51D34","3028":"#CB3234","3031":"#B32428","3032":"#721422","3033":"#B44C43",
+"4001":"#6D3F5B","4002":"#922B3E","4003":"#DE4C8A","4004":"#641C34","4005":"#6C4675","4006":"#A03472","4007":"#4A192C","4008":"#924E7D","4009":"#A18594","4010":"#CF3476","4011":"#8673A1","4012":"#6C6874",
+"5000":"#354D73","5001":"#1F3438","5002":"#20214F","5003":"#1D1E33","5004":"#18171C","5005":"#1E2460","5007":"#3E5F8A","5008":"#26252D","5009":"#025669","5010":"#0E294B","5011":"#231A24","5012":"#3B83BD","5013":"#1E213D","5014":"#606E8C","5015":"#2271B3","5017":"#063971","5018":"#3F888F","5019":"#1B5583","5020":"#1D334A","5021":"#256D7B","5022":"#252850","5023":"#49678D","5024":"#5D9B9B","5025":"#2A6478","5026":"#102C54",
+"6000":"#316650","6001":"#287233","6002":"#2D572C","6003":"#424632","6004":"#1F3A3D","6005":"#2F4538","6006":"#3E3B32","6007":"#343B29","6008":"#39352A","6009":"#31372B","6010":"#35682D","6011":"#587246","6012":"#343E40","6013":"#6C7156","6014":"#47402E","6015":"#3B3C36","6016":"#1E5945","6017":"#4C9141","6018":"#57A639","6019":"#BDECB6","6020":"#2E3A23","6021":"#89AC76","6022":"#25221B","6024":"#308446","6025":"#3D642D","6026":"#015D52","6027":"#84C3BE","6028":"#2C5545","6029":"#20603D","6032":"#317F43","6033":"#497E76","6034":"#7FB5B5","6035":"#1C542D","6036":"#193737","6037":"#008F39","6038":"#00BB2D",
+"7000":"#78858B","7001":"#8A9597","7002":"#7E7B52","7003":"#6C7059","7004":"#969992","7005":"#646B63","7006":"#6D6552","7008":"#6A5F31","7009":"#4D5645","7010":"#4C514A","7011":"#434B4D","7012":"#4E5754","7013":"#464531","7015":"#434750","7016":"#293133","7021":"#23282B","7022":"#332F2C","7023":"#686C5E","7024":"#474A51","7026":"#374447","7030":"#939388","7031":"#5D6970","7032":"#B9B9A8","7033":"#818479","7034":"#939176","7035":"#D7D7D7","7036":"#9C9C9C","7037":"#7A7B7A","7038":"#B4B8B0","7039":"#6B695E","7040":"#9DA1AA","7042":"#8D948D","7043":"#4E5452","7044":"#CAC4B0","7045":"#909090","7046":"#82898F","7047":"#D0D0D0","7048":"#898176",
+"8000":"#826C34","8001":"#955F20","8002":"#6C3B2A","8003":"#734222","8004":"#8E402A","8007":"#59351F","8008":"#6F4F28","8011":"#5B3A29","8012":"#673831","8014":"#49392D","8015":"#633A34","8016":"#4C2F27","8017":"#45322E","8019":"#403A3A","8022":"#212121","8023":"#A65E2E","8024":"#79553D","8025":"#755C48","8028":"#4E3B31","8029":"#763C28",
+"9001":"#FDF4E3","9002":"#E7EBDA","9003":"#F4F4F4","9004":"#282828","9005":"#0A0A0A","9006":"#A5A5A5","9007":"#8F8F8F","9010":"#FFFFFF","9011":"#1C1C1C","9016":"#F6F6F6","9017":"#1E1E1E","9018":"#D7D7D7","9022":"#9C9C9C","9023":"#828282"
+};
+
+/* ---------- App state ---------- */
+let db=null, isAdmin=false, jobs=[], doneJobs=[], activeTab='active', formImgs=[], editingId=null, liveTimer=null;
+const $=id=>document.getElementById(id);
+
+/* Completed history is paged in, not loaded on open. */
+const DONE_PAGE=25, DONE_MAX=10000;   // 10000 is Firestore's hard limit on a query
+let doneUnsub=null, doneLimit=DONE_PAGE, doneStarted=false, doneHasMore=false, allDoneLoaded=false;
+/* Full-size photos live in photos/{jobId} and are fetched only when a card is opened. */
+const photoCache=new Map();
+
+/* ============================================================
+   FAST BOOT
+   The Firebase SDK is ~370 KB and takes a second or two to arrive and compile
+   on a phone. Nothing below waits for it:
+     1. the board repaints from the copy saved on the phone (instant), then
+     2. a single plain fetch() to Firestore's REST API brings the real list in
+        one round trip, with the heavy fields stripped out.
+   Whichever the SDK's live listener beats, it wins and takes over from there.
+   ============================================================ */
+const CACHE_KEY='pct.active.v1';
+let liveArrived=false;
+
+/* Fields the board actually needs to draw a card. Deliberately leaves out
+   `thumb` (a ~4 KB data URL per job) and legacy inline `images` (can be
+   hundreds of KB per job) — those arrive with the live snapshot instead. */
+const FAST_FIELDS=['customer','ral','finish','qty','desc','status','createdAt','order','expectedAt','imgCount'];
+
+function hideSkel(){ $('activeSkel').classList.add('hidden'); }
+
+/* --- saved copy on the phone --- */
+function plainJob(j){
+  const o={id:j.id};
+  for(const k of ['customer','ral','finish','qty','desc','status','thumb','imgCount','order','expectedAt'])
+    if(j[k]!=null) o[k]=j[k];
+  o.createdAt=tsMs(j.createdAt)||null;
+  if(!o.imgCount && Array.isArray(j.images)) o.imgCount=j.images.length;
+  return o;
+}
+function saveCache(list){
+  try{
+    let rows=list.map(plainJob);
+    let s=JSON.stringify(rows);
+    if(s.length>1500000){ rows.forEach(r=>delete r.thumb); s=JSON.stringify(rows); }
+    localStorage.setItem(CACHE_KEY,s);
+  }catch(e){}   // private mode / quota — the board just loses its head start
+}
+function paintFromCache(){
+  let rows=null;
+  try{ rows=JSON.parse(localStorage.getItem(CACHE_KEY)||'null'); }catch(e){}
+  if(!Array.isArray(rows)||!rows.length) return false;
+  jobs=rows; hideSkel();
+  setConn(false,'Saved copy · syncing…');
+  renderActive(); updateCounts();
+  return true;
+}
+
+/* --- one-round-trip REST read, no SDK required --- */
+function decodeVal(v){
+  if(v==null) return null;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return v.doubleValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('timestampValue' in v) return Date.parse(v.timestampValue);
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(decodeVal);
+  if('mapValue' in v){ const o={},f=v.mapValue.fields||{}; for(const k in f) o[k]=decodeVal(f[k]); return o; }
+  return null;
+}
+function restFirstPaint(){
+  if(!fbReady()||!window.fetch) return;
+  const url='https://firestore.googleapis.com/v1/projects/'+firebaseConfig.projectId+
+            '/databases/(default)/documents:runQuery?key='+encodeURIComponent(firebaseConfig.apiKey);
+  const body={structuredQuery:{
+    from:[{collectionId:'jobs'}],
+    where:{fieldFilter:{field:{fieldPath:'status'},op:'EQUAL',value:{stringValue:'active'}}},
+    select:{fields:FAST_FIELDS.map(f=>({fieldPath:f}))},
+    limit:60
+  }};
+  fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    .then(r=>r.ok?r.json():Promise.reject(r.status))
+    .then(rows=>{
+      if(liveArrived) return;                       // the SDK got there first
+      // Thumbnails aren't in the REST payload; reuse the ones the saved copy
+      // already put on screen so they don't blink out and back in.
+      const thumbs=new Map(jobs.map(j=>[j.id,j.thumb]));
+      const out=[];
+      (rows||[]).forEach(r=>{
+        if(!r.document) return;
+        const o={id:r.document.name.split('/').pop()}, f=r.document.fields||{};
+        for(const k in f) o[k]=decodeVal(f[k]);
+        if(thumbs.get(o.id)) o.thumb=thumbs.get(o.id);
+        out.push(o);
+      });
+      jobs=out; hideSkel();
+      setConn(true,'Connecting live…');
+      renderActive(); updateCounts();
+    })
+    .catch(()=>{});   // offline or blocked — the SDK/cache still cover us
+}
+
+/* ---------- Firebase init ---------- */
+function fbReady(){ return !firebaseConfig.apiKey.startsWith("PASTE"); }
+function initFirebase(){
+  if(!fbReady()){
+    $('setupWarn').classList.remove('hidden');
+    hideSkel();
+    setConn(false,"Setup needed");
+    return;
+  }
+  if(typeof firebase==='undefined'){
+    // SDK never made it (offline / blocked). Cached board stays on screen.
+    hideSkel(); setConn(false, jobs.length? "Offline · saved copy" : "Offline");
+    return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db=firebase.firestore();
+    // Offline support for edits and the Completed tab. No longer on the critical
+    // path — the board is already painted by the time this resolves.
+    // (single-tab: synchronizeTabs adds cross-tab lease work a phone never needs)
+    db.enablePersistence()
+      .catch(()=>{})            // private mode / multiple tabs — carry on without it
+      .then(startActiveFeed, startActiveFeed);
+  }catch(e){ console.error(e); hideSkel(); setConn(false,"Config error"); }
+}
+function startActiveFeed(){
+  // Only the live floor queue loads on open. Completed jobs come in when you
+  // actually open the Completed tab.
+  db.collection('jobs').where('status','==','active')
+    .onSnapshot({includeMetadataChanges:true}, snap=>{
+      liveArrived=true;
+      jobs=snap.docs.map(d=>({id:d.id,...d.data()}));
+      hideSkel();
+      setConn(true, snap.metadata.fromCache ? "Saved copy · syncing…" : "Live");
+      renderActive(); updateCounts(); updateMigrateBar();
+      if(!snap.metadata.fromCache) saveCache(jobs);
+    },err=>{
+      console.error(err); hideSkel(); setConn(false,"Connection error");
+      toast("Can't reach database. Check Firestore rules.","err");
+    });
+}
+function startDoneFeed(){
+  if(doneStarted||!db) return;
+  doneStarted=true;
+  $('doneSkel').classList.remove('hidden');
+  subscribeDone();
+}
+function subscribeDone(){
+  if(doneUnsub){ doneUnsub(); doneUnsub=null; }
+  // orderBy('doneAt') implicitly skips jobs that have no doneAt (i.e. still on the
+  // floor), so this needs no composite index.
+  doneUnsub=db.collection('jobs').orderBy('doneAt','desc').limit(doneLimit)
+    .onSnapshot(snap=>{
+      doneJobs=snap.docs.map(d=>({id:d.id,...d.data()}));
+      doneHasMore=!allDoneLoaded && snap.size>=doneLimit;
+      $('doneSkel').classList.add('hidden');
+      renderDone(); updateCounts(); updateMigrateBar();
+    },err=>{
+      console.error(err); $('doneSkel').classList.add('hidden');
+      toast("Couldn't load history: "+err.code,'err');
+    });
+}
+function loadMoreDone(){ doneLimit=Math.min(doneLimit+DONE_PAGE,DONE_MAX); subscribeDone(); }
+function loadAllDone(){
+  // Searching has to look at the whole archive — the docs are small now, so
+  // pulling them all is cheap, and it only happens if someone actually searches.
+  if(allDoneLoaded) return;
+  allDoneLoaded=true; doneLimit=DONE_MAX;
+  $('doneSkel').classList.remove('hidden');
+  subscribeDone();
+}
+let searchT=null;
+function onSearch(){
+  clearTimeout(searchT);
+  searchT=setTimeout(()=>{
+    if($('searchBox').value.trim()) loadAllDone();
+    renderDone();
+  },160);
+}
+function setConn(on,txt){
+  $('connDot').className='dot'+(on?' on':'');
+  $('connTxt').textContent=txt;
+}
+function findJob(id){ return jobs.find(x=>x.id===id) || doneJobs.find(x=>x.id===id) || null; }
+
+/* ---------- Rendering ---------- */
+function renderAll(){ renderActive(); renderDone(); updateCounts(); updateMigrateBar(); }
+function updateCounts(){
+  $('cntActive').textContent=jobs.length;
+  $('cntDone').textContent = !doneStarted ? '–' : (doneHasMore? doneJobs.length+'+' : doneJobs.length);
+}
+function ralColor(ral){
+  if(!ral) return null;
+  const m=(''+ral).match(/\d{4}/); if(!m) return null;
+  return RAL[m[0]]||null;
+}
+function ralLabel(ral){
+  const m=(''+(ral||'')).match(/\d{4}/); return m?('RAL '+m[0]):(ral||'—');
+}
+function fmtTime(ts){
+  if(!ts) return '';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(ts){
+  if(!ts) return '';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString([], {day:'2-digit',month:'short'});
+}
+function elapsed(from,to){
+  if(!from) return '';
+  const a=(from.toDate?from.toDate():new Date(from)).getTime();
+  const b=to?(to.toDate?to.toDate():new Date(to)).getTime():Date.now();
+  let s=Math.max(0,Math.floor((b-a)/1000));
+  const h=Math.floor(s/3600); s-=h*3600; const m=Math.floor(s/60);
+  if(h>0) return h+'h '+m+'m';
+  if(m>0) return m+'m';
+  return Math.floor((b-a)/1000)+'s';
+}
+function swatchHtml(ral){
+  const c=ralColor(ral);
+  const num=(''+(ral||'')).match(/\d{4}/);
+  if(c) return `<div class="swatch" style="background:${c}">${num?num[0]:''}</div>`;
+  return `<div class="swatch" style="background:repeating-linear-gradient(45deg,#2a3a4d,#2a3a4d 6px,#22303f 6px,#22303f 12px);color:var(--mut2)">?</div>`;
+}
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+function orderKey(j){ return (j.order!=null)? j.order : tsMs(j.createdAt); }
+/* The board is painted up to three times on a cold open (saved copy → REST →
+   live). Re-assigning identical HTML would flash the list and slam shut any card
+   the user had opened, so skip the write when nothing actually changed. */
+let lastActiveHtml=null, lastDoneHtml=null;
+function renderActive(){
+  const list=jobs.slice().sort((a,b)=>orderKey(a)-orderKey(b));
+  $('activeEmpty').classList.toggle('hidden',list.length>0||!$('activeSkel').classList.contains('hidden'));
+  const html=list.map((j,i)=>cardHtml(j,i+1,false,i===0,i===list.length-1)).join('');
+  if(html===lastActiveHtml) return;
+  lastActiveHtml=html; $('activeList').innerHTML=html;
+}
+function renderDone(){
+  if(!doneStarted) return;               // tab never opened — nothing fetched yet
+  const q=$('searchBox').value.trim().toLowerCase();
+  let list=doneJobs.slice().sort((a,b)=>tsMs(b.doneAt)-tsMs(a.doneAt));
+  if(q) list=list.filter(j=>(j.customer||'').toLowerCase().includes(q)||(''+(j.ral||'')).toLowerCase().includes(q));
+  $('doneEmpty').classList.toggle('hidden',list.length>0);
+  if(q&&!list.length) $('doneEmpty').innerHTML='<div class="big">🔎</div>No completed job matches “'+esc(q)+'”.';
+  else if(!list.length) $('doneEmpty').innerHTML='<div class="big">✅</div>No completed jobs yet.';
+  $('moreBtn').classList.toggle('hidden',!doneHasMore||!!q);
+  const html=list.map(j=>cardHtml(j,null,true)).join('');
+  if(html===lastDoneHtml) return;
+  lastDoneHtml=html; $('doneList').innerHTML=html;
+}
+function tsMs(ts){ if(!ts) return 0; return (ts.toDate?ts.toDate():new Date(ts)).getTime(); }
+function toLocalInput(ms){
+  if(ms==null) return '';
+  const d=new Date(ms), p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+
+function ralTitle(j){
+  let s=ralLabel(j.ral);
+  if(j.finish) s+=' · '+j.finish;
+  if(j.qty) s+=' · '+j.qty;
+  return s;
+}
+function expInfo(j){
+  if(j.expectedAt==null) return null;
+  const d=new Date(j.expectedAt);
+  const overdue=j.status!=='done' && j.expectedAt<Date.now();
+  const txt=d.toLocaleDateString([], {day:'2-digit',month:'short'})+' '+d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  return {txt,overdue};
+}
+function expPill(j){
+  const e=expInfo(j); if(!e) return '';
+  return `<span class="due${e.overdue?' over':''}">${e.overdue?'⚠ Overdue':'📅 Due'} ${e.txt}</span>`;
+}
+function photoCount(j){ return j.images? j.images.length : (j.imgCount||0); }
+function cardHtml(j,order,done,isFirst,isLast){
+  const thumbSrc=j.thumb||(j.images&&j.images[0])||null;
+  const thumb=thumbSrc?`<img class="cthumb" src="${thumbSrc}" loading="lazy" decoding="async" alt="">`:'';
+  const meta = done
+    ? `<span>✅ ${fmtDate(j.doneAt)} ${fmtTime(j.doneAt)}</span><span class="timer done">took ${elapsed(j.createdAt,j.doneAt)}</span>`
+    : `<span>🕓 ${fmtTime(j.createdAt)}</span><span class="timer live-el" data-from="${tsMs(j.createdAt)}">${elapsed(j.createdAt,null)}</span>${expPill(j)}`;
+  const reorder=(isAdmin&&!done)?`<div class="reorder">
+      <button class="rbtn" ${isFirst?'disabled':''} onclick="event.stopPropagation();moveJob('${j.id}',-1)">▲</button>
+      <button class="rbtn" ${isLast?'disabled':''} onclick="event.stopPropagation();moveJob('${j.id}',1)">▼</button>
+    </div>`:'';
+  return `<div class="card" id="card-${j.id}">
+    <div class="chead" onclick="toggleCard('${j.id}')">
+      ${!done&&order?`<span class="order">${order}</span>`:''}
+      ${swatchHtml(j.ral)}
+      <div class="cmain">
+        <div class="cral">${esc(ralTitle(j))}</div>
+        <div class="ccust">${esc(j.customer||'—')}</div>
+        <div class="cmeta">${meta}</div>
+      </div>
+      ${reorder||thumb}
+      <span class="chev">▶</span>
+    </div>
+    <div class="cbody">
+      ${j.desc?`<div class="drow"><div class="dlab">Details</div><div class="dval">${esc(j.desc)}</div></div>`:''}
+      <div class="drow"><div class="dlab">RAL Powder</div><div class="dval">${esc(ralLabel(j.ral))}${ralColor(j.ral)?` <span style="display:inline-block;width:13px;height:13px;border-radius:3px;vertical-align:-2px;border:1px solid rgba(255,255,255,.2);background:${ralColor(j.ral)}"></span>`:''}</div></div>
+      ${j.finish?`<div class="drow"><div class="dlab">Finish</div><div class="dval">${esc(j.finish)}</div></div>`:''}
+      ${j.qty?`<div class="drow"><div class="dlab">Quantity</div><div class="dval">${esc(j.qty)}</div></div>`:''}
+      ${expInfo(j)?`<div class="drow"><div class="dlab">Expected</div><div class="dval"${expInfo(j).overdue?' style="color:var(--danger);font-weight:700"':''}>${expInfo(j).txt}${expInfo(j).overdue?' · overdue':''}</div></div>`:''}
+      <div class="drow"><div class="dlab">Started</div><div class="dval">${fmtDate(j.createdAt)} at ${fmtTime(j.createdAt)}</div></div>
+      ${done?`<div class="drow"><div class="dlab">Completed</div><div class="dval">${fmtDate(j.doneAt)} at ${fmtTime(j.doneAt)} · took ${elapsed(j.createdAt,j.doneAt)}</div></div>`
+             :`<div class="drow"><div class="dlab">On floor</div><div class="dval"><span class="stagepill active">In Progress</span> · ${elapsed(j.createdAt,null)}</div></div>`}
+      ${photoCount(j)?`<div class="imgs" id="imgs-${j.id}" data-n="${photoCount(j)}"></div>`:''}
+      ${isAdmin?adminActions(j,done):''}
+    </div>
+  </div>`;
+}
+function moveJob(id,dir){
+  const list=jobs.slice().sort((a,b)=>orderKey(a)-orderKey(b));
+  const i=list.findIndex(j=>j.id===id); if(i<0) return;
+  const swapWith=list[i+dir]; if(!swapWith) return;
+  const a=list[i], b=swapWith;
+  const oa=orderKey(a), ob=orderKey(b);
+  const batch=db.batch();
+  batch.update(db.collection('jobs').doc(a.id),{order:ob});
+  batch.update(db.collection('jobs').doc(b.id),{order:oa});
+  batch.commit().catch(e=>toast('Reorder failed: '+e.code,'err'));
+}
+function adminActions(j,done){
+  return `<div class="actions">
+    ${done?`<button class="breopen" onclick="reopen('${j.id}')">↩ Reopen</button>`
+           :`<button class="bdone" onclick="markDone('${j.id}')">✓ Mark Done</button>`}
+    <button class="bedit" onclick="openForm('${j.id}')">✏️</button>
+    <button class="bdel" onclick="delJob('${j.id}')">🗑</button>
+  </div>`;
+}
+function toggleCard(id){
+  const c=$('card-'+id); if(!c) return;
+  const opening=!c.classList.contains('open');
+  c.classList.toggle('open');
+  if(opening) loadPhotos(id);
+}
+/* Photos are pulled the first time a card is opened, never on page load. */
+function loadPhotos(id){
+  const box=$('imgs-'+id); if(!box||box.dataset.loaded) return;
+  const j=findJob(id); if(!j) return;
+  const paint=arr=>{
+    box.dataset.loaded='1';
+    box.innerHTML=arr.length
+      ? arr.map(src=>`<img src="${src}" loading="lazy" decoding="async" onclick="zoom(this.src)">`).join('')
+      : '<div class="ph">🚫</div>';
+  };
+  if(j.images&&j.images.length) return paint(j.images);        // job saved in the old format
+  if(photoCache.has(id)) return paint(photoCache.get(id));
+  const n=Number(box.dataset.n)||1;
+  box.innerHTML=Array.from({length:n},()=>'<div class="ph">📷</div>').join('');
+  db.collection('photos').doc(id).get()
+    .then(d=>{ const arr=(d.exists&&d.data().images)||[]; photoCache.set(id,arr); paint(arr); })
+    .catch(e=>{ console.error(e); box.innerHTML='<div class="ph">⚠️</div>'; });
+}
+
+/* ---------- Live timers ---------- */
+function tickTimers(){
+  document.querySelectorAll('.live-el').forEach(el=>{
+    el.textContent=elapsed(Number(el.dataset.from),null);
+  });
+  const now=new Date();
+  $('clockTime').textContent=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  $('clockDate').textContent=now.toLocaleDateString([], {weekday:'short',day:'2-digit',month:'short'});
+}
+
+/* ---------- Tabs ---------- */
+function switchTab(t){
+  activeTab=t;
+  if(t==='done') startDoneFeed();
+  $('tabActive').classList.toggle('active',t==='active');
+  $('tabDone').classList.toggle('active',t==='done');
+  $('activeView').classList.toggle('hidden',t!=='active');
+  $('doneView').classList.toggle('hidden',t!=='done');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------- Admin / PIN ---------- */
+$('lockBtn').onclick=()=>{
+  if(isAdmin){ // toggle off
+    isAdmin=false; updateAdminUI(); toast("Locked — view only",'ok'); renderAll();
+  } else openPin();
+};
+function openPin(){ $('pinInput').value=''; $('pinMsg').textContent=''; showOverlay('pinOverlay'); setTimeout(()=>$('pinInput').focus(),300); }
+function checkPin(){
+  if($('pinInput').value===ADMIN_PIN){
+    isAdmin=true; updateAdminUI(); hideOverlay('pinOverlay'); toast("Admin unlocked ✓",'ok'); renderAll();
+  } else { $('pinMsg').textContent='Wrong PIN, try again'; $('pinInput').value=''; }
+}
+$('pinInput').addEventListener('keydown',e=>{ if(e.key==='Enter') checkPin(); });
+function updateAdminUI(){
+  $('lockBtn').textContent=isAdmin?'🔓':'🔒';
+  $('lockBtn').classList.toggle('admin',isAdmin);
+  $('fab').classList.toggle('hidden',!isAdmin);
+}
+
+/* ---------- Form ---------- */
+function openForm(id){
+  if(!isAdmin){ openPin(); return; }
+  if(!fbReady()){ toast("Connect Firebase first (see SETUP.md)",'err'); return; }
+  editingId=id||null; formImgs=[]; $('saveBtn').disabled=false; $('imgHint').textContent='';
+  if(id){
+    const j=findJob(id); if(!j) return;
+    $('formTitle').textContent='Edit Job';
+    $('saveBtn').textContent='Save Changes';
+    $('fRal').value=j.ral||''; $('fCust').value=j.customer||'';
+    $('fDesc').value=j.desc||''; $('fQty').value=j.qty||'';
+    $('fFinish').value=j.finish||''; $('fExpected').value=toLocalInput(j.expectedAt);
+    formImgs=(j.images||photoCache.get(id)||[]).slice();
+    if(!j.images&&!photoCache.has(id)&&photoCount(j)>0){
+      // photos live in photos/{id} now — pull them in so editing doesn't wipe them
+      $('saveBtn').disabled=true; $('imgHint').textContent='Loading existing photos…';
+      db.collection('photos').doc(id).get()
+        .then(d=>{
+          const arr=(d.exists&&d.data().images)||[]; photoCache.set(id,arr);
+          if(editingId===id){ formImgs=arr.slice(); renderFormThumbs(); $('saveBtn').disabled=false; }
+        },()=>{
+          // stay disabled: saving without them would wipe the photos
+          if(editingId===id) $('imgHint').textContent='⚠️ Could not load this job’s photos. Close and try again.';
+        });
+    }
+  } else {
+    $('formTitle').textContent='New Job'; $('saveBtn').textContent='Add to Floor';
+    $('fRal').value=''; $('fCust').value=''; $('fDesc').value=''; $('fQty').value='';
+    $('fFinish').value=''; $('fExpected').value='';
+  }
+  updateRalPreview(); renderFormThumbs();
+  showOverlay('formOverlay');
+}
+function closeForm(){ hideOverlay('formOverlay'); }
+function updateRalPreview(){
+  const v=$('fRal').value; const c=ralColor(v); const num=(''+v).match(/\d{4}/);
+  const p=$('ralPrev');
+  if(c){ p.style.background=c; p.style.color='rgba(0,0,0,.5)'; p.textContent=num?num[0]:''; $('ralName').textContent='Colour matched ✓'; $('ralName').style.color='var(--live)'; }
+  else { p.style.background='#2a3a4d'; p.style.color='var(--mut2)'; p.textContent='RAL'; $('ralName').textContent = v? 'Not a known RAL Classic code (still OK to save)':''; $('ralName').style.color='var(--mut2)'; }
+}
+
+/* Image compression → dataURL */
+function handleImgs(e){
+  const files=[...e.target.files]; e.target.value='';
+  const MAX=6;
+  files.forEach(file=>{
+    if(formImgs.length>=MAX){ toast('Max '+MAX+' photos','err'); return; }
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let{width:w,height:h}=img; const max=1100;
+        if(w>max||h>max){ if(w>h){h=Math.round(h*max/w);w=max;} else {w=Math.round(w*max/h);h=max;} }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        formImgs.push(canvas.toDataURL('image/jpeg',0.7));
+        renderFormThumbs();
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderFormThumbs(){
+  $('formThumbs').innerHTML=formImgs.map((src,i)=>
+    `<div class="tw"><img src="${src}"><button class="rm" onclick="rmImg(${i})">✕</button></div>`).join('');
+  const kb=Math.round(formImgs.reduce((s,x)=>s+x.length,0)/1024);
+  $('imgHint').textContent=formImgs.length?formImgs.length+' photo(s) · ~'+kb+' KB':'';
+}
+function rmImg(i){ formImgs.splice(i,1); renderFormThumbs(); }
+
+/* Tiny (~4 KB) preview kept on the job doc so the list can show a thumbnail
+   without downloading the full-size photos. */
+function makeThumb(dataUrl){
+  if(!dataUrl) return Promise.resolve(null);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=120; let{width:w,height:h}=img;
+      if(w>h){ h=Math.round(h*max/w); w=max; } else { w=Math.round(w*max/h); h=max; }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      res(cv.toDataURL('image/jpeg',0.55));
+    };
+    img.onerror=()=>res(null);
+    img.src=dataUrl;
+  });
+}
+
+function saveJob(){
+  const cust=$('fCust').value.trim(), ral=$('fRal').value.trim();
+  if(!cust){ toast('Enter a customer name','err'); $('fCust').focus(); return; }
+  if(!ral){ toast('Enter a RAL number','err'); $('fRal').focus(); return; }
+  const totalKb=formImgs.reduce((s,x)=>s+x.length,0)/1024;
+  if(totalKb>900){ toast('Photos too large — remove one or two','err'); return; }
+  $('saveBtn').disabled=true;
+  const expVal=$('fExpected').value;
+  const imgs=formImgs.slice(), targetId=editingId;
+  const data={
+    customer:cust, ral:ral, finish:$('fFinish').value.trim(),
+    desc:$('fDesc').value.trim(), qty:$('fQty').value.trim(),
+    expectedAt: expVal? new Date(expVal).getTime() : null,
+    imgCount: imgs.length
+  };
+  const DEL=firebase.firestore.FieldValue.delete();
+  const fail=err=>{ $('saveBtn').disabled=false; toast('Save failed: '+(err.code||err.message),'err'); };
+  // Photos go to photos/{jobId}: the board never downloads them, only an opened card does.
+  const savePhotos=id=> imgs.length
+    ? db.collection('photos').doc(id).set({images:imgs})
+    : db.collection('photos').doc(id).delete().catch(()=>{});
+
+  makeThumb(imgs[0]).then(thumb=>{
+    if(targetId){
+      data.thumb = thumb||DEL;
+      data.images = DEL;                       // drop any legacy inline photos
+      return db.collection('jobs').doc(targetId).update(data)
+        .then(()=>savePhotos(targetId))
+        .then(()=>{
+          photoCache.set(targetId,imgs);
+          $('saveBtn').disabled=false; closeForm(); toast('Job updated ✓','ok');
+        });
+    }
+    if(thumb) data.thumb=thumb;                // can't send delete() on a create
+    data.status='active';
+    data.createdAt=firebase.firestore.FieldValue.serverTimestamp();
+    data.order=Date.now();                     // sortable position; newest goes to the end of the queue
+    return db.collection('jobs').add(data).then(ref=>
+      savePhotos(ref.id).then(()=>{
+        photoCache.set(ref.id,imgs);
+        $('saveBtn').disabled=false; closeForm(); switchTab('active'); toast('Added to floor ✓','ok');
+      }));
+  }).catch(fail);
+}
+function markDone(id){
+  db.collection('jobs').doc(id).update({status:'done',doneAt:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(()=>toast('Marked done ✓','ok')).catch(e=>toast('Failed: '+e.code,'err'));
+}
+function reopen(id){
+  db.collection('jobs').doc(id).update({status:'active',doneAt:firebase.firestore.FieldValue.delete()})
+    .then(()=>toast('Reopened','ok')).catch(e=>toast('Failed: '+e.code,'err'));
+}
+function delJob(id){
+  const j=findJob(id);
+  if(!confirm('Delete this job for '+(j?j.customer:'')+'? This cannot be undone.')) return;
+  db.collection('jobs').doc(id).delete()
+    .then(()=>{ photoCache.delete(id); return db.collection('photos').doc(id).delete().catch(()=>{}); })
+    .then(()=>toast('Deleted','ok'))
+    .catch(e=>toast('Failed: '+e.code,'err'));
+}
+
+/* ---------- One-time cleanup of jobs saved in the old inline-photo format ---------- */
+function hasLegacyPhotos(){ return jobs.concat(doneJobs).some(j=>Array.isArray(j.images)&&j.images.length); }
+function updateMigrateBar(){
+  $('migrateBar').classList.toggle('hidden', !(isAdmin && hasLegacyPhotos()));
+}
+let migrating=false;
+function migratePhotos(){
+  if(migrating||!isAdmin||!db) return;
+  migrating=true;
+  const btn=$('migBtn'); btn.disabled=true; btn.textContent='Checking…';
+  const stop=(msg,type)=>{ migrating=false; btn.disabled=false; btn.textContent='Try again ▸'; toast(msg,type||'err'); };
+  db.collection('jobs').get().then(snap=>{
+    const old=snap.docs.filter(d=>Array.isArray(d.data().images)&&d.data().images.length);
+    if(!old.length){ migrating=false; $('migrateBar').classList.add('hidden'); toast('Nothing to move — already fast ✓','ok'); return; }
+    let i=0;
+    const step=()=>{
+      if(i>=old.length){
+        migrating=false; $('migrateBar').classList.add('hidden');
+        toast(old.length+' job(s) slimmed down ✓','ok'); return;
+      }
+      const d=old[i++], imgs=d.data().images;
+      btn.textContent='Moving '+i+' of '+old.length+'…';
+      // photos doc is written first, so an interruption never loses anything
+      db.collection('photos').doc(d.id).set({images:imgs})
+        .then(()=>makeThumb(imgs[0]))
+        .then(thumb=>db.collection('jobs').doc(d.id).update({
+          images: firebase.firestore.FieldValue.delete(),
+          imgCount: imgs.length,
+          thumb: thumb||firebase.firestore.FieldValue.delete()
+        }))
+        .then(step)
+        .catch(e=>stop('Stopped at job '+i+': '+(e.code||e.message)));
+    };
+    step();
+  }).catch(e=>stop('Failed: '+(e.code||e.message)));
+}
+
+/* ---------- Overlays / misc ---------- */
+function showOverlay(id){ $(id).classList.add('show'); document.body.style.overflow='hidden'; }
+function hideOverlay(id){ $(id).classList.remove('show'); document.body.style.overflow=''; }
+$('formOverlay').addEventListener('click',e=>{ if(e.target.id==='formOverlay') closeForm(); });
+$('pinOverlay').addEventListener('click',e=>{ if(e.target.id==='pinOverlay') hideOverlay('pinOverlay'); });
+function zoom(src){ $('lightimg').src=src; $('lightbox').classList.add('show'); }
+let toastT;
+function toast(msg,type){
+  const t=$('toast'); t.textContent=msg; t.className='toast show '+(type||'');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.className='toast '+(type||''),2600);
+}
+
+/* ============================================================
+   ASA: approved devices + the ASA cloud
+   Opening needs the person's name + password and an admin-approved device
+   (shared/asa-device-gate.js, its own list: "Powder Coating devices").
+   Jobs and photos live in the ASA cloud under apps/pc-<key>/{jobs,photos},
+   so only approved devices can reach them. Everyone on an approved device
+   can add, edit, reorder, mark done and delete (no PIN any more).
+   The small adapter below gives the original code the same
+   db.collection(…) calls it used with its old database.
+   ============================================================ */
+let PC = { cloud:false, vault:'', admin:false };
+let FS = null;                      // { sdk, db } from the ASA cloud
+
+function asaDb(vault){
+  const { sdk, db: fdb } = FS;
+  const col = name => sdk.collection(fdb, 'apps', vault, name);
+  const tag = data => ({ ...data, dev: ASACloud.deviceId(), by: ASACloud.name(), ts: Date.now() });
+  const docSnap = s => ({ id: s.id, exists: s.exists(), data: () => s.data() });
+  const qSnap = s => ({ docs: s.docs.map(docSnap), size: s.size, metadata: { fromCache: s.metadata.fromCache } });
+  function query(name, parts){
+    const q = () => sdk.query(col(name), ...parts);
+    return {
+      where: (f, op, v) => query(name, parts.concat(sdk.where(f, op, v))),
+      orderBy: (f, d) => query(name, parts.concat(sdk.orderBy(f, d || 'asc'))),
+      limit: n => query(name, parts.concat(sdk.limit(n))),
+      get: () => sdk.getDocs(q()).then(qSnap),
+      onSnapshot: (a, b, c) => {
+        const next = typeof a === 'function' ? a : b, err = typeof a === 'function' ? b : c;
+        return sdk.onSnapshot(q(), s => next(qSnap(s)), err);
+      }
+    };
+  }
+  function docRef(name, id){
+    const ref = sdk.doc(fdb, 'apps', vault, name, id);
+    return {
+      _ref: ref, id,
+      get: () => sdk.getDoc(ref).then(docSnap),
+      set: data => sdk.setDoc(ref, tag(data)),
+      update: data => sdk.updateDoc(ref, tag(data)),
+      delete: () => sdk.deleteDoc(ref)
+    };
+  }
+  return {
+    collection: name => ({
+      ...query(name, []),
+      doc: id => docRef(name, id),
+      add: data => sdk.addDoc(col(name), tag(data)).then(r => ({ id: r.id }))
+    }),
+    batch: () => {
+      const b = sdk.writeBatch(fdb);
+      return { update: (d, data) => { b.update(d._ref, tag(data)); }, commit: () => b.commit() };
+    },
+    enablePersistence: () => Promise.resolve()
+  };
+}
+
+/* The original code calls firebase.firestore.FieldValue.… — point it at the ASA SDK. */
+window.firebase = { firestore: { FieldValue: {
+  serverTimestamp: () => FS.sdk.serverTimestamp(),
+  delete: () => FS.sdk.deleteField()
+} } };
+
+/* replaces the original start-up: no old database, no PIN */
+function fbReady(){ return !!db; }
+function restFirstPaint(){}
+function initFirebase(){}
+function updateAdminUI(){
+  $('lockBtn').classList.add('hidden');
+  $('fab').classList.toggle('hidden', !isAdmin);
+  const imp = $('pcImportBar'); if (imp) imp.classList.toggle('hidden', !(PC.admin && PC.cloud));
+}
+function openPin(){ toast(PC.cloud ? 'You can make changes on this device' : 'Connect to the internet to make changes', PC.cloud ? 'ok' : 'err'); }
+
+/* ---------- admin: one-time import from the old powder-tracker database ---------- */
+const OLD_PROJECT = 'powder-tracker-9fd10', OLD_KEY = 'AIzaSyBLxiB8V4yPFqBHgfNMfhFA9Qa5M2hwJdk';
+async function oldList(coll){
+  const out = []; let token = '';
+  do {
+    const url = `https://firestore.googleapis.com/v1/projects/${OLD_PROJECT}/databases/(default)/documents/${coll}?pageSize=300&key=${OLD_KEY}` + (token ? '&pageToken=' + encodeURIComponent(token) : '');
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('Old database: HTTP ' + r.status + (r.status === 403 ? ' (already locked?)' : ''));
+    const j = await r.json();
+    (j.documents || []).forEach(d => {
+      const o = { id: d.name.split('/').pop() }, f = d.fields || {};
+      for (const k in f) o[k] = ('timestampValue' in f[k]) ? FS.sdk.Timestamp.fromMillis(Date.parse(f[k].timestampValue)) : decodeVal(f[k]);
+      out.push(o);
+    });
+    token = j.nextPageToken || '';
+  } while (token);
+  return out;
+}
+async function importOld(){
+  if (!PC.admin || !PC.cloud) return;
+  const btn = $('pcImpBtn');
+  try {
+    btn.disabled = true; btn.textContent = 'Reading the old database…';
+    const [oldJobs, oldPhotos] = await Promise.all([oldList('jobs'), oldList('photos')]);
+    if (!confirm(`Copy ${oldJobs.length} job(s) and ${oldPhotos.length} photo set(s) from the old Powder Coating database into the ASA cloud?\nJobs with the same id are overwritten.`)) { btn.disabled = false; btn.textContent = 'Import from the old database ▸'; return; }
+    let i = 0;
+    for (const j of oldJobs) { const { id, ...data } = j; await db.collection('jobs').doc(id).set(data); btn.textContent = `Jobs ${++i}/${oldJobs.length}…`; }
+    i = 0;
+    for (const p of oldPhotos) { const { id, ...data } = p; await db.collection('photos').doc(id).set(data); btn.textContent = `Photos ${++i}/${oldPhotos.length}…`; }
+    btn.textContent = 'Imported ✓';
+    toast(`Imported ${oldJobs.length} jobs — now lock the old database (see the setup guide)`, 'ok');
+  } catch (e) { btn.disabled = false; btn.textContent = 'Try again ▸'; toast('Import failed: ' + (e.message || e.code), 'err'); }
+}
+
+/* ---------- start, after the device check ---------- */
+ASADeviceGate.open({ tool: 'powder', prefix: 'pc', title: 'Powder Coating Tracker' }).then(async ctx => {
+  PC = { ...PC, ...ctx };
+  if (!PC.cloud) {
+    isAdmin = false; updateAdminUI(); hideSkel();
+    setConn(false, ASACloud.configured() && !(ASACloud.session() || {}).setup ? 'Offline · saved copy' : 'Cloud not set up yet');
+    return;
+  }
+  try {
+    FS = await ASACloud.raw();
+    db = asaDb(PC.vault);
+    isAdmin = true; updateAdminUI(); renderAll();
+    startActiveFeed();
+  } catch (e) { hideSkel(); setConn(false, 'Connection error'); }
+});
+
+/* ---------- Boot ----------
+   This inline script runs while the deferred Firebase SDK is still downloading,
+   so the two fast paths start first and the SDK takes over when it lands. */
+updateAdminUI();
+tickTimers();
+startClock();
+paintFromCache();
+restFirstPaint();
+
+// Deferred scripts have all executed by the time DOMContentLoaded fires, so this
+// is the earliest moment `firebase` is guaranteed to exist (or to have failed).
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',initFirebase);
+else initFirebase();
+
+function startClock(){
+  clearInterval(liveTimer);
+  liveTimer=setInterval(tickTimers,1000);
+}
+// A pocketed phone doesn't need a repaint every second.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ clearInterval(liveTimer); liveTimer=null; }
+  else { tickTimers(); startClock(); }
+});
+</script>
+</body>
+</html>

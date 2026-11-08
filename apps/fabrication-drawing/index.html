@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabrication Drawing Sheet — Al Sahlawi</title>
+<link rel="icon" type="image/svg+xml" href="../../assets/favicon.svg">
+<script src="../../shared/asa-config.js"></script>
+<script src="../../shared/asa-cloud.js"></script>
+<script src="../../shared/asa-gate.js" data-app="fab-drawing"></script>
+<style>
+  a.asa-home{font-weight:600; font-size:13px; text-decoration:none; color:#262262; padding:8px 10px; border:1px solid #cfd3e6; border-radius:8px; background:#fff; white-space:nowrap;}
+  a.asa-home:hover{background:#E2E2E2;}
+  .fd-banner{margin:0 0 10px; padding:10px 12px; border:1px solid #f3d38a; background:#fff8e6; border-radius:8px; font-size:13px;}
+  .fd-banner button{margin-left:8px;}
+  .fd-tag{display:inline-block; margin-left:6px; font-size:10.5px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; padding:2px 6px; border-radius:4px; background:#e9e8f3; color:#262262; vertical-align:middle;}
+  .fd-tag.ok{background:#e6f4ec; color:#157f4a;} .fd-tag.warn{background:#fff1d6; color:#8a5a00;}
+</style>
+
+<!-- External libs (need internet on first load; cached afterwards) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+  :root {
+    --brand: #3B73B9;
+    --brand-dark: #2c5a96;
+    --brand-light: #eaf1fb;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --border: #d8dde6;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --tbl-fs: 13px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .app { max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+  /* ---------- On-screen topbar ---------- */
+  header.topbar {
+    background: var(--brand);
+    color: white;
+    padding: 14px 20px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+  }
+  header.topbar h1 { margin: 0; font-size: 18px; font-weight: 600; }
+  header.topbar .subtitle { font-size: 12px; opacity: 0.85; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 { margin: 0 0 12px; font-size: 15px; color: var(--brand-dark); }
+  .card h2 .hint { font-size: 11px; font-weight: 400; color: var(--muted); }
+
+  label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; display:block; margin-bottom: 3px; }
+  input[type=text], input[type=date], textarea {
+    width: 100%; padding: 7px 9px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--text);
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--brand); }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  button {
+    font-family: inherit; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+    padding: 7px 12px; border-radius: 6px; transition: background .12s, border-color .12s;
+  }
+  button:hover { background: #f0f3f8; }
+  button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+  button.primary:hover { background: var(--brand-dark); }
+  button.danger { color: #b42318; border-color: #f3c4bf; }
+  button.danger:hover { background: #fdeceb; }
+  button.tiny { padding: 3px 8px; font-size: 12px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  .toolbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 16px; box-shadow: var(--shadow);
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .toolbar .spacer { flex: 1; }
+
+  /* ---------- Drawings ---------- */
+  #drawings { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; }
+  .drawing-block {
+    box-sizing: border-box; width: 100%;
+    border: 1px dashed var(--border); border-radius: 8px; padding: 12px;
+    background: #fcfdff;
+  }
+  .drawing-block .dctrl { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px; }
+  .drawing-block .dctrl .range-wrap { display:flex; align-items:center; gap:6px; }
+  .drawing-block input[type=range] { width: 140px; }
+  .drawing-img-wrap { text-align: center; }
+  .img-frame {
+    position: relative; display: block; width: 100%;
+    vertical-align: top; line-height: 0;
+  }
+  .img-frame img {
+    width: 100%; height: auto; display: block; border: 1px solid var(--border);
+    border-radius: 4px; background: #fff;
+  }
+  .resize-handle {
+    position: absolute; right: -6px; bottom: -6px; width: 18px; height: 18px;
+    background: var(--brand); border: 2px solid #fff; border-radius: 3px;
+    cursor: nwse-resize; box-shadow: 0 1px 3px rgba(0,0,0,.3); touch-action: none; z-index: 5;
+  }
+  .resize-handle:hover { background: var(--brand-dark); }
+  .drawing-caption { margin-top: 8px; }
+  .empty-hint { color: var(--muted); font-size: 13px; padding: 20px; text-align: center; }
+
+  /* ---------- Tables ---------- */
+  .tbl-card { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+  .tbl-card .tbl-head {
+    display:flex; align-items:center; gap:8px; padding:8px 12px;
+    background: var(--brand-light); border-bottom: 1px solid var(--border);
+  }
+  .tbl-card .tbl-title {
+    font-weight: 700; color: var(--brand-dark); font-size: 14px; flex:1;
+    border: 1px solid transparent; border-radius: 4px; padding: 3px 6px;
+  }
+  .tbl-card .tbl-title:focus { outline:none; border-color: var(--brand); background:#fff; }
+  /* table-layout:fixed keeps column widths stable while editing (no jumping as you type). */
+  table.data-tbl { width: 100%; border-collapse: collapse; font-size: var(--tbl-fs, 13px); table-layout: fixed; }
+  table.data-tbl th, table.data-tbl td {
+    border: 1px solid var(--border); padding: 0.42em 0.6em; text-align: left; vertical-align: top;
+    overflow-wrap: anywhere; word-break: break-word;
+  }
+  /* Keep the row-delete column narrow and fixed. */
+  table.data-tbl th.row-del, table.data-tbl td.row-del { width: 34px; }
+  table.data-tbl th {
+    background: #f3f6fb; font-weight: 600; color: var(--brand-dark);
+  }
+  table.data-tbl th[contenteditable], table.data-tbl td[contenteditable] { min-width: 50px; }
+  table.data-tbl th:focus, table.data-tbl td:focus { outline: 2px solid var(--brand); outline-offset: -2px; }
+  .row-del { width: 30px; text-align:center !important; }
+  .tbl-foot { padding: 8px 12px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ---------- Signatures (compact: just signing lines) ---------- */
+  .sig-grid { display: flex; justify-content: space-between; gap: 60px; margin-top: 6px; }
+  .sig-box { width: 230px; }
+  .sig-space { height: 30px; }
+  .sig-line { border-top: 1px solid #333; padding-top: 3px; font-size: 11px; color: var(--muted); text-align: center; }
+
+  /* ---------- Saved sheets ---------- */
+  .saved-list { display:flex; flex-direction:column; gap:6px; }
+  .saved-row { display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; }
+  .saved-row .nm { flex:1; font-weight:600; }
+  .saved-row .dt { font-size:11px; color:var(--muted); }
+
+  /* ---------- Print/export header (hidden on screen, shown on print & PDF export) ---------- */
+  .print-block { display: none; }
+  /* Reveal print-only elements during html2canvas export/measure. */
+  body.measuring .print-block { display: block !important; }
+  body.measuring .invoice-header { display: flex !important; }
+  body.measuring .no-print { display: none !important; }
+
+  /* Company name / TRN / contact (left) + drawing meta (right) */
+  .invoice-header {
+    justify-content: space-between; align-items: flex-start;
+    gap: 20px; padding: 0 0 12px; margin-bottom: 14px; border-bottom: 2px solid var(--brand);
+  }
+  .invoice-header .left { display: flex; align-items: center; gap: 10px; }
+  .invoice-header .logo-img {
+    width: 40px; height: 40px; object-fit: contain; flex: 0 0 auto;
+    background: var(--brand); border-radius: 6px; padding: 4px;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .invoice-header .doc-title {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--brand-dark); text-transform: uppercase; margin-bottom: 2px;
+  }
+  .invoice-header .co-name { font-size: 16px; font-weight: 700; color: var(--brand-dark); margin-bottom: 4px; }
+  .invoice-header .co-info { font-size: 10px; color: var(--text); line-height: 1.5; }
+  .invoice-header .co-info .trn { font-weight: 700; }
+  .invoice-header .right { text-align: right; font-size: 11px; min-width: 200px; }
+  .invoice-header .right .meta-row { margin: 2px 0; }
+  .invoice-header .right .meta-row .lbl { color: var(--muted); margin-right: 8px; }
+
+  .drawing-caption-print { text-align:center; font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; }
+  .toast {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1f2937; color:#fff; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; opacity: 0; pointer-events:none; transition: opacity .2s; z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ================= PRINT ================= */
+  @media print {
+    body { background: #fff; }
+    .app { padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .print-block { display: block !important; }
+    .card { border: none; box-shadow: none; padding: 0; margin: 0 0 8px; }
+    /* Narrow side margins, normal top/bottom. */
+    @page { size: A4; margin: 9mm 5mm; }
+
+    /* Fit everything onto one A4 page, centered (JS sets --fit + height). */
+    #sheet { text-align: center; overflow: hidden; }
+    #sheetInner {
+      margin: 0 auto; text-align: left;
+      transform: scale(var(--fit, 1)); transform-origin: top center;
+    }
+
+    .invoice-header { display: flex !important; }
+    .invoice-header .logo-img, table.data-tbl th, .tbl-card .tbl-head {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+
+    .drawing-block { border: none; padding: 0; margin: 0 0 12px; background: none; break-inside: avoid; }
+    .drawing-block .dctrl { display: none !important; }
+    .drawing-img-wrap img { border: 1px solid #999; }
+
+    .tbl-card { break-inside: avoid; border: 1px solid #999; }
+    .tbl-card .tbl-head { background: var(--brand-light) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .tbl-card .tbl-foot { display: none !important; }
+    .row-del { display: none !important; }
+    table.data-tbl th { background: #f3f6fb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table.data-tbl { font-size: var(--tbl-fs, 11px); }
+
+    .sig-section { break-inside: avoid; margin-top: 26px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ ON-SCREEN TOPBAR ============ -->
+  <header class="topbar no-print">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <img id="topLogo" src="" alt="" style="height:46px; width:auto;" onerror="this.style.display='none'">
+      <div>
+        <h1>Fabrication Drawing Sheet</h1>
+        <div class="subtitle">Al Sahlawi Bldg. Metal Const. Ind. Factory LLC — Internal Tool</div>
+      </div>
+    </div>
+    <div class="subtitle" id="todayDate"></div>
+  </header>
+
+  <!-- ============ TOOLBAR (actions) ============ -->
+  <div class="toolbar no-print">
+    <a class="asa-home" href="../../index.html" title="Back to ASA Apps">&larr; ASA Home</a>
+    <button class="primary" onclick="document.getElementById('pdfFile').click()">+ Add Drawing (PDF)</button>
+    <input type="file" id="pdfFile" accept="application/pdf" multiple style="display:none" onchange="onPdfUpload(event)">
+    <button class="primary" onclick="document.getElementById('imgFile').click()">+ Add Image</button>
+    <input type="file" id="imgFile" accept="image/*" multiple style="display:none" onchange="onImageUpload(event)">
+    <button onclick="addTable()">+ Add Custom Table</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text);margin:0;cursor:pointer;">
+      <input type="checkbox" id="fitOne" checked> Fit to one page
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;text-transform:none;letter-spacing:0;color:var(--text);margin:0;">
+      Table text
+      <input type="range" id="tblSize" min="7" max="15" step="0.5" value="13" oninput="setTblSize(this.value)" style="width:90px;">
+      <span id="tblSizeVal" style="width:34px;">13px</span>
+    </label>
+    <div class="spacer"></div>
+    <button onclick="saveSheet()">💾 Save</button>
+    <button class="primary" onclick="printDoc()" title="Opens a clean PDF and prints it — no file path, date or page number.">🖨 Print</button>
+    <button onclick="downloadPDF()" title="Save the clean PDF to a file.">⬇ Download PDF</button>
+    <button class="primary" onclick="shareWhatsApp()">📤 Share (WhatsApp)</button>
+  </div>
+
+  <!-- ============ DRAWING INFO (editable) ============ -->
+  <div class="card no-print">
+    <h2>Drawing Information <span class="hint">— appears in the printed header block</span></h2>
+    <div class="grid">
+      <div><label>Drawing Title</label><input type="text" id="f_title" placeholder="e.g. Curtain Wall Bracket"></div>
+      <div><label>Drawing No.</label><input type="text" id="f_no" placeholder="e.g. FD-0001"></div>
+      <div><label>Project / Client</label><input type="text" id="f_project" placeholder="e.g. Marina Tower — ABC Cont."></div>
+      <div><label>Date</label><input type="date" id="f_date"></div>
+      <div><label>Revision</label><input type="text" id="f_rev" placeholder="e.g. R0"></div>
+      <div><label>Prepared By</label><input type="text" id="f_prep" placeholder="e.g. Eng. Name"></div>
+    </div>
+    <div class="btn-row" style="margin-top:12px;">
+      <img id="logoPreview" src="" alt="logo" style="height:42px;width:auto;border:1px solid var(--border);border-radius:4px;padding:5px;background:var(--brand);" onerror="this.style.display='none'">
+      <button class="tiny" onclick="document.getElementById('logoFile').click()">Change Logo</button>
+      <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="onLogoUpload(event)">
+      <button class="tiny" onclick="resetLogo()">Reset Logo</button>
+      <span style="font-size:11px;color:var(--muted)">Header info is fixed company branding; only the right-side block is editable above.</span>
+    </div>
+  </div>
+
+  <!-- ============ PRINTABLE SHEET ============ -->
+  <div id="sheet">
+   <div id="sheetInner">
+
+    <!-- Print/export header: logo + title + company / TRN (left) + drawing meta (right) -->
+    <div class="print-block invoice-header" id="invoiceHeader">
+      <div class="left">
+        <img class="logo-img" id="printLogo" src="" alt="Logo" onerror="this.style.display='none'">
+        <div>
+          <div class="doc-title">Fabrication Drawings</div>
+          <div class="co-name">Al Sahlawi Bldg. Metal Const. Ind. Factory LLC</div>
+          <div class="co-info">
+            <div class="trn">TRN: 100353933300003</div>
+            <div>Tel.(Off): +971-6-5386817 &nbsp;|&nbsp; Mob: +971 56 4991262 &nbsp;|&nbsp; Mob: +971 50 6263517</div>
+            <div>Email: Info@sahlawialuminum.com &nbsp;|&nbsp; Web: www.sahlawialuminum.com</div>
+            <div>P.O. Box: 80079, Opp. Etisalat Office, Emirates Industrial City, Sajaa, Sharjah — U.A.E.</div>
+          </div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="meta-row"><span class="lbl">Drawing No.:</span><span id="p_no"></span></div>
+        <div class="meta-row"><span class="lbl">Title:</span><span id="p_title"></span></div>
+        <div class="meta-row"><span class="lbl">Project:</span><span id="p_project"></span></div>
+        <div class="meta-row"><span class="lbl">Date:</span><span id="p_date"></span></div>
+        <div class="meta-row"><span class="lbl">Rev:</span><span id="p_rev"></span></div>
+      </div>
+    </div>
+
+    <!-- Drawings -->
+    <div class="card">
+      <h2 class="no-print">Drawings &amp; Images <span class="hint">— attach PDFs from AutoCAD or image files; drag the ◢ corner or slider to resize each</span></h2>
+      <div id="drawings"></div>
+      <div class="empty-hint no-print" id="drawingsEmpty">Nothing attached yet. Click “+ Add Drawing (PDF)” or “+ Add Image” above.</div>
+    </div>
+
+    <!-- Tables -->
+    <div class="card">
+      <h2 class="no-print">Technical Tables <span class="hint">— click any cell or title to edit; use “+ Add Custom Table” for a new one with any name &amp; rows; +Row / +Col / –Col / Delete per table</span></h2>
+      <div id="tables"></div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="card sig-section">
+      <h2 class="no-print">Signatures</h2>
+      <div class="sig-grid">
+        <div class="sig-box">
+          <div class="sig-space"></div>
+          <div class="sig-line">Received By</div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-space"></div>
+          <div class="sig-line">Delivered By</div>
+        </div>
+      </div>
+    </div>
+
+   </div><!-- /sheetInner -->
+  </div>
+
+  <!-- ============ SAVED SHEETS ============ -->
+  <div class="card no-print">
+    <h2>Saved Sheets <span class="hint">— shared with the whole ASA team</span></h2>
+    <div class="saved-list" id="savedList"></div>
+    <div class="empty-hint" id="savedEmpty">No saved sheets yet.</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Fabrication Drawing Sheet — Al Sahlawi
+   ============================================================ */
+
+const LOGO_KEY  = 'alsahlawi_logo_v1';     // shared with other Al Sahlawi tools
+const SHEETS_KEY = 'fab_drawings_v1';
+const DEFAULT_LOGO = "data:image/avif;base64,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";
+
+/* ---- PDF.js worker ---- */
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+/* ---------- state ---------- */
+let drawings = [];   // { id, src, caption, widthPct }
+let nextId = 1;
+
+/* ---------- utils ---------- */
+function $(id){ return document.getElementById(id); }
+function esc(s){ return (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
+
+/* ---------- logo ---------- */
+function currentLogo(){
+  let stored = null;
+  try { stored = localStorage.getItem(LOGO_KEY); } catch(e){}
+  if (stored && stored.trim()) return stored;
+  return DEFAULT_LOGO;
+}
+function applyLogo(){
+  const src = currentLogo();
+  const pl = $('printLogo'); if(pl){ pl.src = src; pl.style.display=''; }
+  const pv = $('logoPreview'); if(pv){ pv.src = src; pv.style.display=''; }
+  const tl = $('topLogo'); if(tl){ tl.src = src; tl.style.display=''; }
+}
+function onLogoUpload(ev){
+  const file = ev.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = () => { try{ localStorage.setItem(LOGO_KEY, r.result); }catch(e){ toast('Logo too large to store'); } applyLogo(); toast('Logo updated'); };
+  r.readAsDataURL(file);
+  ev.target.value = '';
+}
+function resetLogo(){ try{ localStorage.removeItem(LOGO_KEY); }catch(e){} applyLogo(); toast('Logo reset'); }
+
+/* ---------- header sync ---------- */
+function syncHeader(){
+  $('p_no').textContent      = $('f_no').value || '—';
+  $('p_title').textContent   = $('f_title').value || '—';
+  $('p_project').textContent = $('f_project').value || '—';
+  $('p_rev').textContent     = $('f_rev').value || '—';
+  const d = $('f_date').value;
+  $('p_date').textContent = d ? new Date(d+'T00:00:00').toLocaleDateString('en-GB') : '—';
+}
+
+/* ============================================================
+   DRAWINGS  (PDF.js)
+   ============================================================ */
+async function onPdfUpload(ev){
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if(!files.length) return;
+  if(!window.pdfjsLib){ alert('PDF library not loaded — check your internet connection and reload.'); return; }
+  toast('Rendering PDF…');
+  for (const file of files){
+    try { await renderPdfFile(file); }
+    catch(e){ console.error(e); alert('Could not render '+file.name+': '+e.message); }
+  }
+  renderDrawings();
+  toast('Drawing(s) added');
+}
+
+/* Attach image files (PNG/JPG/AVIF/etc.) as resizable blocks, same as drawings. */
+function onImageUpload(ev){
+  const files = Array.from(ev.target.files || []);
+  ev.target.value = '';
+  if(!files.length) return;
+  let pending = files.length;
+  files.forEach(file => {
+    const r = new FileReader();
+    r.onload = () => {
+      drawings.push({ id: nextId++, src: r.result, caption: file.name.replace(/\.[^.]+$/,''), widthPct: 100 });
+      if(--pending === 0){ renderDrawings(); toast('Image(s) added'); }
+    };
+    r.onerror = () => { if(--pending === 0) renderDrawings(); };
+    r.readAsDataURL(file);
+  });
+}
+
+async function renderPdfFile(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  const base = file.name.replace(/\.pdf$/i,'');
+  for (let p = 1; p <= pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    // Render at high resolution for crisp print output.
+    const viewport = page.getViewport({ scale: 2.5 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width; canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const src = canvas.toDataURL('image/jpeg', 0.85);
+    const caption = pdf.numPages > 1 ? (base + ' — p.' + p) : base;
+    drawings.push({ id: nextId++, src, caption, widthPct: 100 });
+  }
+}
+
+function renderDrawings(){
+  const wrap = $('drawings');
+  $('drawingsEmpty').style.display = drawings.length ? 'none' : '';
+  wrap.innerHTML = drawings.map((d, i) => `
+    <div class="drawing-block" data-id="${d.id}" style="width:calc(${d.widthPct}% - 6px)">
+      <div class="dctrl no-print">
+        <strong style="font-size:12px;">#${i+1}</strong>
+        <div class="range-wrap">
+          <label style="margin:0;">Size</label>
+          <input type="range" min="20" max="100" value="${d.widthPct}" id="rng_${d.id}" oninput="setWidth(${d.id}, this.value)">
+          <span id="pct_${d.id}" style="font-size:12px;width:38px;">${d.widthPct}%</span>
+        </div>
+        <button class="tiny" onclick="setExactWidth(${d.id},50)" title="Half width (two side by side)">½</button>
+        <button class="tiny" onclick="setExactWidth(${d.id},100)" title="Full width">Full</button>
+        <span style="font-size:11px;color:var(--muted)">or drag ◢</span>
+        <button class="tiny" onclick="moveDrawing(${d.id},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="tiny" onclick="moveDrawing(${d.id},1)" ${i===drawings.length-1?'disabled':''}>↓</button>
+        <button class="tiny danger" onclick="removeDrawing(${d.id})">Remove</button>
+      </div>
+      <div class="drawing-img-wrap">
+        <div class="img-frame">
+          <img src="${d.src}" alt="${esc(d.caption)}">
+          <span class="resize-handle no-print" title="Drag to resize" onpointerdown="startResize(event, ${d.id})"></span>
+        </div>
+      </div>
+      <div class="drawing-caption no-print">
+        <input type="text" value="${esc(d.caption)}" placeholder="Caption (optional)"
+               oninput="setCaption(${d.id}, this.value)">
+      </div>
+      <div class="print-block drawing-caption-print">${esc(d.caption)}</div>
+    </div>`).join('');
+}
+function setWidth(id, v){
+  const d = drawings.find(x=>x.id===id); if(!d) return;
+  d.widthPct = +v; $('pct_'+id).textContent = v+'%';
+  const block = document.querySelector(`.drawing-block[data-id="${id}"]`);
+  if(block) block.style.width = `calc(${v}% - 6px)`;
+}
+/* Snap a drawing to an exact width (e.g. 50% for two side by side). */
+function setExactWidth(id, pct){
+  setWidth(id, pct);
+  const rng = $('rng_'+id); if(rng) rng.value = pct;
+}
+
+/* Click-and-drag the corner handle to resize a drawing (its block width %). */
+function startResize(e, id){
+  e.preventDefault();
+  const handle = e.currentTarget;
+  const block  = handle.closest('.drawing-block');
+  const containerW = document.getElementById('drawings').clientWidth;
+  const startX = e.clientX;
+  const startW = block.getBoundingClientRect().width;
+  try { handle.setPointerCapture(e.pointerId); } catch(_){}
+  function move(ev){
+    let pct = (startW + (ev.clientX - startX)) / containerW * 100;
+    pct = Math.max(20, Math.min(100, pct));
+    block.style.width = `calc(${pct}% - 6px)`;
+    const d = drawings.find(x=>x.id===id);
+    if(d){ d.widthPct = Math.round(pct); }
+    const lbl = $('pct_'+id); if(lbl) lbl.textContent = Math.round(pct)+'%';
+    const rng = $('rng_'+id); if(rng) rng.value = Math.round(pct);
+  }
+  function up(){
+    handle.removeEventListener('pointermove', move);
+    handle.removeEventListener('pointerup', up);
+  }
+  handle.addEventListener('pointermove', move);
+  handle.addEventListener('pointerup', up);
+}
+function setCaption(id, v){ const d=drawings.find(x=>x.id===id); if(d) d.caption=v;
+  const c = document.querySelector(`.drawing-block[data-id="${id}"] .drawing-caption-print`);
+  if(c) c.textContent = v;
+}
+function removeDrawing(id){ drawings = drawings.filter(x=>x.id!==id); renderDrawings(); }
+function moveDrawing(id, dir){
+  const i = drawings.findIndex(x=>x.id===id); const j = i+dir;
+  if(j<0||j>=drawings.length) return;
+  [drawings[i], drawings[j]] = [drawings[j], drawings[i]];
+  renderDrawings();
+}
+
+/* ============================================================
+   TABLES  (fully flexible, contenteditable)
+   ============================================================ */
+function defaultTables(){
+  return [
+    { title:'Materials', headers:['Item','Material / Alloy','Finish','Qty','Remarks'],
+      rows:[['','','','',''],['','','','','']] },
+    { title:'Sizes & Sections', headers:['Member','Profile / Section','Length','Thickness','Qty'],
+      rows:[['','','','',''],['','','','','']] },
+    { title:'Dimensional Summary', headers:['Description','Value','Unit','Tolerance'],
+      rows:[['','','',''],['','','','']] },
+    { title:'Notes', headers:['#','Note'],
+      rows:[['1',''],['2','']] }
+  ];
+}
+
+function tableCard(t, idx){
+  const headCells = t.headers.map((h,ci)=>
+    `<th contenteditable="true" data-c="${ci}">${esc(h)}</th>`).join('')
+    + `<th class="row-del no-print"></th>`;
+  const bodyRows = t.rows.map((r,ri)=>
+    `<tr>` + r.map((cell,ci)=>`<td contenteditable="true">${esc(cell)}</td>`).join('')
+    + `<td class="row-del no-print"><button class="tiny danger" onclick="delRow(${idx},${ri})">✕</button></td></tr>`
+  ).join('');
+  return `
+  <div class="tbl-card" data-idx="${idx}">
+    <div class="tbl-head">
+      <div class="tbl-title" contenteditable="true">${esc(t.title)}</div>
+      <button class="tiny no-print" onclick="addCol(${idx})">+ Col</button>
+      <button class="tiny no-print" onclick="delCol(${idx})">– Col</button>
+      <button class="tiny danger no-print" onclick="delTable(${idx})">Delete</button>
+    </div>
+    <table class="data-tbl">
+      <thead><tr>${headCells}</tr></thead>
+      <tbody>${bodyRows}</tbody>
+    </table>
+    <div class="tbl-foot no-print">
+      <button class="tiny" onclick="addRow(${idx})">+ Row</button>
+    </div>
+  </div>`;
+}
+
+let tables = [];
+
+function setTblSize(v){
+  document.documentElement.style.setProperty('--tbl-fs', v + 'px');
+  const lbl = $('tblSizeVal'); if(lbl) lbl.textContent = v + 'px';
+  const rng = $('tblSize'); if(rng && rng.value !== String(v)) rng.value = v;
+}
+
+function renderTables(){
+  $('tables').innerHTML = tables.map((t,i)=>tableCard(t,i)).join('');
+}
+
+/* Read edited contenteditable values back into the model before mutating/saving. */
+function syncTablesFromDOM(){
+  const cards = document.querySelectorAll('#tables .tbl-card');
+  cards.forEach(card=>{
+    const idx = +card.dataset.idx;
+    const t = tables[idx]; if(!t) return;
+    t.title = card.querySelector('.tbl-title').textContent.trim();
+    t.headers = Array.from(card.querySelectorAll('thead th[contenteditable]')).map(th=>th.textContent.trim());
+    t.rows = Array.from(card.querySelectorAll('tbody tr')).map(tr=>
+      Array.from(tr.querySelectorAll('td[contenteditable]')).map(td=>td.textContent.trim()));
+  });
+}
+function addTable(){
+  syncTablesFromDOM();
+  let name = prompt('Table name:', 'New Table');
+  if (name === null) return;                       // cancelled
+  name = name.trim() || 'New Table';
+  let nc = parseInt(prompt('Number of columns:', '3'), 10);
+  if (!nc || nc < 1) nc = 3;  nc = Math.min(nc, 12);
+  let nr = parseInt(prompt('Number of rows:', '3'), 10);
+  if (!nr || nr < 1) nr = 3;  nr = Math.min(nr, 200);
+  const headers = Array.from({length:nc}, (_,i)=> 'Column ' + (i+1));
+  const rows = Array.from({length:nr}, ()=> headers.map(()=> ''));
+  tables.push({ title:name, headers, rows });
+  renderTables();
+  // Bring the new table into view.
+  const cards = document.querySelectorAll('#tables .tbl-card');
+  if (cards.length) cards[cards.length-1].scrollIntoView({behavior:'smooth', block:'center'});
+}
+function delTable(idx){ syncTablesFromDOM(); tables.splice(idx,1); renderTables(); }
+function addRow(idx){ syncTablesFromDOM(); const t=tables[idx]; t.rows.push(t.headers.map(()=> '')); renderTables(); }
+function delRow(idx,ri){ syncTablesFromDOM(); tables[idx].rows.splice(ri,1); renderTables(); }
+function addCol(idx){ syncTablesFromDOM(); const t=tables[idx]; t.headers.push('Column '+(t.headers.length+1)); t.rows.forEach(r=>r.push('')); renderTables(); }
+function delCol(idx){ syncTablesFromDOM(); const t=tables[idx]; if(t.headers.length<=1) return; t.headers.pop(); t.rows.forEach(r=>r.pop()); renderTables(); }
+
+/* ============================================================
+   SAVE / LOAD  (localStorage)
+   ============================================================ */
+function readSheets(){ try{ return JSON.parse(localStorage.getItem(SHEETS_KEY)||'{}'); }catch(e){ return {}; } }
+function writeSheets(o){ localStorage.setItem(SHEETS_KEY, JSON.stringify(o)); }
+
+function gatherState(){
+  syncTablesFromDOM();
+  return {
+    info: {
+      title:$('f_title').value, no:$('f_no').value, project:$('f_project').value,
+      date:$('f_date').value, rev:$('f_rev').value, prep:$('f_prep').value
+    },
+    drawings: drawings.map(d=>({src:d.src, caption:d.caption, widthPct:d.widthPct})),
+    tables: JSON.parse(JSON.stringify(tables)),
+    tblSize: $('tblSize') ? $('tblSize').value : '13'
+  };
+}
+function applyState(s){
+  $('f_title').value=s.info.title||''; $('f_no').value=s.info.no||'';
+  $('f_project').value=s.info.project||''; $('f_date').value=s.info.date||'';
+  $('f_rev').value=s.info.rev||''; $('f_prep').value=s.info.prep||'';
+  drawings = (s.drawings||[]).map(d=>({id:nextId++, src:d.src, caption:d.caption||'', widthPct:d.widthPct||100}));
+  tables = s.tables && s.tables.length ? JSON.parse(JSON.stringify(s.tables)) : defaultTables();
+  setTblSize(s.tblSize || '13');
+  syncHeader(); renderDrawings(); renderTables();
+}
+
+function saveSheet(){
+  const state = gatherState();
+  let key = state.info.no || state.info.title;
+  key = (key||'').trim();
+  if(!key){ key = prompt('Enter a name for this sheet:', 'FD-'+todayISO()); if(!key) return; }
+  const all = readSheets();
+  all[key] = { ...state, savedAt: new Date().toISOString() };
+  try { writeSheets(all); toast('Saved as “'+key+'”'); }
+  catch(e){ alert('Save failed — storage full. Drawings with many high-res pages can exceed the browser limit. Try fewer/smaller drawings.'); return; }
+  renderSaved();
+}
+function loadSheet(key){
+  const all = readSheets(); const s = all[key];
+  if(!s) return;
+  applyState(s); toast('Loaded “'+key+'”');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function deleteSheet(key){
+  if(!confirm('Delete saved sheet “'+key+'”?')) return;
+  const all = readSheets(); delete all[key]; writeSheets(all); renderSaved(); toast('Deleted');
+}
+function renderSaved(){
+  const all = readSheets();
+  const keys = Object.keys(all).sort();
+  $('savedEmpty').style.display = keys.length ? 'none' : '';
+  $('savedList').innerHTML = keys.map(k=>{
+    const dt = all[k].savedAt ? new Date(all[k].savedAt).toLocaleString('en-GB') : '';
+    return `<div class="saved-row">
+      <span class="nm">${esc(k)}</span>
+      <span class="dt">${dt}</span>
+      <button class="tiny" onclick="loadSheet('${esc(k).replace(/'/g,"\\'")}')">Open</button>
+      <button class="tiny danger" onclick="deleteSheet('${esc(k).replace(/'/g,"\\'")}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+// A4 printable area at 96dpi (5mm side, 9mm top/bottom margins).
+const MM = 96/25.4;
+const A4_W = (210 - 10) * MM;   // ~756px
+const A4_H = (297 - 18) * MM;   // ~1054px
+
+function fitEnabled(){ const c = $('fitOne'); return !c || c.checked; }
+
+/* When "Fit to one page" is on, measure the sheet and scale it onto a single A4 page. */
+function computeFit(){
+  const sheet = $('sheet'), inner = $('sheetInner');
+  if (!fitEnabled()){ clearFit(); return; }
+  document.body.classList.add('measuring');
+  inner.style.transform = 'none';
+  inner.style.width = A4_W + 'px';
+  const h = inner.scrollHeight;
+  const scale = Math.min(1, (A4_H * 0.99) / h);
+  sheet.style.setProperty('--fit', scale);
+  sheet.style.height = Math.ceil(h * scale) + 'px';   // avoid a blank 2nd page
+  inner.style.transform = '';                          // let the @media print rule apply the scale
+  document.body.classList.remove('measuring');
+}
+function clearFit(){
+  const sheet = $('sheet'), inner = $('sheetInner');
+  sheet.style.removeProperty('--fit');
+  sheet.style.height = '';
+  inner.style.width = '';
+  inner.style.transform = '';
+}
+window.addEventListener('beforeprint', computeFit);
+window.addEventListener('afterprint', clearFit);
+
+/* ============================================================
+   PDF OUTPUT  (html2canvas -> jsPDF) — clean, no browser headers/footers
+   ============================================================ */
+function pdfFilename(){
+  const base = ($('f_no').value || $('f_title').value || 'Fabrication-Drawing').trim().replace(/[^\w\-]+/g,'_');
+  return base + '.pdf';
+}
+
+async function buildPdfBlob(){
+  syncTablesFromDOM();
+  const { jsPDF } = window.jspdf;
+  const inner = $('sheetInner');
+  // Reveal print-only elements and lay out at A4 width, then capture.
+  document.body.classList.add('measuring');
+  inner.style.width = A4_W + 'px';
+  let canvas;
+  try {
+    canvas = await html2canvas(inner, { scale: 2, backgroundColor:'#ffffff', useCORS:true });
+  } finally {
+    inner.style.width = '';
+    document.body.classList.remove('measuring');
+  }
+
+  const pdf = new jsPDF('p','mm','a4');
+  try { pdf.setProperties({ title: ($('f_no').value || 'Fabrication Drawing').trim() }); } catch(_){}
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
+  const margin = 5;                       // slim side margins
+  const img = canvas.toDataURL('image/jpeg', 0.92);
+
+  if (fitEnabled()){
+    // Everything on ONE A4 page (scale by the limiting dimension).
+    const availW = pw - margin*2, availH = ph - margin*2;
+    let imgW = availW, imgH = canvas.height * imgW / canvas.width;
+    if (imgH > availH){ imgH = availH; imgW = canvas.width * imgH / canvas.height; }
+    pdf.addImage(img, 'JPEG', (pw - imgW)/2, margin, imgW, imgH);
+    return pdf.output('blob');
+  }
+
+  // Full size, flowing across as many A4 pages as needed.
+  const imgW = pw - margin*2;
+  const imgH = canvas.height * imgW / canvas.width;
+  let heightLeft = imgH, pos = margin;
+  pdf.addImage(img, 'JPEG', margin, pos, imgW, imgH);
+  heightLeft -= (ph - margin*2);
+  while (heightLeft > 0){
+    pos = margin - (imgH - heightLeft);
+    pdf.addPage();
+    pdf.addImage(img, 'JPEG', margin, pos, imgW, imgH);
+    heightLeft -= (ph - margin*2);
+  }
+  return pdf.output('blob');
+}
+
+/* Print via the generated PDF (not the HTML page), so the browser never stamps
+   the file:// path / date / page number onto the output. */
+async function printDoc(){
+  if(!window.jspdf || !window.html2canvas){
+    // Libraries missing — fall back to normal print (browser footer may appear).
+    window.print(); return;
+  }
+  try{
+    toast('Preparing print…');
+    const blob = await buildPdfBlob();
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url, '_blank');
+    if(!w){
+      // Pop-up blocked: download the clean PDF instead.
+      const a = document.createElement('a'); a.href = url; a.download = pdfFilename();
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      toast('Pop-up blocked — clean PDF downloaded; open it and print');
+      setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      return;
+    }
+    // Try to open the print dialog automatically once the PDF is shown.
+    const tryPrint = ()=>{ try{ w.focus(); w.print(); }catch(_){} };
+    w.addEventListener('load', tryPrint);
+    setTimeout(tryPrint, 1500);
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }catch(e){ console.error(e); alert('Print preparation failed: '+e.message); }
+}
+
+async function downloadPDF(){
+  if(!window.jspdf || !window.html2canvas){ alert('Export libraries not loaded — check internet and reload.'); return; }
+  try{
+    toast('Generating PDF…');
+    const blob = await buildPdfBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = pdfFilename();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+    toast('PDF downloaded');
+  }catch(e){ console.error(e); alert('PDF generation failed: '+e.message); }
+}
+
+async function shareWhatsApp(){
+  if(!window.jspdf || !window.html2canvas){ alert('Export libraries not loaded — check internet and reload.'); return; }
+  try{
+    toast('Preparing PDF…');
+    const blob = await buildPdfBlob();
+    const file = new File([blob], pdfFilename(), { type:'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files:[file] })){
+      await navigator.share({
+        files:[file],
+        title: 'Fabrication Drawing',
+        text: 'Fabrication Drawing — Al Sahlawi Aluminum'
+      });
+      toast('Shared');
+    } else {
+      // Desktop fallback: download the PDF, then open WhatsApp Web.
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download=pdfFilename();
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(url),1500);
+      window.open('https://web.whatsapp.com/', '_blank');
+      toast('PDF downloaded — attach it in WhatsApp Web');
+    }
+  }catch(e){
+    if(e.name!=='AbortError'){ console.error(e); alert('Share failed: '+e.message); }
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  $('todayDate').textContent = new Date().toLocaleDateString('en-GB', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  $('f_date').value = todayISO();
+  $('f_rev').value = 'R0';
+  applyLogo();
+  tables = defaultTables();
+  renderTables();
+  renderDrawings();
+  renderSaved();
+  syncHeader();
+  ['f_no','f_title','f_project','f_rev','f_date'].forEach(id=> $(id).addEventListener('input', syncHeader));
+}
+
+/* ============================================================================
+   ASA SHARED STORAGE — every saved sheet is shared with the whole ASA team.
+   - Device copy in IndexedDB (room for big drawings; doesn't crowd the small
+     localStorage that other ASA tools on this website use).
+   - Cloud copy under apps/fab-drawing:  sheets/{id} = details + tables,
+     chunks/{id}_{n} = the drawing images, split because one cloud record holds
+     at most 1 MB.
+   - Members can add and update sheets; only the admin can delete from the cloud.
+   These definitions replace the original saveSheet / loadSheet / … above.
+   ========================================================================== */
+const FD_APP = 'fab-drawing';
+const LEGACY_SHEETS = 'fab_drawings_v1';         // the old version's saved sheets (localStorage)
+const LEGACY_DONE = 'fd2_legacy_imported';
+const CHUNK = 900000;
+let cloudSheets = [];
+let fdReady = false;
+
+function fdMode() {
+  if (!window.ASACloud || !ASACloud.configured()) return 'local';
+  const s = ASACloud.session();
+  if (!s || s.setup) return 'local';
+  return s.offline ? 'offline' : 'cloud';
+}
+function sheetId(key) {
+  let h = 5381; for (const ch of key) h = ((h << 5) + h + ch.charCodeAt(0)) >>> 0;
+  return (key.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'sheet') + '-' + h.toString(36);
+}
+
+/* ---- device store (IndexedDB, falls back to localStorage) ---- */
+const FDB = {
+  db: null, ls: false,
+  open() {
+    if (this.db || this.ls) return Promise.resolve();
+    return new Promise(res => {
+      try {
+        const rq = indexedDB.open('asa_fab_drawings', 1);
+        rq.onupgradeneeded = () => { if (!rq.result.objectStoreNames.contains('sheets')) rq.result.createObjectStore('sheets', { keyPath: 'key' }); };
+        rq.onsuccess = () => { this.db = rq.result; res(); };
+        rq.onerror = rq.onblocked = () => { this.ls = true; res(); };
+      } catch (e) { this.ls = true; res(); }
+    });
+  },
+  _lsAll() { try { return JSON.parse(localStorage.getItem('fd2_sheets') || '{}'); } catch (e) { return {}; } },
+  _req(store, mode, fn) {
+    return new Promise((res, rej) => { const rq = fn(this.db.transaction(store, mode).objectStore(store)); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); });
+  },
+  async all() { await this.open(); return this.ls ? Object.values(this._lsAll()) : (await this._req('sheets', 'readonly', s => s.getAll())) || []; },
+  async get(key) { await this.open(); return this.ls ? this._lsAll()[key] : this._req('sheets', 'readonly', s => s.get(key)); },
+  async put(o) {
+    await this.open();
+    if (!this.ls) return this._req('sheets', 'readwrite', s => s.put(o));
+    const a = this._lsAll(); a[o.key] = o; localStorage.setItem('fd2_sheets', JSON.stringify(a));
+  },
+  async del(key) {
+    await this.open();
+    if (!this.ls) return this._req('sheets', 'readwrite', s => s.delete(key));
+    const a = this._lsAll(); delete a[key]; localStorage.setItem('fd2_sheets', JSON.stringify(a));
+  }
+};
+
+/* ---- cloud ---- */
+async function pushSheet(rec) {
+  const id = sheetId(rec.key);
+  const d = JSON.stringify(rec.drawings || []);
+  const n = Math.max(1, Math.ceil(d.length / CHUNK));
+  for (let i = 0; i < n; i++) {
+    await ASACloud.put(FD_APP, 'chunks', id + '_' + i, { sheet: id, i, data: d.slice(i * CHUNK, (i + 1) * CHUNK) });
+  }
+  const { drawings, _synced, _legacy, ...meta } = rec;
+  // Details last, so a sheet only shows up once all its pieces are in.
+  await ASACloud.put(FD_APP, 'sheets', id, { ...meta, chunks: n, drawingCount: (rec.drawings || []).length, size: d.length });
+}
+async function pullSheet(meta) {
+  const parts = await Promise.all(Array.from({ length: meta.chunks || 1 }, (_, i) => ASACloud.get(FD_APP, 'chunks', meta.id + '_' + i)));
+  if (parts.some(p => !p)) throw new Error('Part of this sheet is missing in the cloud.');
+  return { key: meta.key, info: meta.info, tables: meta.tables, tblSize: meta.tblSize, savedAt: meta.savedAt,
+    savedBy: meta._by || '', drawings: JSON.parse(parts.map(p => p.data).join('')), _synced: true };
+}
+async function refreshCloudSheets() {
+  if (fdMode() !== 'cloud') return;
+  try { cloudSheets = await ASACloud.list(FD_APP, 'sheets'); }
+  catch (e) { toast('Could not load shared sheets: ' + ASACloud.friendly(e)); }
+}
+async function markSynced(key) { const r = await FDB.get(key); if (r) { r._synced = true; delete r._legacy; await FDB.put(r); } }
+async function syncPending(includeLegacy) {
+  const todo = (await FDB.all()).filter(r => !r._synced && (includeLegacy || !r._legacy));
+  let ok = 0;
+  for (const r of todo) { try { await pushSheet(r); await markSynced(r.key); ok++; } catch (e) { toast('Upload stopped: ' + ASACloud.friendly(e)); break; } }
+  if (ok) { toast(`Shared ${ok} sheet(s) with the team`); await refreshCloudSheets(); }
+  return ok;
+}
+
+/* ---- save / open / delete ---- */
+async function saveSheet() {
+  const state = gatherState();
+  let key = (state.info.no || state.info.title || '').trim();
+  if (!key) { key = prompt('Enter a name for this sheet:', 'FD-' + todayISO()); if (!key) return; key = key.trim(); }
+  const rec = { ...state, key, savedAt: new Date().toISOString(), savedBy: ASACloud.name(), _synced: false };
+  try { await FDB.put(rec); }
+  catch (e) { alert('Could not save on this device: ' + (e && e.message)); return; }
+  if (fdMode() === 'cloud') {
+    toast('Saving and sharing…');
+    try { await pushSheet(rec); await markSynced(key); toast('Saved and shared with the team as “' + key + '”'); await refreshCloudSheets(); }
+    catch (e) { toast('Saved on this device. Not shared yet: ' + ASACloud.friendly(e)); }
+  } else toast('Saved as “' + key + '”');
+  renderSaved();
+}
+
+async function loadSheet(key) {
+  const local = await FDB.get(key);
+  const c = cloudSheets.find(x => x.key === key);
+  let rec = local;
+  if (c && (!local || String(c.savedAt) > String(local.savedAt))) {
+    try { toast('Downloading “' + key + '”…'); rec = await pullSheet(c); await FDB.put(rec); }
+    catch (e) { if (!local) { alert('Could not open: ' + ASACloud.friendly(e)); return; } toast('Opened this device’s copy — cloud copy unavailable'); }
+  }
+  if (!rec) return;
+  applyState(rec); toast('Loaded “' + key + '”');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderSaved();
+}
+
+async function deleteSheet(key) {
+  const c = cloudSheets.find(x => x.key === key);
+  const admin = ASACloud.isAdmin();
+  if (c && admin && fdMode() === 'cloud') {
+    if (!confirm('Delete “' + key + '” for everyone? It is removed from the cloud and this device.')) return;
+    try {
+      for (let i = 0; i < (c.chunks || 1); i++) await ASACloud.remove(FD_APP, 'chunks', c.id + '_' + i);
+      await ASACloud.remove(FD_APP, 'sheets', c.id);
+      cloudSheets = cloudSheets.filter(x => x.key !== key);
+    } catch (e) { alert('Could not delete from the cloud: ' + ASACloud.friendly(e)); return; }
+  } else if (!confirm('Remove “' + key + '” from this device?' + (c ? '\nIt stays shared in the cloud — only the admin can delete it there.' : ''))) return;
+  await FDB.del(key); renderSaved(); toast('Deleted');
+}
+
+/* ---- the saved list ---- */
+async function renderSaved() {
+  if (!fdReady) return;
+  const local = await FDB.all();
+  const map = new Map();
+  local.forEach(r => map.set(r.key, { key: r.key, savedAt: r.savedAt, by: r.savedBy || '', here: true, synced: !!r._synced, legacy: !!r._legacy }));
+  cloudSheets.forEach(c => {
+    const have = map.get(c.key);
+    const newer = !have || String(c.savedAt) > String(have.savedAt);
+    map.set(c.key, { ...(have || {}), key: c.key, savedAt: newer ? c.savedAt : have.savedAt, by: newer ? (c._by || '') : have.by,
+      cloud: true, synced: have ? have.synced || !newer : true, newerInCloud: !!have && newer, count: c.drawingCount });
+  });
+  const rows = [...map.values()].sort((a, b) => String(b.savedAt).localeCompare(String(a.savedAt)));
+  const pending = rows.filter(r => r.here && !r.synced && !r.cloud);
+  const mode = fdMode();
+  $('savedEmpty').style.display = rows.length ? 'none' : '';
+  const banner = mode === 'cloud' && pending.length ? `<div class="fd-banner">
+      <b>${pending.length} sheet${pending.length === 1 ? '' : 's'} on this device ${pending.length === 1 ? 'is' : 'are'} not shared with the team yet</b>
+      ${pending.some(r => r.legacy) ? '(including sheets from the old version)' : ''}.
+      <button class="tiny" onclick="syncPending(true).then(renderSaved)">Share with team</button></div>` : '';
+  const js = k => esc(k).replace(/'/g, "\\'");
+  $('savedList').innerHTML = banner + rows.map(r => {
+    const dt = r.savedAt ? new Date(r.savedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+    const where = mode !== 'cloud' ? '' : r.cloud ? (r.newerInCloud ? '<span class="fd-tag">Updated by team</span>' : '<span class="fd-tag ok">Shared</span>')
+      : '<span class="fd-tag warn">Not shared</span>';
+    return `<div class="saved-row">
+      <span class="nm">${esc(r.key)} ${where}</span>
+      <span class="dt">${dt}${r.by ? ' · ' + esc(r.by) : ''}</span>
+      <button class="tiny" onclick="loadSheet('${js(r.key)}')">Open</button>
+      <button class="tiny danger" onclick="deleteSheet('${js(r.key)}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+/* ---- start, once logged in and the page is built ---- */
+async function fdStart() {
+  // Sheets saved by the old version on this device are copied in once (kept unshared until someone shares them).
+  try {
+    if (!localStorage.getItem(LEGACY_DONE)) {
+      const old = JSON.parse(localStorage.getItem(LEGACY_SHEETS) || '{}');
+      for (const [key, s] of Object.entries(old)) {
+        if (!(await FDB.get(key))) await FDB.put({ ...s, key, _synced: false, _legacy: true });
+      }
+      localStorage.setItem(LEGACY_DONE, '1');
+    }
+  } catch (e) { console.warn('Old sheets not imported', e); }
+  fdReady = true;
+  await renderSaved();
+  if (fdMode() === 'cloud') { await refreshCloudSheets(); await syncPending(false); renderSaved(); }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+ASAGate.ready.then(() => {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fdStart); else fdStart();
+});
+</script>
+</body>
+</html>
