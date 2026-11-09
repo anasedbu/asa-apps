@@ -6,7 +6,7 @@
      ASADeviceGate.open({ tool: 'lpo', prefix: 'lpo', title: 'LPO Generator' })
        .then(ctx => …)     // ctx = { cloud, vault, shared, admin }
 
-   1. Asks for the person's own name + password (every time the tool opens).
+   1. Asks for the person's own name + password, only if they are not logged in yet.
    2. Logs the visit in apps/<tool>/access for the Admin page.
    3. Gives the tool its cloud folder: apps/<prefix>-data (+ a shared folder if any).
    Who may open a tool is the admin's per-person tick (asa-gate.js + cloud rules).
@@ -82,8 +82,11 @@
         done({ cloud: true, vault: prefix + '-data', shared: shared ? sharedPrefix + '-data' : '', admin: s.role === 'admin' });
       };
 
+      // Already logged in on this browser (asa-gate.js checked the password): open the tool
+      // straight away. Only ask for the name + password when there is no login yet.
+      const begin = () => { const s = C.session(); if (s && s.name) device(); else login(); };
       (window.ASAGate ? ASAGate.ready : Promise.resolve()).then(() => {
-        if (document.body) login(); else document.addEventListener('DOMContentLoaded', login);
+        if (document.body) begin(); else document.addEventListener('DOMContentLoaded', begin);
       });
     });
   }
