@@ -12,7 +12,6 @@
 <style>
   a.asa-home{color:inherit;text-decoration:none;font-weight:600;font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.55);border-radius:8px;white-space:nowrap}
   a.asa-home:hover{background:rgba(255,255,255,.15)}
-  body.lpo-locked-sign #btnSig, body.lpo-locked-sign #btnStamp, body.lpo-locked-sign #btnSigRm, body.lpo-locked-sign #btnStampRm{display:none}
 </style>
 <link rel="icon" type="image/png" href="logo.png">
 <style>
@@ -302,15 +301,15 @@ table.items .rowtools button{
 .terms{margin-top:8px;font-size:11px;color:#666;line-height:1.6}
 .signblock{margin-top:30px;width:300px;max-width:70%}
 .signstack{
-  position:relative;height:140px;border:1.5px dashed #c3ccda;border-radius:6px;
+  position:relative;aspect-ratio:450/210;border:1.5px dashed #c3ccda;border-radius:6px;
   background:#fafbfd;display:flex;align-items:center;justify-content:center;overflow:hidden;
 }
 .signstack.has{border-style:solid;border-color:#e0e6ee;background:#fff}
-.sig-layer{max-width:92%;max-height:122px;object-fit:contain;display:none}
+#sigCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 .stamp-layer{
   position:absolute;top:50%;left:50%;
   transform:translate(-50%,-50%) rotate(-7deg);
-  max-width:72%;max-height:128px;object-fit:contain;
+  max-width:72%;max-height:92%;object-fit:contain;
   opacity:.9;mix-blend-mode:multiply;pointer-events:none;display:none;
 }
 .slot-ph{color:#9aa6b6;font-size:12px;font-weight:600;pointer-events:none}
@@ -385,10 +384,9 @@ table.items .rowtools button{
   .notes textarea{border:none;padding:0;min-height:auto;resize:none;font-size:8.5pt}
   .terms{font-size:8pt}
   .signblock{width:265px;margin-top:20px}
-  .signstack{height:108px;border:none;background:none;border-radius:0}
+  .signstack{border:none;background:none;border-radius:0}
   .signstack:not(.has){border-bottom:1px solid #333}
-  .sig-layer{max-height:100px}
-  .stamp-layer{max-height:104px}
+  .slot-ph{display:none !important}
   .sign-cap{font-size:8.5pt;border-top:1px solid #333}
   .signfor{font-size:8.5pt;margin-top:8px}
 }
@@ -517,20 +515,22 @@ table.items .rowtools button{
   <!-- Signature & Stamp (stamp overlays the signature) -->
   <div class="signblock">
     <div class="signstack" id="signStack">
-      <img id="sigImg" class="sig-layer" alt="">
+      <canvas id="sigCanvas" width="450" height="210"></canvas>
       <img id="stampImg" class="stamp-layer" alt="">
-      <div class="slot-ph" id="signPh">＋ Add signature &amp; stamp</div>
+      <div class="slot-ph" id="signPh">✎ Sign here</div>
     </div>
     <div class="sign-cap">Authorized Signature &amp; Company Stamp</div>
     <div class="sign-controls no-print">
-      <button type="button" id="btnSig">＋ Signature</button>
-      <button type="button" id="btnSigRm" class="rm">Remove</button>
+      <button type="button" id="btnSig">Upload Signature</button>
+      <button type="button" id="btnSigRm" class="rm">Clear</button>
       <span class="ctl-sep">|</span>
-      <button type="button" id="btnStamp">＋ Stamp</button>
-      <button type="button" id="btnStampRm" class="rm">Remove</button>
+      <button type="button" id="btnStamp">Upload Stamp</button>
+      <button type="button" id="btnStampRm" class="rm">Remove Stamp</button>
     </div>
+    <div id="stampNotice" class="no-print"></div>
     <input type="file" id="sigFile" accept="image/*" hidden>
     <input type="file" id="stampFile" accept="image/*" hidden>
+    <input type="file" id="companyStampFile" accept="image/*" hidden>
   </div>
   <div class="signfor">For AL SAHLAWI BLDG. METAL CONST. IND. FACTORY LLC</div>
 
@@ -1036,19 +1036,93 @@ $('btnShare').addEventListener('click',()=>{
   window.open(url,'_blank');
 });
 
-/* ============ Signature & Stamp (stamp overlays signature) ============ */
+/* ============ Signature & Stamp (stamp overlays signature) ============
+   Each LPO keeps its own signature and stamp, like the Quotation:
+   ''     = use the company one set by the admin
+   'none' = left blank on purpose
+   else   = this LPO's own image (drawn or uploaded)                      */
 let sigData='', stampData='';
+const sigC=$('sigCanvas'), sigCtx=sigC.getContext('2d');
+let sigDrawing=false, sigInk=false, sigToken=0;
+sigCtx.lineWidth=3; sigCtx.lineCap='round'; sigCtx.lineJoin='round'; sigCtx.strokeStyle='#16335c';
+const companySig   = () => (companySign && companySign.sig)   || '';   // companySign: see the ASA section below
+const companyStamp = () => (companySign && companySign.stamp) || '';
+
 function updateSignUI(){
-  $('sigImg').style.display   = sigData?'block':'none';
-  $('stampImg').style.display = stampData?'block':'none';
-  $('signPh').style.display   = (sigData||stampData)?'none':'block';
-  $('signStack').classList.toggle('has', !!(sigData||stampData));
+  const st=!!$('stampImg').getAttribute('src');
+  $('stampImg').style.display = st?'block':'none';
+  $('signPh').style.display   = (sigInk||st)?'none':'block';
+  $('signStack').classList.toggle('has', sigInk||st);
 }
-function setSlot(type, dataURL){
-  if(type==='sig'){ sigData=dataURL||''; $('sigImg').src=sigData; }
-  else { stampData=dataURL||''; $('stampImg').src=stampData; }
+// Draw an image onto the pad, fitted and centred.
+function drawFit(src, cb){
+  const t=++sigToken, img=new Image();
+  img.onload=()=>{
+    if(t!==sigToken) return;   // something newer was drawn meanwhile
+    sigCtx.clearRect(0,0,sigC.width,sigC.height);
+    const s=Math.min(sigC.width/img.width, sigC.height/img.height), w=img.width*s, h=img.height*s;
+    sigCtx.drawImage(img,(sigC.width-w)/2,(sigC.height-h)/2,w,h);
+    sigInk=true; updateSignUI(); if(cb) cb();
+  };
+  img.onerror=()=>toast('Could not read that image');
+  img.src=src;
+}
+function paintSig(){
+  sigToken++; sigCtx.clearRect(0,0,sigC.width,sigC.height); sigInk=false;
+  const src = sigData==='none' ? '' : (sigData || companySig());
+  if(src) drawFit(src);
   updateSignUI();
 }
+function paintStamp(){
+  const src = stampData==='none' ? '' : (stampData || companyStamp()), el=$('stampImg');
+  if(src) el.src=src; else el.removeAttribute('src');
+  updateSignUI();
+}
+function setSlot(type, v){
+  if(type==='sig'){ sigData=v||''; paintSig(); }
+  else { stampData=v||''; paintStamp(); }
+}
+// Older LPOs stored a copy of the company image; treat that as "use the company one".
+function normSign(v, company){ return (v && v===company) ? '' : (v||''); }
+function applySign(sig, stamp){ setSlot('sig', normSign(sig, companySig())); setSlot('stamp', normSign(stamp, companyStamp())); }
+
+// Draw with mouse, finger or pen
+(function(){
+  const pos=e=>{ const r=sigC.getBoundingClientRect(); return {x:(e.clientX-r.left)*(sigC.width/r.width), y:(e.clientY-r.top)*(sigC.height/r.height)}; };
+  sigC.addEventListener('pointerdown',e=>{ sigToken++; sigDrawing=true; sigInk=true; updateSignUI(); const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); sigC.setPointerCapture(e.pointerId); });
+  sigC.addEventListener('pointermove',e=>{ if(!sigDrawing) return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); });
+  const stop=()=>{ if(!sigDrawing) return; sigDrawing=false; sigData=sigC.toDataURL('image/png'); saveDraft(); };
+  sigC.addEventListener('pointerup',stop); sigC.addEventListener('pointerleave',stop); sigC.addEventListener('pointercancel',stop);
+})();
+
+// A scanned/photographed stamp sits on white paper. Turning that white see-through is what
+// lets the signature underneath stay visible; it is also scaled down to a sensible size.
+function matteWhite(dataURL, maxW){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const scale=img.naturalWidth>maxW ? maxW/img.naturalWidth : 1;
+        const w=Math.max(1,Math.round(img.naturalWidth*scale)), hgt=Math.max(1,Math.round(img.naturalHeight*scale));
+        const c=document.createElement('canvas'); c.width=w; c.height=hgt;
+        const x=c.getContext('2d'); x.drawImage(img,0,0,w,hgt);
+        const id=x.getImageData(0,0,w,hgt), p=id.data;
+        let minLum=255;
+        for(let i=0;i<p.length;i+=4){ const l=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2]; if(l<minLum) minLum=l; }
+        const range=Math.max(1,255-minLum);
+        for(let i=0;i<p.length;i+=4){
+          const l=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2];
+          p[i+3]=Math.max(0,Math.min(255,Math.round(255*(255-l)/range*(p[i+3]/255))));
+        }
+        x.putImageData(id,0,0);
+        resolve(c.toDataURL('image/png'));
+      }catch(e){ resolve(dataURL); }
+    };
+    img.onerror=()=>resolve(dataURL);
+    img.src=dataURL;
+  });
+}
+const readFile = f => new Promise(r=>{ const rd=new FileReader(); rd.onload=()=>r(rd.result); rd.readAsDataURL(f); });
 function downscaleImage(file, cb){
   const reader=new FileReader();
   reader.onload=e=>{
@@ -1065,17 +1139,19 @@ function downscaleImage(file, cb){
   };
   reader.readAsDataURL(file);
 }
-function pickImage(type){
-  const inp=$(type+'File'), f=inp.files[0]; if(!f) return;
-  downscaleImage(f,url=>{ setSlot(type,url); saveDraft(); adminSetSign(); toast((type==='sig'?'Signature':'Company stamp')+' added'); });
-  inp.value='';
-}
 $('btnSig').addEventListener('click',()=>$('sigFile').click());
 $('btnStamp').addEventListener('click',()=>$('stampFile').click());
-$('sigFile').addEventListener('change',()=>pickImage('sig'));
-$('stampFile').addEventListener('change',()=>pickImage('stamp'));
-$('btnSigRm').addEventListener('click',()=>{ setSlot('sig',''); saveDraft(); adminSetSign(); toast('Signature removed'); });
-$('btnStampRm').addEventListener('click',()=>{ setSlot('stamp',''); saveDraft(); adminSetSign(); toast('Stamp removed'); });
+$('sigFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  drawFit(await readFile(f), ()=>{ sigData=sigC.toDataURL('image/png'); saveDraft(); toast('Signature added'); });
+});
+$('stampFile').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  setSlot('stamp', await matteWhite(await readFile(f), 420)); saveDraft(); toast('Stamp added');
+});
+$('btnSigRm').addEventListener('click',()=>{ setSlot('sig','none'); saveDraft(); toast('Signature cleared'); });
+$('btnStampRm').addEventListener('click',()=>{ setSlot('stamp','none'); saveDraft(); toast('Stamp removed'); });
+$('companyStampFile').addEventListener('change',onCompanyStampFile);
 
 /* ================= Company logo (persists across all LPOs) ================= */
 function applyLogo(){
@@ -1108,8 +1184,9 @@ $('logoFile').addEventListener('change',pickLogo);
    (shared/asa-device-gate.js). Suppliers, saved prices and saved LPOs are
    then shared between approved devices through the cloud folder
    apps/lpo-<key>/{suppliers,catalog,lpos}; this device keeps its copy for
-   offline use. The signature + company stamp are set by the admin
-   (apps/lpo-<key>/assets/signstamp) and used on every device.          */
+   offline use. The company signature + stamp are set by the admin
+   (apps/lpo-<key>/assets/signstamp) and are the default on every LPO;
+   anyone can sign or stamp a single LPO differently.                   */
 let LPO = { cloud: false, vault: '', admin: false, applying: false };
 const LPO_COLL = { lpoasa_suppliers: 'suppliers', lpoasa_catalog: 'catalog', lpoasa_saved_lpos: 'lpos' };
 const LPO_OUTBOX = 'lpoasa_outbox', LPO_SIGN = 'lpoasa_company_sign';
@@ -1119,8 +1196,13 @@ let companySign = (() => { try { return JSON.parse(localStorage.getItem(LPO_SIGN
 const META = ['dev', 'by', 'ts', '_u', '_by', '_device', '_at', 'deleted'];
 const strip = d => { const o = { ...d }; META.forEach(k => delete o[k]); return o; };
 function toDoc(coll, item) {
-  // Saved LPOs travel without the signature/stamp images — the company ones are used.
-  if (coll === 'lpos') return { id: item.id, savedAt: item.savedAt || 0, data: JSON.stringify({ ...item.data, sigImg: '', stampImg: '' }) };
+  if (coll === 'lpos') {
+    // An LPO's own signature/stamp travels with it; the company ones are not copied in.
+    const d = { ...item.data, sigImg: normSign(item.data && item.data.sigImg, companySig()), stampImg: normSign(item.data && item.data.stampImg, companyStamp()) };
+    let js = JSON.stringify(d);
+    if (js.length > 900000) js = JSON.stringify({ ...d, sigImg: '', stampImg: '' });   // cloud record size limit
+    return { id: item.id, savedAt: item.savedAt || 0, data: js };
+  }
   return { ...item };
 }
 function fromDoc(coll, d) {
@@ -1208,31 +1290,58 @@ function lpoLive() {
   ASACloud.watchDoc(LPO.vault, 'assets', 'signstamp', d => { if (d) useCompanySign(d); }).catch(() => {});
 }
 
-/* signature + stamp: the admin's, everywhere */
+/* company signature + stamp: set by the admin, the default on every LPO */
 function useCompanySign(d) {
   companySign = { sig: d.sig || '', stamp: d.stamp || '' };
   try { localStorage.setItem(LPO_SIGN, JSON.stringify(companySign)); } catch (e) {}
-  setSlot('sig', companySign.sig); setSlot('stamp', companySign.stamp);
+  if (!sigData) paintSig();
+  if (!stampData) paintStamp();
+  paintStampNotice();
 }
-function applySign(sig, stamp) {
-  if (companySign && (LPO.cloud || !LPO.admin)) { setSlot('sig', companySign.sig); setSlot('stamp', companySign.stamp); return; }
-  setSlot('sig', sig || ''); setSlot('stamp', stamp || '');
-}
-async function adminSetSign() {
-  if (!LPO.admin || !LPO.cloud) return;
+async function putCompanySign(sig, stamp, msg) {
   try {
-    await ASACloud.put(LPO.vault, 'assets', 'signstamp', { sig: sigData, stamp: stampData, by: ASACloud.name(), ts: Date.now() });
-    companySign = { sig: sigData, stamp: stampData };
-    localStorage.setItem(LPO_SIGN, JSON.stringify(companySign));
-    toast('Signature & stamp saved for every device');
-  } catch (e) { toast('Could not save for everyone: ' + ASACloud.friendly(e)); }
+    await ASACloud.put(LPO.vault, 'assets', 'signstamp', { sig, stamp, by: ASACloud.name(), ts: Date.now() });
+    useCompanySign({ sig, stamp });
+    // This LPO now simply uses the company ones.
+    if (sigData === sig) sigData = '';
+    if (stampData === stamp) stampData = '';
+    saveDraft(); toast(msg);
+  } catch (e) { alert('Could not save for everyone: ' + ASACloud.friendly(e)); }
+}
+
+// Under the signature: until the company stamp is set the admin gets a one-click upload,
+// everyone else a short note. The admin can also make this LPO's signature + stamp the default.
+function paintStampNotice() {
+  const box = $('stampNotice'); if (!box) return;
+  if (!LPO.cloud) { box.innerHTML = ''; return; }
+  const note = 'margin:8px 0;padding:8px 10px;border:1px solid #c9cdee;background:#eef0fb;border-radius:6px;font-size:12px;color:#333';
+  let html = '';
+  if (!companyStamp()) html = LPO.admin
+    ? `<div style="${note}">The company stamp isn't set yet.
+         <button type="button" onclick="$('companyStampFile').click()">Upload company stamp</button>
+         <div style="font-size:11px;color:#6b7280;margin-top:4px">Pick the stamp image once — every LPO then shows it over the signature.</div></div>`
+    : `<div style="${note}">The company stamp hasn't been set by the admin yet.</div>`;
+  if (LPO.admin) html += `<div class="sign-controls"><button type="button" onclick="makeCompanyDefault()">Use this signature &amp; stamp on every LPO</button></div>`;
+  box.innerHTML = html;
+}
+async function onCompanyStampFile(e) {
+  const f = e.target.files && e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const url = await matteWhite(await readFile(f), 420);
+  putCompanySign(companySig(), url, 'Company stamp saved — it now shows on every LPO');
+}
+function makeCompanyDefault() {
+  const sig = sigInk ? sigC.toDataURL('image/png') : '';
+  const stamp = $('stampImg').getAttribute('src') || '';
+  if (!sig && !stamp) { alert('Sign and/or add the stamp on this LPO first, then press this again.'); return; }
+  if (!confirm('Make this signature & stamp the default on everyone’s LPOs?')) return;
+  putCompanySign(sig, stamp, 'Signature & stamp saved for every LPO');
 }
 
 async function lpoStart(ctx) {
   LPO = { ...LPO, ...ctx };
-  // Only the admin may change the signature and stamp once the cloud is on.
-  document.body.classList.toggle('lpo-locked-sign', !LPO.admin && (LPO.cloud || !!companySign));
-  if (!LPO.cloud) { applySign(sigData, stampData); return; }
+  paintStampNotice();
+  if (!LPO.cloud) return;
   try {
     const a = await ASACloud.get(LPO.vault, 'assets', 'signstamp');
     if (a) useCompanySign(a);
