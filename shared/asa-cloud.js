@@ -71,6 +71,7 @@
     { id: 'fab-drawing', name: 'Fabrication Drawing' }, { id: 'work-tracker', name: 'Work Tracker' },
     { id: 'material-tracker', name: 'Material Tracker' }, { id: 'powder', name: 'Powder Coating' },
     { id: 'stock', name: 'Stock Inventory' }, { id: 'costing', name: 'Stock Costing' }, { id: 'procurement', name: 'Procurement' },
+    { id: 'incoming-material', name: 'Incoming Material' },
     { id: 'stl', name: 'STL Payments' }
   ];
   const OPEN_TOOLS = ['sheet-rate', 'home'];
